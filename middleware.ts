@@ -19,11 +19,13 @@ function hasSession(req: Request): boolean {
   const cookie = req.headers.get("cookie") || "";
   return cookie
     .split(";")
-    .some(
-      (part) =>
-        part.trim().startsWith("next-auth.session-token=") ||
-        part.trim().startsWith("__secure-next-auth.session-token=")
-    );
+    .some((part) => {
+      const name = part.trim().split("=")[0].toLowerCase();
+      return (
+        name === "next-auth.session-token" ||
+        name === "__secure-next-auth.session-token"
+      );
+    });
 }
 
 export default function middleware(req: Request) {
