@@ -1,0 +1,98 @@
+{
+  "appName": "MediSathi",
+  "tagline": "Your health records, in simple language",
+  "nav": {
+    "dashboard": "Dashboard",
+    "documents": "Documents",
+    "checkin": "Check-in",
+    "timeline": "Timeline",
+    "ask": "Ask",
+    "summary": "Summary",
+    "report": "Report"
+  },
+  "header": {
+    "language": "Language",
+    "login": "Log in",
+    "logout": "Log out",
+    "tryDemo": "Try the demo"
+  },
+  "demo": {
+    "dataBanner": "Demo mode — sample data, resets on reload",
+    "aiBanner": "Sample AI output — Muse not connected"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "empty": "No records yet. Upload a prescription or lab report to get started.",
+    "uploadCta": "Upload document",
+    "checkinCta": "Today's check-in"
+  },
+  "documents": {
+    "title": "Documents",
+    "upload": "Upload",
+    "empty": "No documents yet.",
+    "status": {
+      "uploaded": "Uploaded",
+      "processing": "Processing",
+      "needs_review": "Needs review",
+      "confirmed": "Confirmed",
+      "failed": "Failed"
+    }
+  },
+  "review": {
+    "title": "Review extracted values",
+    "original": "Original",
+    "extracted": "Extracted",
+    "confirm": "Confirm",
+    "mismatch": "Mismatch",
+    "needsReview": "Needs review"
+  },
+  "checkin": {
+    "title": "Daily check-in",
+    "sleep": "Sleep (hours)",
+    "water": "Water (glasses)",
+    "activity": "Activity (minutes)",
+    "energy": "Energy",
+    "symptoms": "Symptoms",
+    "save": "Save check-in",
+    "skip": "Skip"
+  },
+  "timeline": {
+    "title": "Timeline",
+    "empty": "No entries yet."
+  },
+  "summary": {
+    "title": "Health summary",
+    "generate": "Generate summary",
+    "empty": "No summary yet."
+  },
+  "ask": {
+    "title": "Ask about your records",
+    "placeholder": "Ask a question…",
+    "send": "Send",
+    "notFound": "I couldn't find this in your records."
+  },
+  "report": {
+    "title": "Doctor report",
+    "download": "Download PDF",
+    "print": "Print"
+  },
+  "auth": {
+    "loginTitle": "Log in to MediSathi",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log in",
+    "demoHint": "Demo: demo@medisathi.app / demo1234"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong.",
+    "retry": "Try again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "back": "Back"
+  },
+  "footer": {
+    "disclaimer": "MediSathi explains your records in simple language. It is not a diagnostic tool and never replaces a doctor."
+  }
+}
