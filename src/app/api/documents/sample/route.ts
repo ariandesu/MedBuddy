@@ -194,7 +194,7 @@ export async function POST(): Promise<NextResponse> {
   });
   await repo.updateDocumentStatus(user.id, doc.id, "needs_review");
 
-  await repo.createExtraction({
+  const extraction = await repo.createExtraction({
     userId: user.id,
     documentId: doc.id,
     documentType: sample.documentType,
@@ -204,11 +204,24 @@ export async function POST(): Promise<NextResponse> {
     ocrText: sample.ocrText,
   });
 
+  // Return full document + extraction so the client can persist them in
+  // localStorage. Demo mode uses in-memory storage that doesn't survive
+  // across Vercel serverless instances.
   return NextResponse.json(
     {
       id: doc.id,
       status: "needs_review",
       fileName: doc.fileName,
+      document: doc,
+      extraction: {
+        id: extraction.id,
+        documentId: doc.id,
+        documentType: sample.documentType,
+        documentDateRaw: sample.documentDateRaw,
+        documentDate: sample.documentDate,
+        fields: sample.fields,
+        ocrText: sample.ocrText,
+      },
       message: "Sample document created — review it in Documents.",
     },
     { status: 201 }

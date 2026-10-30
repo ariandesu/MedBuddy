@@ -7,6 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import {
+  saveSampleDocument,
+  saveSampleExtraction,
+} from "@/lib/sample-storage";
 import { createWorker, type Worker } from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
@@ -171,7 +175,18 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to load sample");
       }
-      const data = await res.json();
+      const data = (await res.json()) as {
+        id: string;
+        status: string;
+        fileName: string;
+        document: unknown;
+        extraction: unknown;
+        message?: string;
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      saveSampleDocument(data.document as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      saveSampleExtraction(data.extraction as any);
       toast.success(data.message ?? "Sample loaded — review it in Documents");
       if (data.id) router.push(`/documents/${data.id}`);
     } catch (err) {

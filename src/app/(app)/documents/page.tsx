@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { UploadZone } from "@/components/upload-zone";
 import { useDictionary } from "@/lib/use-dictionary";
+import { getSampleDocuments } from "@/lib/sample-storage";
 
 type Doc = {
   id: string;
@@ -31,12 +32,31 @@ export default function DocumentsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/documents")
-      .then((r) => r.json())
-      .then((data: { documents: Doc[] }) => {
-        if (!cancelled) setDocs(data.documents ?? []);
-      })
-      .finally(() => setLoading(false));
+    async function load() {
+      const serverDocs: Doc[] = [];
+      try {
+        const res = await fetch("/api/documents");
+        if (res.ok) {
+          const data = await res.json();
+          serverDocs.push(...(data.documents ?? []));
+        }
+      } catch {
+        // Server may be unreachable; fall back to localStorage samples only.
+      }
+      // Merge in localStorage sample documents (demo mode persists them
+      // client-side because in-memory storage doesn't survive across
+      // Vercel instances).
+      const sampleDocs = getSampleDocuments().map((d) => ({
+        id: d.id,
+        fileName: d.fileName,
+        mimeType: d.mimeType,
+        sizeBytes: d.sizeBytes ?? 0,
+        status: d.status,
+        createdAt: d.createdAt ?? new Date().toISOString(),
+      }));
+      if (!cancelled) setDocs([...serverDocs, ...sampleDocs]);
+    }
+    load();
     return () => {
       cancelled = true;
     };
