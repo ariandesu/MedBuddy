@@ -11,10 +11,10 @@ Log when spec conflicts with current library docs, or when a choice needs justif
 - Pre-commit hook: blocks `.env*` staging + `mongodb+srv://` / `LLM_*` patterns. No husky/lefthook yet (M1 minimal),
   plain `.git/hooks/pre-commit` to avoid extra deps. Can upgrade to lefthook in M2 if needed.
 - No GitHub remote yet — local `main` only until user provides repo URL or runs `gh repo create`.
-  UPDATE: repo created via GitHub API as `ariandesu/medisathi` (public) using existing keychain PAT
+  UPDATE: repo created via GitHub API as `ariandesu/MedBuddy` (public; renamed from `medisathi` on user request) using existing keychain PAT
   (scopes `repo,user:email,workflow`; `gh` CLI refused it for missing `read:org`, raw API worked).
   Push via SSH with `~/.ssh/hermes_shareflow` key (`git config core.sshCommand`), remote
-  `git@github.com:ariandesu/medisathi.git`. Token value never printed/logged.
+  `git@github.com:ariandesu/MedBuddy.git`. Token value never printed/logged.
 
 ## M1 — Scaffold (2026-10-30)
 
