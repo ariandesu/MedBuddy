@@ -2,7 +2,6 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { GenerateSummaryButton } from "@/components/generate-summary-button";
-import type { Dictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 

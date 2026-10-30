@@ -1,7 +1,6 @@
 import { getRepo } from "@/server/repo/index";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { missingDays, weeklyAverages } from "@/server/trends";
-import type { Dictionary } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendChart } from "@/components/trend-chart";
 

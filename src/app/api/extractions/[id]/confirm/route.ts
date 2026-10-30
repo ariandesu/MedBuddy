@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
-import type { Observation, MedicationAsWritten } from "@/lib/schemas/record";
+import type { Observation } from "@/lib/schemas/record";
 
 const MED_FIELD = /^med_(\d+)_(name|dose|frequency|duration)$/;
 
