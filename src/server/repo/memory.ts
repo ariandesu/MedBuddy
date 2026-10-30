@@ -20,6 +20,7 @@ import type {
   WellnessUpsertInput,
   CreateHealthSummaryInput,
 } from "./types";
+import { daysAgoDate, daysAgoISODate } from "@/server/dates";
 import documentsFixture from "../../../fixtures/documents.json";
 import extractionsFixture from "../../../fixtures/extractions.json";
 import recordsFixture from "../../../fixtures/records.json";
@@ -29,16 +30,6 @@ import summaryFixture from "../../../fixtures/summary.json";
 export const DEMO_USER_ID = "demo_user_001";
 export const DEMO_EMAIL = "demo@medisathi.app";
 export const DEMO_PASSWORD = "demo1234";
-
-const DAY_MS = 86_400_000;
-
-function daysAgoDate(days: number): Date {
-  return new Date(Date.now() - days * DAY_MS);
-}
-
-function daysAgoISODate(days: number): string {
-  return daysAgoDate(days).toISOString().slice(0, 10);
-}
 
 function clone<T>(value: T): T {
   return structuredClone(value);
@@ -53,15 +44,17 @@ export class MemoryRepository implements Repository {
   private records = new Map<string, MedicalRecord>();
   private wellness = new Map<string, WellnessEntry>();
   private summaries = new Map<string, HealthSummary>();
+  private readonly demoUserId: string;
 
-  constructor(opts?: { seed?: boolean }) {
+  constructor(opts?: { seed?: boolean; userId?: string }) {
+    this.demoUserId = opts?.userId ?? DEMO_USER_ID;
     if (opts?.seed !== false) this.seed();
   }
 
   private seed(): void {
     const now = new Date();
     const demoUser: User = {
-      id: DEMO_USER_ID,
+      id: this.demoUserId,
       email: DEMO_EMAIL,
       passwordHash: bcrypt.hashSync(DEMO_PASSWORD, 10),
       locale: "bn",
@@ -73,7 +66,7 @@ export class MemoryRepository implements Repository {
     for (const d of documentsFixture) {
       const doc: Document = {
         id: d.id,
-        userId: DEMO_USER_ID,
+        userId: this.demoUserId,
         fileName: d.fileName,
         mimeType: d.mimeType,
         sizeBytes: d.sizeBytes,
@@ -115,7 +108,7 @@ export class MemoryRepository implements Repository {
     for (const r of recordsFixture) {
       const rec: MedicalRecord = {
         id: r.id,
-        userId: DEMO_USER_ID,
+        userId: this.demoUserId,
         documentId: r.documentId,
         recordType: r.recordType as MedicalRecord["recordType"],
         recordDate: daysAgoISODate(r.recordDateDaysAgo),
@@ -129,7 +122,7 @@ export class MemoryRepository implements Repository {
     for (const w of wellnessFixture) {
       const entry: WellnessEntry = {
         id: `well_demo_${w.daysAgo}`,
-        userId: DEMO_USER_ID,
+        userId: this.demoUserId,
         date: daysAgoISODate(w.daysAgo),
         sleepHours: w.sleepHours,
         waterGlasses: w.waterGlasses,
@@ -139,12 +132,12 @@ export class MemoryRepository implements Repository {
         symptoms: w.symptoms,
         note: w.note,
       };
-      this.wellness.set(`${DEMO_USER_ID}:${entry.date}`, entry);
+      this.wellness.set(`${this.demoUserId}:${entry.date}`, entry);
     }
 
     const summary: HealthSummary = {
       id: "sum_demo_001",
-      userId: DEMO_USER_ID,
+      userId: this.demoUserId,
       version: 1,
       generatedAt: now,
       coveredFrom: daysAgoISODate(summaryFixture.coveredFromDaysAgo),

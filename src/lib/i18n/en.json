@@ -90,7 +90,19 @@
     "password": "Password",
     "submit": "Log in",
     "error": "Wrong email or password. Please try again.",
-    "demoHint": "Demo: demo@medisathi.app / demo1234"
+    "signUpTitle": "Create an account",
+    "signUpHint": "Sign up to save your own health records.",
+    "signUp": "Sign up",
+    "confirmPassword": "Confirm password",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "logIn": "Log in",
+    "tryDemo": "Try the demo",
+    "demoExplain": "Try the demo — you get your own private sample account.",
+    "demoStartError": "Failed to start demo account.",
+    "userExists": "User already exists.",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "signUpError": "Signup failed. Please try again."
   },
   "common": {
     "loading": "Loading…",

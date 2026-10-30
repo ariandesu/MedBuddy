@@ -21,7 +21,7 @@ export default async function LoginPage() {
       <Card>
         <CardHeader>
           <CardTitle>{dict.auth.loginTitle}</CardTitle>
-          <CardDescription>{dict.auth.demoHint}</CardDescription>
+          <CardDescription>{dict.auth.demoExplain}</CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm dict={dict} />

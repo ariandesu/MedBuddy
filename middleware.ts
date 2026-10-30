@@ -13,7 +13,7 @@ const isProtectedPath = (pathname: string) =>
   PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)
   ) ||
-  (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/"));
+  (pathname.startsWith("/api/") && !pathname.startsWith("/api/auth/") && !pathname.startsWith("/api/demo/"));
 
 function hasSession(req: Request): boolean {
   const cookie = req.headers.get("cookie") || "";

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/demo";
 import type { Dictionary } from "@/lib/i18n";
 
 export function LoginForm({ dict }: { dict: Dictionary }) {
@@ -49,7 +48,6 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      // Success: 200 + {url: <callbackUrl>}. Failure: 401 + {url: .../error?...}.
       const ok =
         res.ok &&
         typeof data?.url === "string" &&
@@ -62,6 +60,21 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
       }
     } catch {
       setError(dict.auth.error);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function startDemo() {
+    setPending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/demo/start", { method: "POST" });
+      if (!res.ok) throw new Error("Failed to start demo");
+      const data = await res.json();
+      await submit(data.email, data.password);
+    } catch {
+      setError(dict.auth.demoStartError);
     } finally {
       setPending(false);
     }
@@ -107,23 +120,19 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
           {dict.auth.submit}
         </Button>
       </form>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void submit(DEMO_EMAIL, DEMO_PASSWORD);
-        }}
+      <Button
+        onClick={startDemo}
+        variant="secondary"
+        className="w-full"
+        disabled={pending}
       >
-        <Button
-          type="submit"
-          variant="secondary"
-          className="w-full"
-          disabled={pending || !csrfToken}
-        >
-          {dict.header.tryDemo}
-        </Button>
-      </form>
+        {dict.auth.tryDemo}
+      </Button>
       <p className="text-center text-sm text-muted-foreground">
-        {dict.auth.demoHint}
+        {dict.auth.noAccount}{" "}
+        <a href="/signup" className="underline">
+          {dict.auth.signUp}
+        </a>
       </p>
     </div>
   );
