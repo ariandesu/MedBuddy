@@ -53,6 +53,7 @@
     "water": "Water (glasses)",
     "activity": "Activity (minutes)",
     "energy": "Energy",
+    "symptomLevel": "Symptom level",
     "symptoms": "Symptoms",
     "save": "Save check-in",
     "skip": "Skip"
@@ -95,5 +96,16 @@
   },
   "footer": {
     "disclaimer": "MediSathi explains your records in simple language. It is not a diagnostic tool and never replaces a doctor."
+  },
+  "redflag": {
+    "title": "This may need urgent care",
+    "bn": "এটি জরুরি চিকিৎসার প্রয়োজন হতে পারে। বাংলাদেশে ৯৯৯ নম্বরে কল করুন অথবা নিকটতম হাসপাতালে যান।",
+    "en": "This may need urgent care. In Bangladesh call 999 or go to the nearest hospital."
+  },
+  "chart": {
+    "sleep": "Sleep (hrs)",
+    "water": "Water (glasses)",
+    "activity": "Activity (min)",
+    "missingDays": "{{count}} day(s) with no check-in (shown as gaps, not zero)"
   }
 }
