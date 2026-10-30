@@ -163,6 +163,24 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
     }
   };
 
+  async function handleSample(fileName: string) {
+    setUploading(true);
+    try {
+      const res = await fetch("/api/documents/sample", { method: "POST" });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to load sample");
+      }
+      const data = await res.json();
+      toast.success(data.message ?? "Sample loaded — review it in Documents");
+      if (data.id) router.push(`/documents/${data.id}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : dict.common.error);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
@@ -230,6 +248,26 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
         >
           {uploading ? dict.common.loading : dict.documents.upload}
         </Button>
+      </div>
+      <Separator />
+      <div className="border-t pt-4">
+        <p className="text-xs font-semibold mb-3">
+          Or try sample data (no real file needed)
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {["Sample CBC Report.jpg", "Sample Prescription.jpg"].map((name) => (
+            <Button
+              key={name}
+              variant="outline"
+              size="sm"
+              onClick={() => handleSample(name)}
+              disabled={uploading}
+              className="min-h-[44px]"
+            >
+              {name}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );
