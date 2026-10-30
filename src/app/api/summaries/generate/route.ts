@@ -4,6 +4,7 @@ import { getSessionUser } from "@/server/auth";
 import { getAI } from "@/server/ai/index";
 import { getLocale } from "@/lib/i18n/server";
 import { groundSummaryChanges } from "@/server/ai/grounding";
+import { isDemoAiMode, getMuseModel } from "@/server/env";
 import type { HealthSummaryPayload } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
@@ -58,8 +59,8 @@ export async function POST(
       limitations,
     },
     sourceRecordIds: records.map((r) => r.id),
-    model: "fixture",
-    isSample: true,
+    model: isDemoAiMode() ? "fixture" : getMuseModel(),
+    isSample: isDemoAiMode(),
   });
 
   return NextResponse.json(summary, { status: 201 });
