@@ -1,0 +1,42 @@
+[
+  {
+    "id": "doc_cbc_001",
+    "fileName": "CBC-Report.jpg",
+    "mimeType": "image/jpeg",
+    "sizeBytes": 184320,
+    "checksum": "fixture-checksum-cbc-001",
+    "fileRef": "file_cbc_001",
+    "status": "confirmed",
+    "daysAgo": 20
+  },
+  {
+    "id": "doc_rx_001",
+    "fileName": "Prescription-Rahman.jpg",
+    "mimeType": "image/jpeg",
+    "sizeBytes": 210540,
+    "checksum": "fixture-checksum-rx-001",
+    "fileRef": "file_rx_001",
+    "status": "confirmed",
+    "daysAgo": 12
+  },
+  {
+    "id": "doc_lipid_002",
+    "fileName": "Lipid-Profile.jpg",
+    "mimeType": "image/jpeg",
+    "sizeBytes": 196880,
+    "checksum": "fixture-checksum-lipid-002",
+    "fileRef": "file_lipid_002",
+    "status": "needs_review",
+    "daysAgo": 2
+  },
+  {
+    "id": "doc_rx_hand_002",
+    "fileName": "Prescription-handwritten.jpg",
+    "mimeType": "image/jpeg",
+    "sizeBytes": 175120,
+    "checksum": "fixture-checksum-rxhand-002",
+    "fileRef": "file_rxhand_002",
+    "status": "needs_review",
+    "daysAgo": 1
+  }
+]

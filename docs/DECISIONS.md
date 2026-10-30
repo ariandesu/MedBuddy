@@ -41,3 +41,22 @@ Log when spec conflicts with current library docs, or when a choice needs justif
   `(value: string | null, details) => void` — handle `null`.
 - Verified: `pnpm build` passes with empty env, with only `AUTH_SECRET`, and with real `.env.local`.
   All routes render as `ƒ (Dynamic)`.
+
+## M2 — Repo + fixtures (2026-10-30)
+
+- One `Repository` interface (`src/server/repo/types.ts`); `MemoryRepository` + `MongoRepository`
+  both implement it; `getRepo()` lazy singleton decides at request time. User-identity methods
+  (`createUser`/`getUserByEmail`/`getUserById`) don't take `userId` (nothing to scope yet);
+  every user-DATA method scopes by `userId` and returns `null` on cross-user access.
+- IDs are opaque strings (UUID in memory, ObjectId-hex in mongo); mongo stores `_id: string`
+  via `FlexDoc` type to satisfy driver v7 typings. Summaries auto-version per user (max+1).
+  Newest-first lists use tiebreaks (memory: reverse-insertion; mongo: `_id` desc) + ms delays
+  in tests for determinism.
+- Fixtures use relative `daysAgo` so the demo never goes stale; Bangla digits preserved in
+  `rawValue` with parsed `numericValue`; prescription fields follow `med_{i}_{name,dose,frequency,duration}`
+  convention (grouped at confirm time in M5). Placeholder 1x1 PNG stands in for report images
+  until Playwright-generated images land (M4/M9).
+- `pnpm smoke:mongo` (1x this milestone) FAILED at TLS handshake to Atlas (`tlsv1 alert internal error`).
+  URI is well-formed and SRV DNS resolves — almost certainly Atlas Network Access IP whitelist.
+  Fix is in Atlas console (add this IP or 0.0.0.0/0). Mongo code path is verified by contract
+  tests on mongodb-memory-server instead; will re-run smoke once per later milestone.

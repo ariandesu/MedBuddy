@@ -1,0 +1,63 @@
+[
+  {
+    "id": "rec_cbc_001",
+    "documentId": "doc_cbc_001",
+    "recordType": "lab_report",
+    "recordDateDaysAgo": 20,
+    "confirmedDaysAgo": 19,
+    "observations": [
+      {
+        "name": "Hemoglobin",
+        "rawValue": "13.5",
+        "numericValue": 13.5,
+        "unit": "g/dL",
+        "referenceRangeRaw": "13.0-17.0",
+        "sourceDocumentId": "doc_cbc_001",
+        "page": 1
+      },
+      {
+        "name": "WBC",
+        "rawValue": "7.2",
+        "numericValue": 7.2,
+        "unit": "x10^9/L",
+        "referenceRangeRaw": "4.0-11.0",
+        "sourceDocumentId": "doc_cbc_001",
+        "page": 1
+      },
+      {
+        "name": "Platelets",
+        "rawValue": "250",
+        "numericValue": 250,
+        "unit": "x10^9/L",
+        "referenceRangeRaw": "150-450",
+        "sourceDocumentId": "doc_cbc_001",
+        "page": 1
+      }
+    ],
+    "medications": []
+  },
+  {
+    "id": "rec_rx_001",
+    "documentId": "doc_rx_001",
+    "recordType": "prescription",
+    "recordDateDaysAgo": 12,
+    "confirmedDaysAgo": 11,
+    "observations": [],
+    "medications": [
+      {
+        "nameAsWritten": "Napa 500mg",
+        "doseAsWritten": "1 tablet",
+        "frequencyAsWritten": "twice daily",
+        "durationAsWritten": "7 days",
+        "uncertain": false
+      },
+      {
+        "nameAsWritten": "Omeprazole 20mg",
+        "doseAsWritten": "1 capsule",
+        "frequencyAsWritten": "once daily before breakfast",
+        "durationAsWritten": "14 days",
+        "uncertain": false
+      }
+    ]
+  }
+]

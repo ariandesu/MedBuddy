@@ -1,0 +1,20 @@
+{
+  "coveredFromDaysAgo": 30,
+  "coveredToDaysAgo": 0,
+  "model": "fixture",
+  "isSample": true,
+  "sourceRecordIds": ["rec_cbc_001", "rec_rx_001"],
+  "payload": {
+    "summary": "SAMPLE — Your records include one blood test (CBC) and one prescription with two medicines as written. Your check-ins show regular sleep and activity with one brief fever episode.",
+    "observedChanges": [
+      {
+        "description": "SAMPLE — Hemoglobin was recorded once; no earlier value exists to compare.",
+        "sourceRecordIds": ["rec_cbc_001"],
+        "uncertainty": "Only one measurement available."
+      }
+    ],
+    "missingInformation": ["No blood pressure readings in your records.", "Lipid profile is uploaded but not yet confirmed."],
+    "questionsForDoctor": ["Should I repeat the CBC test, and when?", "How long should I continue the prescribed medicines?"],
+    "limitations": ["SAMPLE summary from synthetic data.", "Only confirmed records are included; unreviewed uploads are excluded."]
+  }
+}

@@ -1,0 +1,14 @@
+[
+  { "daysAgo": 13, "sleepHours": 6, "waterGlasses": 6, "activityMinutes": 20, "energy": 2, "symptomLevel": "mild", "symptoms": ["headache"], "note": "" },
+  { "daysAgo": 12, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 11, "sleepHours": 5.5, "waterGlasses": 5, "activityMinutes": 10, "energy": 2, "symptomLevel": "mild", "symptoms": ["tiredness"], "note": "" },
+  { "daysAgo": 10, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 40, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 8, "sleepHours": 6.5, "waterGlasses": 6, "activityMinutes": 25, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 7, "sleepHours": 8, "waterGlasses": 7, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 6, "sleepHours": 6, "waterGlasses": 5, "activityMinutes": 15, "energy": 2, "symptomLevel": "moderate", "symptoms": ["fever", "cough"], "note": "Felt warm in the evening" },
+  { "daysAgo": 4, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "mild", "symptoms": ["cough"], "note": "" },
+  { "daysAgo": 3, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 20, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 2, "sleepHours": 6.5, "waterGlasses": 6, "activityMinutes": 25, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 1, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+  { "daysAgo": 0, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" }
+]
