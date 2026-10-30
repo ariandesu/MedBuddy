@@ -1,21 +1,116 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getLocaleAndDict } from "@/lib/i18n/server";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { Dictionary } from "@/lib/i18n";
 
-export default async function AskPage() {
-  const { dict } = await getLocaleAndDict();
+export function AskPage({ dict }: { dict: Dictionary }) {
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [citations, setCitations] = useState<string[]>([]);
+  const [limitations, setLimitations] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleAsk(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setAnswer(null);
+    setCitations([]);
+    setLimitations([]);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error(dict.common.error);
+      const data = await res.json();
+      setAnswer(data.answer ?? dict.ask.notFound);
+      setCitations(Array.isArray(data.citations) ? data.citations : []);
+      setLimitations(
+        Array.isArray(data.limitations) ? data.limitations : []
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : dict.common.error);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-bold">{dict.ask.title}</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>{dict.ask.title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">M1 placeholder — M7 adds grounded Q&A.</p>
-        </CardContent>
-      </Card>
+      <p className="text-sm text-muted-foreground">
+        Questions are answered using only your confirmed records and latest
+        summary.
+      </p>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleAsk} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium" htmlFor="ask-input">
+            Ask a question
+          </label>
+          <Input
+            id="ask-input"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder={dict.ask.placeholder}
+            disabled={saving}
+          />
+        </div>
+        <Button
+          type="submit"
+          disabled={saving || !question.trim()}
+          className="min-h-[44px] w-full"
+        >
+          {saving ? dict.common.loading : dict.ask.send}
+        </Button>
+      </form>
+
+      {answer && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Answer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm">{answer}</p>
+            {citations.length > 0 && (
+              <div className="border-t pt-3 text-xs text-muted-foreground">
+                <span className="font-semibold">Sources:</span>{" "}
+                {citations.join(", ")}
+              </div>
+            )}
+            {limitations.length > 0 && (
+              <div className="border rounded-lg p-3 bg-amber-50 text-amber-800 text-xs">
+                <p className="font-semibold mb-1">Limitations</p>
+                <ul className="space-y-1">
+                  {limitations.map((l) => (
+                    <li key={l}>• {l}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
+
+export default AskPage;
