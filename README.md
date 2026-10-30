@@ -1,6 +1,7 @@
 # MediSathi — মেডিসাথী
 
 > Repo: https://github.com/ariandesu/MedBuddy
+> Live: https://medbuddy-tau.vercel.app (demo data mode + live Muse AI)
 
 Plain-language health record helper for low health literacy (Bangla/English).
 Digitize prescriptions + lab reports, review extracted values, get simple explanations,

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "init-indexes": "tsx scripts/init-indexes.ts",
-    "smoke:mongo": "tsx scripts/smoke-mongo.ts"
+    "smoke:mongo": "tsx scripts/smoke-mongo.ts",
+    "smoke:muse": "tsx scripts/smoke-muse.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

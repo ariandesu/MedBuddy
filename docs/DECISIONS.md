@@ -80,3 +80,20 @@ Log when spec conflicts with current library docs, or when a choice needs justif
   `signIn("credentials", { redirect: false })`; "Try the demo" button submits demo creds.
 - `src/lib/demo.ts`: DEMO_EMAIL / DEMO_PASSWORD (client-safe hint).
 - Verified: lint + typecheck + test (23) + build green, both real and empty-env builds pass.
+
+## Deploy — Vercel production (2026-10-30)
+
+- Project `medbuddy` (lowercase required; dir `MedBuddy` rejected), live at
+  https://medbuddy-tau.vercel.app (alias) — public, SSO Deployment Protection disabled via API.
+- Vercel env (production + preview): fresh `AUTH_SECRET` (generated, differs from local),
+  `MODEL_API_KEY` + `MUSE_MODEL` + `MUSE_BASE_URL` (Muse verified live via `smoke:muse`),
+  `MONGODB_DB`. `MONGODB_URI` deliberately NOT set — Atlas IP whitelist blocks Vercel;
+  prod runs demo data mode by design until network access is opened.
+- `pnpm approve-builds esbuild mongodb-memory-server tesseract.js` required —
+  Vercel `pnpm install` fails with ERR_PNPM_IGNORED_BUILDS otherwise (`allowBuilds` in pnpm-workspace.yaml).
+- Meta endpoint rejects `reasoning` param (400) and needs real JSON Schema —
+  `MuseAI.chat` now sends `z.toJSONSchema(schema)`, no reasoning field.
+- Prod cookie is `__Secure-next-auth.session-token` (capital S) — middleware
+  cookie check is now case-insensitive (lowercase-only broke all authed routes on HTTPS).
+- Verified on prod: 307 /login redirect, demo login → session, dashboard/timeline/report 200,
+  4 seeded docs, data banner shown, AI banner hidden (Muse connected).

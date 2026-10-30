@@ -50,22 +50,22 @@ export class MuseAI implements AIProvider {
   private async chat<T>(
     schema: z.ZodType<T>,
     messages: ChatCompletionMessageParam[],
-    reasoningEffort: "low" | "medium",
+    _reasoningEffort: "low" | "medium",
     schemaName: string
   ): Promise<T> {
     const client = this.getClient();
     const model = getMuseModel();
     const lastError: unknown[] = [];
+    // NOTE: Meta endpoint rejects the `reasoning` param (400 unknown parameter),
+    // so effort is accepted for API compat but not sent. See DECISIONS.md.
+    const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const completion = await client.chat.completions.create({
           model,
           messages,
-          response_format: chatResponseFormat(schemaName, schema),
+          response_format: chatResponseFormat(schemaName, jsonSchema),
           store: false,
-          ...(reasoningEffort
-            ? { reasoning: { effort: reasoningEffort } }
-            : {}),
         });
         const raw = completion.choices[0]?.message.content ?? "";
         return schema.parse(JSON.parse(raw));
