@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,6 +140,8 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
     [compressImage, renderPdfPage, runOcr]
   );
 
+  const router = useRouter();
+
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
@@ -172,9 +175,9 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Upload failed");
       }
-      await res.json();
+      const data = await res.json();
       toast.success("Uploaded — review your extracted values");
-      // Reset
+      if (data.id) router.push(`/documents/${data.id}`);
       setFile(null);
       setOcrText("");
     } catch (err) {

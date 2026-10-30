@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import type { Dictionary } from "@/lib/i18n";
+import { useDictionary } from "@/lib/use-dictionary";
 
 type Wellness = {
   date: string;
@@ -44,7 +44,8 @@ const THIRTY_DAYS_AGO = new Date(Date.now() - 29 * 86_400_000)
   .toISOString()
   .slice(0, 10);
 
-export function ReportPage({ dict }: { dict: Dictionary }) {
+export function ReportPage() {
+  const dict = useDictionary();
   const [from, setFrom] = useState<string>(THIRTY_DAYS_AGO);
   const [to, setTo] = useState<string>(TODAY);
   const [records, setRecords] = useState<Record[]>([]);

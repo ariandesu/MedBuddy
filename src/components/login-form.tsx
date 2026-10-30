@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,26 +12,53 @@ import type { Dictionary } from "@/lib/i18n";
 export function LoginForm({ dict }: { dict: Dictionary }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
     searchParams.get("error") ? dict.auth.error : null
   );
   const [pending, setPending] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/csrf")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data?.csrfToken) setCsrfToken(data.csrfToken);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function submit(email: string, password: string) {
+    if (!csrfToken) return;
     setPending(true);
     setError(null);
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl: "/dashboard",
-    });
-    setPending(false);
-    if (res?.ok) {
-      router.push("/dashboard");
-      router.refresh();
-    } else {
+    try {
+      const res = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          csrfToken,
+          email,
+          password,
+          callbackUrl: "/dashboard",
+          json: "true",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.ok) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        setError(dict.auth.error);
+      }
+    } catch {
       setError(dict.auth.error);
+    } finally {
+      setPending(false);
     }
   }
 

@@ -13,7 +13,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { UploadZone } from "@/components/upload-zone";
-import type { Dictionary } from "@/lib/i18n";
+import { useDictionary } from "@/lib/use-dictionary";
 
 type Doc = {
   id: string;
@@ -24,7 +24,8 @@ type Doc = {
   createdAt: string;
 };
 
-export default function DocumentsPage({ dict }: { dict: Dictionary }) {
+export default function DocumentsPage() {
+  const dict = useDictionary();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
 

@@ -30,7 +30,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { BellRing } from "lucide-react";
-import type { Dictionary } from "@/lib/i18n";
+import { useDictionary } from "@/lib/use-dictionary";
 
 type SymptomLevel = "none" | "mild" | "moderate" | "severe";
 
@@ -62,7 +62,8 @@ function isRedFlag(entry: {
 const URGENT_MESSAGE =
   "This may need urgent care. In Bangladesh call 999 or go to the nearest hospital.";
 
-export default function CheckinPage({ dict }: { dict: Dictionary }) {
+export default function CheckinPage() {
+  const dict = useDictionary();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);

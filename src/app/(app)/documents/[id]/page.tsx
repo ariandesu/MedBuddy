@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Button,
-} from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -24,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
-import type { Dictionary } from "@/lib/i18n";
+import { useDictionary } from "@/lib/use-dictionary";
 
 type Field = {
   key: string;
@@ -51,11 +49,8 @@ type Extraction = {
   ocrText: string;
 };
 
-export default function DocumentReviewPage({
-  dict,
-}: {
-  dict: Dictionary;
-}) {
+export default function DocumentReviewPage() {
+  const dict = useDictionary();
   const [doc, setDoc] = useState<{
     id: string;
     fileName: string;
@@ -75,7 +70,7 @@ export default function DocumentReviewPage({
     async function load() {
       const [dRes, eRes] = await Promise.all([
         fetch(`/api/documents/${id}`),
-        fetch(`/api/extractions/${id}`),
+        fetch(`/api/extractions?documentId=${encodeURIComponent(id ?? "")}`),
       ]);
       if (dRes.ok) {
         const d = await dRes.json();
@@ -107,11 +102,16 @@ export default function DocumentReviewPage({
   };
 
   const handleConfirm = async () => {
+    const extId = extraction?.id;
+    if (!extId) {
+      setError("No extraction found");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       // Persist edits first.
-      const patchRes = await fetch(`/api/extractions/${id}`, {
+      const patchRes = await fetch(`/api/extractions/${extId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fields }),
@@ -119,14 +119,12 @@ export default function DocumentReviewPage({
       if (!patchRes.ok) throw new Error("Failed to save edits");
 
       const confirmRes = await fetch(
-        `/api/extractions/${id}/confirm`,
+        `/api/extractions/${extId}/confirm`,
         { method: "POST" }
       );
       if (!confirmRes.ok) throw new Error("Confirm failed");
-
-      const data = await confirmRes.json();
-      // eslint-disable-next-line no-console
-      console.log("confirmed", data);
+      await confirmRes.json();
+      router.push("/documents");
     } catch (err) {
       setError(err instanceof Error ? err.message : dict.common.error);
     } finally {

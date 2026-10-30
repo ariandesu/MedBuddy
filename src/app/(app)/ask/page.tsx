@@ -10,9 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { Dictionary } from "@/lib/i18n";
+import { useDictionary } from "@/lib/use-dictionary";
 
-export function AskPage({ dict }: { dict: Dictionary }) {
+export function AskPage() {
+  const dict = useDictionary();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [citations, setCitations] = useState<string[]>([]);
