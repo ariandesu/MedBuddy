@@ -1,7 +1,6 @@
 allowBuilds:
+  esbuild: true
+  mongodb-memory-server: true
   sharp: false
+  tesseract.js: true
   unrs-resolver: false
-onlyBuiltDependencies:
-  - esbuild
-  - mongodb-memory-server
-  - tesseract.js
