@@ -49,7 +49,12 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data?.ok) {
+      // Success: 200 + {url: <callbackUrl>}. Failure: 401 + {url: .../error?...}.
+      const ok =
+        res.ok &&
+        typeof data?.url === "string" &&
+        !data.url.includes("/error");
+      if (ok) {
         router.push("/dashboard");
         router.refresh();
       } else {
@@ -98,7 +103,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
             disabled={pending}
           />
         </div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending || !csrfToken}>
           {dict.auth.submit}
         </Button>
       </form>
@@ -112,7 +117,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
           type="submit"
           variant="secondary"
           className="w-full"
-          disabled={pending}
+          disabled={pending || !csrfToken}
         >
           {dict.header.tryDemo}
         </Button>

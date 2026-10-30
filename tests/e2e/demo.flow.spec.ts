@@ -12,20 +12,12 @@ test.describe("M9 demo flow (demo mode, no credentials)", () => {
       { name: "medisathi-locale", value: "en", domain: "localhost", path: "/" },
     ]);
 
-    // 1. Login (demo) via API request (reliable session cookie)
-    const csrfRes = await context.request.get("/api/auth/csrf");
-    const csrf = await csrfRes.json();
-    const loginRes = await context.request.post("/api/auth/callback/credentials", {
-      form: {
-        csrfToken: csrf.csrfToken,
-        email: "demo@medisathi.app",
-        password: "demo1234",
-        callbackUrl: "/dashboard",
-        json: "true",
-      },
-    });
-    expect(loginRes.ok()).toBeTruthy();
-    await page.goto("/dashboard");
+    // 1. Login (demo) via the real UI form
+    await page.goto("/login");
+    await expect(page).toHaveURL("/login");
+    await page.fill('input[name="email"]', "demo@medisathi.app");
+    await page.fill('input[name="password"]', "demo1234");
+    await page.click('button:has-text("Log in")');
     await expect(page).toHaveURL("/dashboard");
 
     // 2. Documents -> seeded list (4 docs, 2 confirmed + 2 needs_review)
