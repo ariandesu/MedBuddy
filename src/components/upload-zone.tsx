@@ -208,7 +208,21 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Upload failed");
       }
-      const data = await res.json();
+      const data = (await res.json()) as {
+        id: string;
+        status: string;
+        fileName: string;
+        document?: unknown;
+        extraction?: unknown;
+        message?: string;
+      };
+      // Persist document + extraction in localStorage so they survive
+      // across Vercel serverless instances (demo mode uses in-memory
+      // storage that doesn't share between instances).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (data.document) saveSampleDocument(data.document as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (data.extraction) saveSampleExtraction(data.extraction as any);
       toast.success("Uploaded — review your extracted values");
       if (data.id) router.push(`/documents/${data.id}`);
       setFile(null);

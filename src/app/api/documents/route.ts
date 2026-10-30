@@ -142,12 +142,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     await repo.updateDocumentStatus(user.id, doc.id, "needs_review");
 
+    const extraction = await repo.getExtractionByDocument(user.id, doc.id);
+
     return NextResponse.json(
       {
         id: doc.id,
         status: "needs_review",
         fileName: doc.fileName,
         sizeBytes: doc.sizeBytes,
+        document: doc,
+        extraction: extraction ?? null,
       },
       { status: 201 }
     );
