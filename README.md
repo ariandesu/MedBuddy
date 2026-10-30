@@ -22,6 +22,20 @@ their own records, and print a doctor-ready report. It is explicitly **not** a d
 - Demo login: `demo@medisathi.app` / `demo1234`
 - Default language: Bangla (`bn`), switchable in the header (cookie `medisathi-locale`)
 
+### Test without uploading real data (demo mode)
+
+In demo mode the app seeds synthetic records on every visit — no upload needed:
+
+1. **Documents** — see 4 sample files (2 `confirmed`, 2 `needs_review`: a lipid profile and a handwritten-style prescription).
+2. Click a `needs_review` document → review extracted values vs. OCR (mismatches flagged) → **Confirm** to create a medical record.
+3. **Check-in** → save a wellness entry → urgent-care dialog fires only if you select red-flag symptoms.
+4. **Timeline** → merged records + check-ins with trend charts (missing days shown as gaps, never treated as 0).
+5. **Summary** → **Generate summary** → source-linked summary (live Muse AI in production).
+6. **Ask** → grounded Q&A with citations.
+7. **Report** → print-optimized doctor report (`window.print()`).
+
+All fixture data is synthetic and clearly watermarked **"SAMPLE — NOT REAL PATIENT DATA"**.
+
 ## Screenshots
 
 *(Add screenshots of dashboard, documents, review, timeline, and report here.)*
