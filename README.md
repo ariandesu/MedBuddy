@@ -1,5 +1,7 @@
 # MediSathi — মেডিসাথী
 
+> Repo: https://github.com/ariandesu/medisathi
+
 Plain-language health record helper for low health literacy (Bangla/English).
 Digitize prescriptions + lab reports, review extracted values, get simple explanations,
 log daily check-ins, see timeline + trends, generate source-linked summaries, ask grounded
