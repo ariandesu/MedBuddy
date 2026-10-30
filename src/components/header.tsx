@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { HeartPulse } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { LogoutButton } from "@/components/logout-button";
 import type { Dictionary, Locale } from "@/lib/i18n";
+import type { SessionUser } from "@/server/auth";
 
 export function Header({
   locale,
   dict,
+  user,
 }: {
   locale: Locale;
   dict: Dictionary;
+  user: SessionUser | null;
 }) {
   return (
     <header className="no-print sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
@@ -27,12 +32,20 @@ export function Header({
         </Link>
         <div className="flex items-center gap-2">
           <LanguageSwitcher locale={locale} label={dict.header.language} />
-          <Link
-            href="/login"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            {dict.header.login}
-          </Link>
+          {user ? (
+            <>
+              <Avatar title={user.email}>
+                <AvatarFallback>
+                  {user.email.slice(0, 1).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <LogoutButton label={dict.header.logout} />
+            </>
+          ) : (
+            <Link href="/login" className={buttonVariants({ variant: "outline" })}>
+              {dict.header.login}
+            </Link>
+          )}
         </div>
       </div>
     </header>

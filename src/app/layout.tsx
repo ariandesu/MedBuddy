@@ -7,6 +7,7 @@ import { Header } from "@/components/header";
 import { BottomNav } from "@/components/bottom-nav";
 import { DemoBanners } from "@/components/demo-banners";
 import { getLocaleAndDict } from "@/lib/i18n/server";
+import { getSessionUser } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const { locale, dict } = await getLocaleAndDict();
+  const user = await getSessionUser();
   return (
     <html
       lang={locale}
@@ -46,7 +48,7 @@ export default async function RootLayout({
         }}
       >
         <TooltipProvider>
-          <Header locale={locale} dict={dict} />
+          <Header locale={locale} dict={dict} user={user} />
           <DemoBanners dict={dict} />
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:pb-10">
             {children}

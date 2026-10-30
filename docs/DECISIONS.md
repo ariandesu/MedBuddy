@@ -60,3 +60,23 @@ Log when spec conflicts with current library docs, or when a choice needs justif
   URI is well-formed and SRV DNS resolves — almost certainly Atlas Network Access IP whitelist.
   Fix is in Atlas console (add this IP or 0.0.0.0/0). Mongo code path is verified by contract
   tests on mongodb-memory-server instead; will re-run smoke once per later milestone.
+
+## M3 — Auth (2026-10-30)
+
+- Auth.js v4 (current stable `next-auth@4.24.15`), JWT session strategy, credentials provider.
+- `src/server/auth.ts`: `verifyCredentials` (lazy repo + bcrypt), `authOptions` (JWT callbacks),
+  `getSessionUser()`. `src/types/next-auth.d.ts` augments Session/JWT with `id`.
+- Route `src/app/api/auth/[...nextauth]/route.ts` (GET/POST), `force-dynamic`.
+- Middleware (`middleware.ts`): cookie-presence gating — `next-auth.session-token` /
+  `__secure-next-auth.session-token` cookie (encrypted with AUTH_SECRET) = valid session.
+  Protects `(app)` routes + `/api/*` except `/api/auth/*`; unauth → 307 to `/login?callbackUrl=...`.
+  NOTE: `import { getToken } from "next-auth/jwt"` breaks middleware module load under turbopack
+  (all routes 500); `next-auth/middleware`'s `withAuth` works but does NOT auto-redirect unauth
+  (returns 200). Cookie-presence gating in a custom middleware is the reliable approach.
+  Verified on `next start` (production server): unauth → 307 /login, login → session cookie,
+  wrong password → CredentialsSignin error. Turbopack `next dev` swallows middleware redirects
+  but `next start` behaves correctly.
+- Login page: `getSessionUser()` redirects authed users to /dashboard; client `LoginForm` uses
+  `signIn("credentials", { redirect: false })`; "Try the demo" button submits demo creds.
+- `src/lib/demo.ts`: DEMO_EMAIL / DEMO_PASSWORD (client-safe hint).
+- Verified: lint + typecheck + test (23) + build green, both real and empty-env builds pass.

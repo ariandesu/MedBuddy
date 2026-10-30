@@ -82,6 +82,7 @@
     "email": "ইমেইল",
     "password": "পাসওয়ার্ড",
     "submit": "লগ ইন",
+    "error": "ইমেইল বা পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।",
     "demoHint": "ডেমো: demo@medisathi.app / demo1234"
   },
   "common": {

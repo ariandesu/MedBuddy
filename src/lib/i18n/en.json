@@ -82,6 +82,7 @@
     "email": "Email",
     "password": "Password",
     "submit": "Log in",
+    "error": "Wrong email or password. Please try again.",
     "demoHint": "Demo: demo@medisathi.app / demo1234"
   },
   "common": {
