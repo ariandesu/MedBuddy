@@ -23,12 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { useDictionary } from "@/lib/use-dictionary";
-import {
-  getSampleDocument,
-  getSampleExtraction,
-  markSampleDocumentConfirmed,
-  saveSampleMedicalRecord,
-} from "@/lib/sample-storage";
 
 type Field = {
   key: string;
@@ -85,15 +79,13 @@ export default function DocumentReviewPage() {
       if (dRes.ok) {
         docData = await dRes.json();
       } else {
-        // Fall back to localStorage sample (demo mode: in-memory storage
-        // doesn't survive across Vercel instances).
-        docData = getSampleDocument(id ?? "") ?? null;
+        docData = null;
       }
 
       if (eRes.ok) {
         extData = await eRes.json();
       } else {
-        extData = getSampleExtraction(id ?? "") ?? null;
+        extData = null;
       }
 
       if (!cancelled) {
@@ -128,74 +120,7 @@ export default function DocumentReviewPage() {
     setSaving(true);
     setError(null);
     try {
-      // Detect if this is a localStorage-only sample doc (demo mode:
-      // in-memory storage doesn't survive across Vercel instances).
-      const sampleDoc = getSampleDocument(id ?? "");
-      const sampleExt = getSampleExtraction(id ?? "");
-      const isSampleOnly = !!sampleDoc && !!sampleExt && !window.location.pathname.startsWith("/api");
-
-      if (isSampleOnly) {
-        // Client-side confirm for localStorage sample.
-        const MED_FIELD = /^med_(\d+)_(name|dose|frequency|duration)$/;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const observations: any[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const medsByIndex: Record<number, any> = {};
-
-        for (const [key, f] of Object.entries(
-          Object.fromEntries(fields.map((f) => [f.key, f]))
-        )) {
-          const m = key.match(MED_FIELD);
-          if (m) {
-            const idx = Number(m[1]);
-            const which = m[2] as "name" | "dose" | "frequency" | "duration";
-            if (!medsByIndex[idx]) medsByIndex[idx] = {};
-            medsByIndex[idx][which] = f.rawValue ?? "";
-            medsByIndex[idx].uncertain =
-              f.agreement !== "match" || f.needsReview;
-          } else {
-            observations.push({
-              name: f.label ?? key,
-              rawValue: f.rawValue ?? "",
-              numericValue: f.numericValue ?? null,
-              unit: f.unit ?? null,
-              referenceRangeRaw: f.referenceRangeRaw ?? null,
-              sourceDocumentId: id ?? "",
-              page: f.page ?? 1,
-            });
-          }
-        }
-
-        const medications = Object.values(medsByIndex).map((m) => ({
-          nameAsWritten: m.name ?? "",
-          doseAsWritten: m.dose ?? "",
-          frequencyAsWritten: m.frequency ?? "",
-          durationAsWritten: m.duration ?? "",
-          uncertain: Boolean(m.uncertain),
-        }));
-
-        const { documentType: recordType, documentDate: recordDate } = sampleExt as {
-          documentType: string;
-          documentDate: string | null;
-        };
-        const record = {
-          id: crypto.randomUUID(),
-          userId: "demo",
-          documentId: id ?? "",
-          recordType,
-          recordDate,
-          observations,
-          medications,
-          confirmedAt: new Date().toISOString(),
-        };
-
-        saveSampleMedicalRecord(record);
-        markSampleDocumentConfirmed(id ?? "");
-        router.push("/documents");
-        return;
-      }
-
-      // Server-side confirm (Mongo mode or server-persisted doc).
+      // Patch extraction with edited fields.
       const patchRes = await fetch(`/api/extractions/${extId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

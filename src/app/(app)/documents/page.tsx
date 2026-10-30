@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Upload } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { UploadZone } from "@/components/upload-zone";
 import { useDictionary } from "@/lib/use-dictionary";
-import { getSampleDocuments } from "@/lib/sample-storage";
 
 type Doc = {
   id: string;
@@ -30,40 +30,47 @@ export default function DocumentsPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const load = useCallback(async () => {
+    const serverDocs: Doc[] = [];
+    try {
+      const res = await fetch("/api/documents");
+      if (res.ok) {
+        const data = await res.json();
+        serverDocs.push(...(data.documents ?? []));
+      }
+    } catch {
+      // Server unreachable — show empty state.
+    }
+    setDocs(serverDocs);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      const serverDocs: Doc[] = [];
-      try {
-        const res = await fetch("/api/documents");
-        if (res.ok) {
-          const data = await res.json();
-          serverDocs.push(...(data.documents ?? []));
+    fetch("/api/documents")
+      .then(res => (res.ok ? res.json() : { documents: [] }))
+      .then(data => {
+        if (!cancelled) {
+          setDocs(data.documents ?? []);
+          setLoading(false);
         }
-      } catch {
-        // Server may be unreachable; fall back to localStorage samples only.
-      }
-      // Merge in localStorage sample documents (demo mode persists them
-      // client-side because in-memory storage doesn't survive across
-      // Vercel instances).
-      const sampleDocs = getSampleDocuments().map((d) => ({
-        id: d.id,
-        fileName: d.fileName,
-        mimeType: d.mimeType,
-        sizeBytes: d.sizeBytes ?? 0,
-        status: d.status,
-        createdAt: d.createdAt ?? new Date().toISOString(),
-      }));
-      if (!cancelled) setDocs([...serverDocs, ...sampleDocs]);
-    }
-    load();
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDocs([]);
+          setLoading(false);
+        }
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
   const statusBadge = (status: string) => {
-    const variant: Record<string, "default" | "secondary" | "destructive"> = {
+    const variant: Record<
+      string,
+      "default" | "secondary" | "destructive"
+    > = {
       uploaded: "default",
       processing: "default",
       needs_review: "secondary",
@@ -77,21 +84,17 @@ export default function DocumentsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">{dict.documents.title}</h1>
-        <Button>
-          <Upload aria-hidden />
-          {dict.documents.upload}
-        </Button>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>{dict.documents.upload}</CardTitle>
           <CardDescription>
-            JPG/PNG/PDF · ≤ 4 MB · max 5 PDF pages · OCR runs in your browser
+            {dict.documents.help}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <UploadZone dict={dict} />
+          <UploadZone dict={dict} onUploadComplete={() => load()} />
         </CardContent>
       </Card>
 
@@ -103,7 +106,7 @@ export default function DocumentsPage() {
         <CardContent>
           {loading ? (
             <div className="h-40 flex items-center justify-center">
-              Loading…
+              {dict.common.loading}
             </div>
           ) : docs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -113,16 +116,20 @@ export default function DocumentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>File</TableHead>
-                  <TableHead className="text-center">Type</TableHead>
-                  <TableHead className="text-right">Size</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead>{dict.documents.colFile}</TableHead>
+                  <TableHead className="text-center">{dict.documents.colType}</TableHead>
+                  <TableHead className="text-right">{dict.documents.colSize}</TableHead>
+                  <TableHead className="text-center">{dict.documents.colStatus}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {docs.map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell className="font-medium">{d.fileName}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link href={`/documents/${d.id}`} className="underline-offset-4 hover:underline">
+                        {d.fileName}
+                      </Link>
+                    </TableCell>
                     <TableCell className="text-center text-sm text-muted-foreground">
                       {d.mimeType}
                     </TableCell>

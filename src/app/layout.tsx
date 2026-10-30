@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/header";
 import { BottomNav } from "@/components/bottom-nav";
 import { DemoBanners } from "@/components/demo-banners";
+import LegacyStorageCleanup from "@/components/legacy-storage-cleanup";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { getSessionUser } from "@/server/auth";
 
@@ -48,6 +49,7 @@ export default async function RootLayout({
         }}
       >
         <TooltipProvider>
+          <LegacyStorageCleanup />
           <Header locale={locale} dict={dict} user={user} />
           <DemoBanners dict={dict} />
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:pb-10">

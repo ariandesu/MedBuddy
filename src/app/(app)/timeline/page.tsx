@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { missingDays, weeklyAverages } from "@/server/trends";
-import { getSampleMedicalRecords } from "@/lib/sample-storage";
 import { useDictionary } from "@/lib/use-dictionary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendChart } from "@/components/trend-chart";
@@ -78,9 +77,7 @@ export default function TimelinePage() {
     };
   }, []);
 
-  // Merge server records with localStorage sample medical records.
-  const sampleRecords = getSampleMedicalRecords();
-  const allRecords = [...serverRecords, ...sampleRecords] as MedicalRecord[];
+  const allRecords = serverRecords;
   const allWellness = serverWellness;
 
   const avg = weeklyAverages(allWellness as unknown as WellnessEntry[]);

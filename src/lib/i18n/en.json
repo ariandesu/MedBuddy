@@ -31,6 +31,12 @@
     "title": "Documents",
     "upload": "Upload",
     "empty": "No documents yet.",
+    "uploaded": "Uploaded — review your extracted values",
+    "help": "JPG/PNG/PDF · ≤ 4 MB · max 5 PDF pages · OCR runs in your browser",
+    "colFile": "File",
+    "colType": "Type",
+    "colSize": "Size",
+    "colStatus": "Status",
     "status": {
       "uploaded": "Uploaded",
       "processing": "Processing",

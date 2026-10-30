@@ -7,10 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import {
-  saveSampleDocument,
-  saveSampleExtraction,
-} from "@/lib/sample-storage";
 import { createWorker, type Worker } from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
@@ -27,7 +23,7 @@ type UploadedFile = {
   ocrText: string;
 };
 
-export function UploadZone({ dict }: { dict: Dictionary }) {
+export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUploadComplete?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [ocrText, setOcrText] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -175,19 +171,8 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to load sample");
       }
-      const data = (await res.json()) as {
-        id: string;
-        status: string;
-        fileName: string;
-        document: unknown;
-        extraction: unknown;
-        message?: string;
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      saveSampleDocument(data.document as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      saveSampleExtraction(data.extraction as any);
-      toast.success(data.message ?? "Sample loaded — review it in Documents");
+      const data = (await res.json()) as { id: string; status: string; fileName: string };
+      toast.success(dict.documents.upload);
       if (data.id) router.push(`/documents/${data.id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : dict.common.error);
@@ -208,23 +193,12 @@ export function UploadZone({ dict }: { dict: Dictionary }) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Upload failed");
       }
-      const data = (await res.json()) as {
-        id: string;
-        status: string;
-        fileName: string;
-        document?: unknown;
-        extraction?: unknown;
-        message?: string;
-      };
-      // Persist document + extraction in localStorage so they survive
-      // across Vercel serverless instances (demo mode uses in-memory
-      // storage that doesn't share between instances).
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (data.document) saveSampleDocument(data.document as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (data.extraction) saveSampleExtraction(data.extraction as any);
-      toast.success("Uploaded — review your extracted values");
-      if (data.id) router.push(`/documents/${data.id}`);
+      const data = (await res.json()) as { id: string; status: string; fileName: string };
+      toast.success(dict.documents.uploaded);
+      if (data.id) {
+        router.push(`/documents/${data.id}`);
+        onUploadComplete?.();
+      }
       setFile(null);
       setOcrText("");
     } catch (err) {
