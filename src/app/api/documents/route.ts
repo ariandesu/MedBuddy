@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
+import { getAI } from "@/server/ai/index";
+import { crossCheckField } from "@/server/ai/crosscheck";
+import { toExtractedField } from "@/lib/schemas/ai";
 
-const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4 MB (Vercel body limit ~4.5 MB)
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
 const Magic: Record<string, Buffer> = {
   jpg: Buffer.from([0xff, 0xd8, 0xff]),
@@ -66,6 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const file = formData.get("file") as File | null;
+  const clientOcrText = (formData.get("ocrText") as string) ?? "";
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
@@ -95,9 +99,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const fileRef = `${user.id}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
 
   const repo = getRepo();
+  let doc;
   try {
     await repo.storeFile(user.id, fileRef, buf, mime, file.name);
-    const doc = await repo.createDocument({
+    doc = await repo.createDocument({
       userId: user.id,
       fileName: file.name,
       mimeType: mime,
@@ -106,16 +111,50 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       fileRef,
     });
     await repo.updateDocumentStatus(user.id, doc.id, "processing");
+
+    // AI extraction + deterministic cross-check.
+    let ocrText = clientOcrText;
+    let aiResult;
+    try {
+      aiResult = await getAI().extractDocument(buf, mime, ocrText, doc.id);
+      ocrText = aiResult.ocrText ?? ocrText;
+    } catch {
+      await repo.updateDocumentStatus(user.id, doc.id, "failed");
+      return NextResponse.json(
+        { id: doc.id, status: "failed", fileName: doc.fileName },
+        { status: 502 }
+      );
+    }
+
+    const fields = aiResult.fields.map((f) => {
+      const { agreement, needsReview } = crossCheckField(f, ocrText);
+      return toExtractedField(f, agreement, needsReview);
+    });
+
+    await repo.createExtraction({
+      userId: user.id,
+      documentId: doc.id,
+      documentType: aiResult.documentType,
+      documentDateRaw: aiResult.documentDateRaw,
+      documentDate: aiResult.documentDate,
+      fields,
+      ocrText,
+    });
+    await repo.updateDocumentStatus(user.id, doc.id, "needs_review");
+
     return NextResponse.json(
       {
         id: doc.id,
-        status: "processing",
+        status: "needs_review",
         fileName: doc.fileName,
         sizeBytes: doc.sizeBytes,
       },
       { status: 201 }
     );
   } catch {
+    try {
+      await repo.updateDocumentStatus(user.id, doc!.id, "failed");
+    } catch {}
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

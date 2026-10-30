@@ -1,0 +1,22 @@
+{
+  "summary": "SAMPLE — Your records include one blood test (CBC) and one prescription with two medicines as written. Your check-ins show regular sleep and activity with one brief fever episode.",
+  "observedChanges": [
+    {
+      "description": "SAMPLE — Hemoglobin was recorded once; no earlier value exists to compare.",
+      "sourceRecordIds": ["rec_cbc_001"],
+      "uncertainty": "Only one measurement available."
+    }
+  ],
+  "missingInformation": [
+    "SAMPLE — No blood pressure readings in your records.",
+    "SAMPLE — Lipid profile is uploaded but not yet confirmed."
+  ],
+  "questionsForDoctor": [
+    "SAMPLE — Should I repeat the CBC test, and when?",
+    "SAMPLE — How long should I continue the prescribed medicines?"
+  ],
+  "limitations": [
+    "SAMPLE — Summary from synthetic data.",
+    "SAMPLE — Only confirmed records are included; unreviewed uploads are excluded."
+  ]
+}
