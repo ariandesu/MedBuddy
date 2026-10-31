@@ -37,6 +37,9 @@
     "colType": "Type",
     "colSize": "Size",
     "colStatus": "Status",
+    "colAction": "Action",
+    "review": "Review",
+    "view": "View",
     "status": {
       "uploaded": "Uploaded",
       "processing": "Processing",

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Upload } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { UploadZone } from "@/components/upload-zone";
 import { useDictionary } from "@/lib/use-dictionary";
+import { buttonVariants } from "@/components/ui/button";
 
 type Doc = {
   id: string;
@@ -120,6 +120,7 @@ export default function DocumentsPage() {
                   <TableHead className="text-center">{dict.documents.colType}</TableHead>
                   <TableHead className="text-right">{dict.documents.colSize}</TableHead>
                   <TableHead className="text-center">{dict.documents.colStatus}</TableHead>
+                  <TableHead className="text-center">{dict.documents.colAction}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -137,6 +138,20 @@ export default function DocumentsPage() {
                       {(d.sizeBytes / 1024).toFixed(1)} KB
                     </TableCell>
                     <TableCell className="text-center">{statusBadge(d.status)}</TableCell>
+                    <TableCell className="text-center">
+                      <Link
+                        href={`/documents/${d.id}`}
+                        className={buttonVariants({
+                          variant: d.status === "needs_review" ? "secondary" : "outline",
+                          size: "sm",
+                          className: "min-h-[44px]",
+                        })}
+                      >
+                        {d.status === "needs_review"
+                          ? dict.documents.review
+                          : dict.documents.view}
+                      </Link>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

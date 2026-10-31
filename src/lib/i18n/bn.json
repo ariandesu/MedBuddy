@@ -37,6 +37,9 @@
     "colType": "প্রকার",
     "colSize": "আকার",
     "colStatus": "অবস্থা",
+    "colAction": "কার্যকলাপ",
+    "review": "যাচাই করুন",
+    "view": "দেখুন",
     "status": {
       "uploaded": "আপলোড হয়েছে",
       "processing": "প্রসেস হচ্ছে",
