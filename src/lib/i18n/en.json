@@ -87,7 +87,10 @@
   "report": {
     "title": "Doctor report",
     "download": "Download PDF",
-    "print": "Print"
+    "print": "Print",
+    "from": "From",
+    "to": "To",
+    "refresh": "Refresh"
   },
   "auth": {
     "loginTitle": "Log in to MediSathi",

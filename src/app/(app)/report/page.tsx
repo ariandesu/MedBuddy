@@ -81,12 +81,12 @@ export function ReportPage() {
   const print = () => window.print();
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto no-print">
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+      <div className="no-print flex flex-col gap-4">
         <h1 className="text-2xl font-bold">{dict.report.title}</h1>
         <div className="flex gap-3">
           <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">From</label>
+            <label className="text-sm text-muted-foreground">{dict.report.from}</label>
             <Input
               type="date"
               value={from}
@@ -94,7 +94,7 @@ export function ReportPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">To</label>
+            <label className="text-sm text-muted-foreground">{dict.report.to}</label>
             <Input
               type="date"
               value={to}
@@ -102,7 +102,7 @@ export function ReportPage() {
             />
           </div>
           <Button onClick={load} disabled={loading} className="min-h-[44px]">
-            {dict.common.loading}
+            {loading ? dict.common.loading : dict.report.refresh}
           </Button>
           <Button
             onClick={print}
