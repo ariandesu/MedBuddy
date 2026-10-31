@@ -12,6 +12,13 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useDictionary } from "@/lib/use-dictionary";
+import {
+  MessageCircleQuestion,
+  CheckCircle2,
+  Link as LinkIcon,
+  AlertTriangle,
+  Search,
+} from "lucide-react";
 
 export function AskPage() {
   const dict = useDictionary();
@@ -51,7 +58,10 @@ export function AskPage() {
 
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold">{dict.ask.title}</h1>
+      <div className="flex items-center gap-2">
+        <MessageCircleQuestion className="size-5 text-primary" aria-hidden />
+        <h1 className="text-2xl font-bold">{dict.ask.title}</h1>
+      </div>
       <p className="text-sm text-muted-foreground">
         Questions are answered using only your confirmed records and latest
         summary.
@@ -65,9 +75,12 @@ export function AskPage() {
 
       <form onSubmit={handleAsk} className="flex flex-col gap-3">
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-medium" htmlFor="ask-input">
-            Ask a question
-          </label>
+          <div className="flex items-center gap-2">
+            <Search className="size-4 text-muted-foreground" aria-hidden />
+            <label className="text-sm font-medium" htmlFor="ask-input">
+              Ask a question
+            </label>
+          </div>
           <Input
             id="ask-input"
             value={question}
@@ -79,22 +92,27 @@ export function AskPage() {
         <Button
           type="submit"
           disabled={saving || !question.trim()}
-          className="min-h-[44px] w-full"
+          className="min-h-[44px] w-full flex items-center justify-center gap-2"
         >
+          <Search className="size-4" aria-hidden />
           {saving ? dict.common.loading : dict.ask.send}
         </Button>
       </form>
 
       {answer && (
         <Card>
-          <CardHeader>
+          <CardHeader className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-primary" aria-hidden />
             <CardTitle>{dict.ask.answer}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm">{answer}</p>
             {citations.length > 0 && (
               <div className="border-t pt-3 text-xs text-muted-foreground">
-                <span className="font-semibold">{dict.ask.sources}:</span>{" "}
+                <div className="flex items-center gap-1 mb-2">
+                  <LinkIcon className="size-3" aria-hidden />
+                  <span className="font-semibold">{dict.ask.sources}:</span>
+                </div>
                 {citations.map((c) => (
                   <Link
                     key={c.id}
@@ -108,10 +126,16 @@ export function AskPage() {
             )}
             {limitations.length > 0 && (
               <div className="border rounded-lg p-3 bg-amber-50 text-amber-800 text-xs">
-                <p className="font-semibold mb-1">{dict.ask.limitations}</p>
+                <div className="flex items-center gap-1 mb-2">
+                  <AlertTriangle className="size-3" aria-hidden />
+                  <p className="font-semibold mb-0">{dict.ask.limitations}</p>
+                </div>
                 <ul className="space-y-1">
                   {limitations.map((l) => (
-                    <li key={l}>• {l}</li>
+                    <li key={l} className="flex items-center gap-1">
+                      <AlertTriangle className="size-2 text-amber-600" aria-hidden />
+                      {l}
+                    </li>
                   ))}
                 </ul>
               </div>
