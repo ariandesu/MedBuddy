@@ -8,6 +8,8 @@ const PROTECTED_PREFIXES = [
   "/summary",
   "/ask",
   "/report",
+  "/records",
+  "/show-doctor",
 ];
 const isProtectedPath = (pathname: string) =>
   PROTECTED_PREFIXES.some(
@@ -53,6 +55,10 @@ export const config = {
     "/summary/:path*",
     "/ask/:path*",
     "/report/:path*",
+    "/records",
+    "/show-doctor",
+    "/records/:path*",
+    "/show-doctor/:path*",
     "/api/((?!auth).*)",
   ],
 };

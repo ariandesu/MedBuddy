@@ -1,37 +1,30 @@
 import {
-  LayoutDashboard,
-  FileText,
-  Files,
+  House,
+  FolderOpen,
   ClipboardCheck,
-  ChartLine,
   MessageCircleQuestion,
-  Printer,
-  Activity,
+  Stethoscope,
 } from "lucide-react";
 
 export type NavItem = {
   href: string;
-  key: string;
-  Icon: typeof LayoutDashboard;
+  key: "dashboard" | "records" | "checkin" | "ask" | "showDoctor";
+  Icon: typeof House;
+  /** Other paths that should highlight this item. */
+  match?: string[];
 };
 
+/** The five places in the app. Same set on mobile (bottom bar) and desktop (header). */
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", key: "dashboard", Icon: LayoutDashboard },
-  { href: "/records", key: "records", Icon: FileText },
-  { href: "/documents", key: "documents", Icon: Files },
+  { href: "/dashboard", key: "dashboard", Icon: House },
+  { href: "/records", key: "records", Icon: FolderOpen, match: ["/documents"] },
   { href: "/checkin", key: "checkin", Icon: ClipboardCheck },
-  { href: "/timeline", key: "timeline", Icon: ChartLine },
-  { href: "/show-doctor", key: "showDoctor", Icon: Activity },
   { href: "/ask", key: "ask", Icon: MessageCircleQuestion },
-  { href: "/summary", key: "summary", Icon: FileText },
-  { href: "/report", key: "report", Icon: Printer },
+  { href: "/show-doctor", key: "showDoctor", Icon: Stethoscope },
 ];
 
-export const MORE_ITEMS = NAV_ITEMS.filter(
-  (i) =>
-    i.key === "records" ||
-    i.key === "summary" ||
-    i.key === "report" ||
-    i.key === "ask" ||
-    i.key === "showDoctor"
-);
+export function isNavActive(item: NavItem, pathname: string): boolean {
+  return [item.href, ...(item.match ?? [])].some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
+}

@@ -26,12 +26,14 @@ their own records, and print a doctor-ready report. It is explicitly **not** a d
 
 Click **"Try the demo"** on the login page — you get your own private per-visitor seeded demo account with synthetic records:
 
-1. **Documents** — see 4 sample files (2 `confirmed`, 2 `needs_review`). Click a `needs_review` document → review extracted values vs. OCR (mismatches flagged, tick every "I checked this" box) → **Confirm** to create a medical record.
-2. **Check-in** → save a wellness entry → urgent-care dialog fires if you select red-flag symptoms (e.g. chest pain).
-3. **Timeline** → merged records + check-ins with trend charts (missing days shown as gaps, never treated as 0).
-4. **Summary** → **Generate summary** → source-linked summary (live Muse AI when `MODEL_API_KEY` is set).
-5. **Ask** → grounded Q&A with citations linking to timeline records.
-6. **Report** → print-optimized doctor report (`window.print()`).
+1. **Home** — one "next step" card (check documents → today's check-in → show the doctor) and your latest lab results as range bars.
+2. **Records → Documents** — 4 sample files (2 confirmed, 2 need checking). Open one that needs checking, compare each value with the photo, fix anything wrong, tap **Looks right** on each, then **Save record**. The server refuses to save until every value is checked.
+3. **Check-in** — tap **Add** to log sleep, water or activity with − / + buttons. Tapping an urgent sign (e.g. chest pain) opens an urgent-care alert with a **Call 999** button.
+4. **Records → Timeline** — latest lab results, 30-day wellness trends (missing days are gaps, never zero), every entry, and **Explain in simple words** per record.
+5. **Ask** — grounded Q&A with citations that link to timeline records.
+6. **Doctor** — print-ready doctor report and the latest summary (**Generate summary**; live Muse AI when `MODEL_API_KEY` is set).
+
+Old URLs (`/documents`, `/timeline`, `/summary`, `/report`) redirect to the new pages.
 
 All fixture data is synthetic and clearly watermarked **"SAMPLE — NOT REAL PATIENT DATA"**.
 

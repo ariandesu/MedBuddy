@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useDictionary } from "@/lib/use-dictionary";
+import { useLocale } from "@/components/locale-provider";
+import { formatDate, toLocaleDigits } from "@/lib/digits";
 
 type Wellness = {
   date: string;
@@ -56,8 +57,10 @@ function isOutOfRange(rawValue: string | null | undefined, referenceRangeRaw: st
   return val < lo || val > hi;
 }
 
-export function ReportPage() {
-  const dict = useDictionary();
+export function ReportView({ embedded = false }: { embedded?: boolean }) {
+  const { dict, locale } = useLocale();
+  const n = (v: number) => toLocaleDigits(String(v), locale);
+  const sym = (s: string) => (dict.symptomName as { [k: string]: string })[s] ?? s;
   const [from, setFrom] = useState<string>(THIRTY_DAYS_AGO);
   const [to, setTo] = useState<string>(TODAY);
   const [records, setRecords] = useState<Record[]>([]);
@@ -100,37 +103,25 @@ export function ReportPage() {
   const undatedRecords = records.filter((r) => r.recordDate == null);
 
   const print = () => window.print();
-  const generatedOn = new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  const generatedOn = formatDate(new Date(), locale);
 
   return (
-    <div className="flex flex-col gap-6 max-w-4xl mx-auto">
+    <div className="mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-6">
       <div className="no-print flex flex-col gap-4">
-        <h1 className="text-2xl font-bold">{dict.report.title}</h1>
-        <div className="flex gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">{dict.report.from}</label>
-            <Input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-muted-foreground">{dict.report.to}</label>
-            <Input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-            />
-          </div>
-          <Button onClick={load} disabled={loading} className="min-h-[44px]">
+        {!embedded && <h1 className="text-2xl font-bold">{dict.report.title}</h1>}
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end">
+          <label className="flex flex-col gap-1 text-sm text-muted-foreground">
+            {dict.report.from}
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-11 min-w-0 text-base text-foreground" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm text-muted-foreground">
+            {dict.report.to}
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-11 min-w-0 text-base text-foreground" />
+          </label>
+          <Button onClick={load} disabled={loading} variant="outline" className="h-11">
             {loading ? dict.common.loading : dict.report.refresh}
           </Button>
-          <Button
-            onClick={print}
-            variant="outline"
-            className="min-h-[44px]"
-          >
+          <Button onClick={print} className="h-11">
             {dict.report.print}
           </Button>
         </div>
@@ -139,7 +130,7 @@ export function ReportPage() {
       {loading && <div className="h-64 flex items-center justify-center">{dict.common.loading}</div>}
 
       {!loading && (
-        <div className="print-section">
+        <div className="print-section flex min-w-0 flex-col gap-4">
           <div className="text-center mb-8">
             <h2 className="text-lg font-bold">{dict.report.doctorReport}</h2>
             <p className="text-sm text-muted-foreground">
@@ -151,7 +142,7 @@ export function ReportPage() {
           </div>
 
           {/* Dated records */}
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>{dict.report.recordsMeds}</CardTitle>
             </CardHeader>
@@ -168,8 +159,8 @@ export function ReportPage() {
                             <span className="font-medium">
                               {dict.recordType[r.recordType as keyof typeof dict.recordType] ?? r.recordType}
                             </span>
-                            <Badge variant="outline" className="text-xs">
-                              {r.recordDate ?? dict.report.noRange}
+                            <Badge variant="outline" className="text-sm">
+                              {r.recordDate ? formatDate(r.recordDate, locale) : dict.report.undated}
                             </Badge>
                           </div>
                           {r.observations.map((o) => {
@@ -178,11 +169,11 @@ export function ReportPage() {
                               <p key={o.name} className="text-sm ml-2">
                                 {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""}
                                 {o.referenceRangeRaw ? (
-                                  <span className="text-xs text-muted-foreground ml-1">
+                                  <span className="text-sm text-muted-foreground ml-1">
                                     ({o.referenceRangeRaw}){outOfRange ? " " + dict.report.outsideRange : ""}
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-muted-foreground ml-1"> ({dict.report.noRange})</span>
+                                  <span className="text-sm text-muted-foreground ml-1"> ({dict.report.noRange})</span>
                                 )}
                               </p>
                             );
@@ -212,7 +203,7 @@ export function ReportPage() {
                               <span className="font-medium">
                                 {dict.recordType[r.recordType as keyof typeof dict.recordType] ?? r.recordType}
                               </span>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-sm">
                                 {dict.report.undated}
                               </Badge>
                             </div>
@@ -242,7 +233,7 @@ export function ReportPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardHeader>
               <CardTitle>{dict.report.wellness}</CardTitle>
             </CardHeader>
@@ -250,27 +241,40 @@ export function ReportPage() {
               {wellness.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{dict.report.noCheckins}</p>
               ) : (
-                <ul className="space-y-2 text-sm">
-                  {wellness.map((w) => (
-                    <li key={w.date} className="flex justify-between">
-                      <span>{w.date}</span>
-                      <span>
-                        {(w.sleepHours != null ? `Sleep ${w.sleepHours}h` : "")}{" "}
-                        {(w.waterGlasses != null ? `Water ${w.waterGlasses}` : "")}{" "}
-                        {(w.activityMinutes != null ? `Activity ${w.activityMinutes}min` : "")}{" "}
-                        {w.energy != null ? `Energy ${w.energy}/4` : ""}
-                        {w.symptomLevel ? ` Symptom: ${w.symptomLevel}` : ""}
-                        {w.symptoms?.length ? ` Symptoms: ${w.symptoms.join(", ")}` : ""}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="max-w-full overflow-x-auto">
+                  <table className="w-full min-w-[32rem] text-sm">
+                    <thead className="text-left text-muted-foreground">
+                      <tr className="border-b">
+                        <th className="py-2 pr-3 font-medium">{dict.report.colDate}</th>
+                        <th className="py-2 pr-3 font-medium">{dict.chart.sleep}</th>
+                        <th className="py-2 pr-3 font-medium">{dict.chart.water}</th>
+                        <th className="py-2 pr-3 font-medium">{dict.chart.activity}</th>
+                        <th className="py-2 pr-3 font-medium">{dict.timeline.energy}</th>
+                        <th className="py-2 font-medium">{dict.timeline.symptoms}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {wellness.map((w) => (
+                        <tr key={w.date} className="border-b last:border-0 align-top">
+                          <td className="whitespace-nowrap py-2 pr-3">{formatDate(w.date, locale, { withYear: false })}</td>
+                          <td className="py-2 pr-3">{w.sleepHours != null ? `${n(w.sleepHours)} ${dict.checkin.hrs}` : "–"}</td>
+                          <td className="py-2 pr-3">{w.waterGlasses != null ? `${n(w.waterGlasses)} ${dict.checkin.glasses}` : "–"}</td>
+                          <td className="py-2 pr-3">{w.activityMinutes != null ? `${n(w.activityMinutes)} ${dict.checkin.min}` : "–"}</td>
+                          <td className="py-2 pr-3">{w.energy != null ? `${n(w.energy)}/${n(4)}` : "–"}</td>
+                          <td className={w.symptoms?.some((x) => ["chest pain", "difficulty breathing", "fainting", "severe bleeding", "confusion", "stroke signs"].includes(x)) ? "py-2 font-medium text-destructive" : "py-2"}>
+                            {w.symptoms?.length ? w.symptoms.map(sym).join(", ") : "–"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {summary && (
-            <Card>
+            <Card className="min-w-0">
               <CardHeader>
                 <CardTitle>{dict.report.latestSummary}</CardTitle>
               </CardHeader>
@@ -278,7 +282,7 @@ export function ReportPage() {
                 <p className="text-sm">{summary.payload.summary}</p>
                 {summary.payload.questionsForDoctor.length > 0 && (
                   <div className="mt-3">
-                    <h3 className="text-xs font-semibold mb-1">{dict.report.questionsForDoctor}</h3>
+                    <h3 className="text-sm font-semibold mb-1">{dict.report.questionsForDoctor}</h3>
                     <ul className="text-sm list-disc ml-4 space-y-1">
                       {summary.payload.questionsForDoctor.map((q) => (
                         <li key={q}>{q}</li>
@@ -290,7 +294,7 @@ export function ReportPage() {
             </Card>
           )}
 
-          <p className="text-xs text-muted-foreground mt-6">
+          <p className="text-sm text-muted-foreground mt-6">
             {dict.report.disclaimer}
           </p>
         </div>
@@ -299,4 +303,3 @@ export function ReportPage() {
   );
 }
 
-export default ReportPage;

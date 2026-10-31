@@ -35,8 +35,10 @@ MediSathi uses a mobile-first, icon-based design system inspired by a health not
 - All buttons: `min-height: 48px` (≥48px tap target)
 - All nav links/buttons: `min-height: 48px`, `min-width: 48px`
 - Mobile-first: single column on mobile, grid on desktop (md+)
-- Bottom navigation on mobile: 4 main slots + "More" sheet
-- Desktop header: icon-based nav with active state
+- Navigation: the same five places everywhere (Home, Records, Check-in, Ask, Doctor). Mobile: bottom bar, no hidden "More" menu. Desktop: centered pills in the header.
+- Range bar (`src/components/range-bar.tsx`): the signature element. A lab value as a dot on a bar whose shaded middle 50% is the normal range. Teal dot = within range, Haldi dot = outside.
+- Red (Alarm) is reserved for urgent symptoms and destructive actions. "Needs checking" uses Haldi, never red.
+- CSS tokens in `globals.css` are the hex values above converted to OKLCH; Haldi is a fill colour only, text on it uses `--warning-foreground` (#7A5200).
 
 ## Pages
 

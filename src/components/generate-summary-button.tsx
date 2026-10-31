@@ -44,7 +44,7 @@ export function GenerateSummaryButton({ dict }: { dict: Dictionary }) {
         </Button>
         <p className="text-sm text-muted-foreground">
           {dict.summary.noRecords}{" "}
-          <Link href="/documents" className="underline underline-offset-4 hover:underline">
+          <Link href="/records" className="underline underline-offset-4 hover:underline">
             {dict.summary.uploadDocument}
           </Link>
         </p>

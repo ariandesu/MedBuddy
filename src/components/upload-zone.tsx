@@ -3,9 +3,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { createWorker, type Worker } from "tesseract.js";
@@ -137,7 +136,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
         const jpgName = selected.name.replace(/\.[^.]+$/, "") + ".jpg";
         fileToUpload = new File([blob], jpgName, { type: "image/jpeg" });
       } else {
-        throw new Error("Unsupported file type");
+        throw new Error(dict.documents.unsupported);
       }
 
       return { file: fileToUpload as File, ocrText: text };
@@ -181,7 +180,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to load sample");
+        throw new Error(dict.documents.uploadFailed);
       }
       const data = (await res.json()) as { id: string; status: string; fileName: string };
       toast.success(dict.documents.upload);
@@ -203,7 +202,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       const res = await fetch("/api/documents", { method: "POST", body: formData });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Upload failed");
+        throw new Error(dict.documents.uploadFailed);
       }
       const data = (await res.json()) as { id: string; status: string; fileName: string };
       toast.success(dict.documents.uploaded);
@@ -224,63 +223,67 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="file-upload">{dict.documents.upload}</Label>
-        <Input
+        <input
           id="file-upload"
           type="file"
           accept={accept}
           onChange={handleFile}
           disabled={uploading}
+          className="peer sr-only"
         />
+        <label
+          htmlFor="file-upload"
+          className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 text-center font-medium text-primary hover:bg-primary/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring peer-disabled:opacity-60"
+        >
+          <Camera className="size-7" aria-hidden />
+          {file ? dict.documents.pickChange : dict.documents.pick}
+        </label>
         {file && (
-          <p className="text-sm text-muted-foreground">
-            {file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB
+          <p className="break-all text-sm text-muted-foreground">
+            {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)
           </p>
         )}
       </div>
       {ocrText && (
         <div className="border rounded-lg p-3 bg-muted/50 text-sm">
           <Label className="text-xs font-semibold mb-1 block">
-            OCR text (review before upload)
+            {dict.documents.ocrLabel}
           </Label>
           <Textarea
             value={ocrText}
             onChange={(e) => setOcrText(e.target.value)}
             rows={6}
-            className="font-mono text-xs"
+            className="text-base"
             disabled={uploading}
           />
         </div>
       )}
-      <Separator />
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          JPG/PNG/PDF · ≤ 4 MB · max 5 PDF pages · OCR runs in your browser
-        </p>
+      {file && (
         <Button
           onClick={handleUpload}
           disabled={uploading || !file}
-          className="min-h-[44px]"
+          className="h-12 w-full text-base"
         >
           {uploading ? dict.common.loading : dict.documents.upload}
         </Button>
-      </div>
-      <Separator />
+      )}
       <div className="border-t pt-4">
-        <p className="text-xs font-semibold mb-3">
-          Or try sample data (no real file needed)
+        <p className="mb-2 text-sm font-medium text-muted-foreground">
+          {dict.documents.sampleTitle}
         </p>
-        <div className="flex flex-wrap gap-2">
-          {["Sample CBC Report.jpg", "Sample Prescription.jpg"].map((name) => (
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            ["Sample CBC Report.jpg", dict.documents.sampleCbc],
+            ["Sample Prescription.jpg", dict.documents.samplePrescription],
+          ] as const).map(([name, label]) => (
             <Button
               key={name}
               variant="outline"
-              size="sm"
               onClick={() => handleSample(name)}
               disabled={uploading}
-              className="min-h-[44px]"
+              className="h-11"
             >
-              {name}
+              {label}
             </Button>
           ))}
         </div>

@@ -13,16 +13,19 @@ import { getSessionUser } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
+// Headings and numbers. Latin subset too, so English mode and digits match.
 const anekBangla = Anek_Bangla({
   variable: "--font-anek",
-  subsets: ["bengali"],
-  weight: ["400", "500", "600", "700"],
+  subsets: ["bengali", "latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
 });
 
 const notoSansBengali = Noto_Sans_Bengali({
   variable: "--font-noto",
   subsets: ["bengali", "latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -43,18 +46,12 @@ export default async function RootLayout({
       lang={locale}
       className={`${anekBangla.variable} ${notoSansBengali.variable} h-full antialiased`}
     >
-      <body
-        className="flex min-h-full flex-col"
-        style={{
-          fontFamily:
-            "var(--font-noto), var(--font-anek), system-ui, sans-serif",
-        }}
-      >
+      <body className="flex min-h-full flex-col">
         <TooltipProvider>
           <LegacyStorageCleanup />
           <Header locale={locale} dict={dict} user={user} />
           <DemoBanners dict={dict} />
-          <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:pb-10">
+          <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-5 md:pb-12 md:pt-8">
             <LocaleProvider initialLocale={locale}>
               {children}
             </LocaleProvider>
