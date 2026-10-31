@@ -63,7 +63,7 @@ export function BottomNav({ dict, user }: { dict: Dictionary; user?: { email?: s
                 )}
               >
                 <MoreHorizontal className="size-6" aria-hidden />
-                <span className="leading-none">More</span>
+                <span className="leading-none">{dict.nav.more}</span>
               </Link>
             </SheetTrigger>
             <SheetContent>

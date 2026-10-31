@@ -238,6 +238,7 @@
     "sleep": "Sleep (hrs)",
     "water": "Water (glasses)",
     "activity": "Activity (min)",
-    "missingDays": "{{count}} day(s) with no check-in (shown as gaps, not zero)"
+    "missingDays": "{{count}} day(s) with no check-in (shown as gaps, not zero)",
+    "wellnessTrends": "Wellness trends"
   }
 }

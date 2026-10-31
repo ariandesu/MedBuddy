@@ -3,7 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis } from "recharts";
 import type { Dictionary } from "@/lib/i18n";
-
 export function TrendChart({
   entries,
   dict,
@@ -22,7 +21,7 @@ export function TrendChart({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Wellness trends</CardTitle>
+        <CardTitle>{dict.chart.wellnessTrends}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64 w-full">
