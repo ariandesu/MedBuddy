@@ -4,6 +4,7 @@ import { _setRepoForTests } from "@/server/repo/index";
 import { clientIp } from "@/server/rate-limit";
 import { POST as demoStart } from "@/app/api/demo/start/route";
 import { POST as register } from "@/app/api/auth/register/route";
+import { verifyCredentials } from "@/server/auth";
 
 // Route-level tests: call the real handlers, not just the counter.
 
@@ -32,19 +33,27 @@ describe("clientIp", () => {
   });
 });
 
-describe("Demo start rate limit is per client IP", () => {
+describe("Demo start without a database (serverless in-memory mode)", () => {
   beforeEach(() => {
-    _setRepoForTests(new MemoryRepository({ seed: false }));
+    _setRepoForTests(new MemoryRepository({ seed: true }));
   });
 
-  it("one IP hitting the limit does not lock out other visitors", async () => {
-    const ipA = `192.0.2.${Math.floor(Math.random() * 200) + 1}`;
-    let lastA = 0;
-    for (let i = 0; i < 31; i++) lastA = (await demoStart(demoReq(ipA))).status;
-    expect(lastA).toBe(429); // the 31st request from the same IP is refused
+  it("hands out the built-in demo account, which logs in on any other instance", async () => {
+    const res = await demoStart(demoReq("203.0.113.9"));
+    expect(res.status).toBe(200);
+    const creds = await res.json();
+    expect(creds.shared).toBe(true);
 
-    const other = await demoStart(demoReq("198.51.100.77"));
-    expect(other.status).toBe(201); // a different visitor still gets a demo
+    // Simulate the login landing on a different server with its own fresh memory.
+    _setRepoForTests(new MemoryRepository({ seed: true }));
+    const user = await verifyCredentials(creds.email, creds.password);
+    expect(user).not.toBeNull();
+  });
+
+  it("never locks visitors out in this mode", async () => {
+    let last = 0;
+    for (let i = 0; i < 40; i++) last = (await demoStart(demoReq("192.0.2.10"))).status;
+    expect(last).toBe(200);
   });
 });
 
