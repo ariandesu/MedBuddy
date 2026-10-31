@@ -95,7 +95,7 @@ export function groundSummaryChanges(
     dropped > 0
       ? `Dropped ${dropped} unsourced claim(s) that could not be grounded in your records.`
       : null;
-  return { changes, limitationNote: note };
+  return { changes: kept, limitationNote: note };
 }
 
 /** Grounding filter for Q&A citations: keep only ids in `allowed`. */
