@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Header } from "@/components/header";
 import { BottomNav } from "@/components/bottom-nav";
 import { DemoBanners } from "@/components/demo-banners";
+import { LocaleProvider } from "@/components/locale-provider";
 import LegacyStorageCleanup from "@/components/legacy-storage-cleanup";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { getSessionUser } from "@/server/auth";
@@ -53,7 +54,9 @@ export default async function RootLayout({
           <Header locale={locale} dict={dict} user={user} />
           <DemoBanners dict={dict} />
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 md:pb-10">
-            {children}
+            <LocaleProvider initialLocale={locale}>
+              {children}
+            </LocaleProvider>
           </main>
           <footer className="no-print border-t">
             <p className="mx-auto max-w-5xl px-4 py-4 text-center text-sm text-muted-foreground">

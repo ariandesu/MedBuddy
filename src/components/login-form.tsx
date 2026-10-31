@@ -35,6 +35,12 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
     setPending(true);
     setError(null);
     try {
+      const callbackUrl = searchParams.get("callbackUrl");
+      const isValidCallback =
+        typeof callbackUrl === "string" &&
+        callbackUrl.startsWith("/") &&
+        !callbackUrl.startsWith("//");
+      const finalCallbackUrl = isValidCallback ? callbackUrl : "/dashboard";
       const res = await fetch("/api/auth/callback/credentials", {
         method: "POST",
         credentials: "include",
@@ -43,7 +49,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
           csrfToken,
           email,
           password,
-          callbackUrl: "/dashboard",
+          callbackUrl: finalCallbackUrl,
           json: "true",
         }),
       });
