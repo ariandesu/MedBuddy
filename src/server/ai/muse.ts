@@ -34,6 +34,16 @@ function chatResponseFormat(name: string, schema: unknown) {
   };
 }
 
+/**
+ * Strip markdown code-fence wrappers (```json ... ```) that the model may
+ * wrap around its JSON output, then return the raw JSON string.
+ */
+function stripMarkdown(raw: string): string {
+  const trimmed = raw.trim();
+  const match = trimmed.match(/^```(?:json)?\n([\s\S]*?)\n```$/);
+  return match ? match[1] : trimmed;
+}
+
 export class MuseAI implements AIProvider {
   private client: OpenAI | null = null;
 
@@ -67,7 +77,7 @@ export class MuseAI implements AIProvider {
           response_format: chatResponseFormat(schemaName, jsonSchema),
           store: false,
         });
-        const raw = completion.choices[0]?.message.content ?? "";
+        const raw = stripMarkdown(completion.choices[0]?.message.content ?? "");
         return schema.parse(JSON.parse(raw));
       } catch (err) {
         lastError.push(err);
@@ -97,7 +107,7 @@ export class MuseAI implements AIProvider {
       ],
       store: false,
     });
-    const raw = completion.choices[0]?.message.content ?? "";
+    const raw = stripMarkdown(completion.choices[0]?.message.content ?? "");
     return schema.parse(JSON.parse(raw));
   }
 

@@ -89,6 +89,21 @@ export async function POST(
     return NextResponse.json({ error: "already_confirmed" }, { status: 409 });
   }
 
+  // Server-side enforcement: every field must have needsReview: false
+  // before confirmation is allowed.
+  const fields = Object.fromEntries(
+    extraction.fields.map((f) => [f.key, f])
+  );
+  const unreviewed = Object.values(fields).filter(
+    (f) => f.needsReview === true
+  );
+  if (unreviewed.length > 0) {
+    return NextResponse.json(
+      { error: "review_required", message: "Please check every field before confirming." },
+      { status: 409 }
+    );
+  }
+
   const input = extractionToRecord(
     user.id,
     extraction.documentId,

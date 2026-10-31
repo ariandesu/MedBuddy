@@ -9,7 +9,7 @@ async function demoLogin(page: Page) {
   await expect(page).toHaveURL("/dashboard");
 }
 
-test.describe("T27 E2E demo flow", () => {
+test.describe("T27 E2E demo flow (upload → review → confirm)", () => {
   test("full flow in English", async ({ page, context }) => {
     await context.addCookies([
       { name: "medisathi-locale", value: "en", domain: "localhost", path: "/" },
@@ -19,10 +19,11 @@ test.describe("T27 E2E demo flow", () => {
     // Navigate to Documents via nav link
     await page.click('a:has-text("Documents")');
     await expect(page.locator("h1")).toContainText("Documents");
-    // Wait for at least one document row
-    await expect(page.locator("table tbody tr").first()).toBeVisible();
 
-    // Click a needs_review document
+    // Wait for at least one document card
+    await expect(page.locator("article").first()).toBeVisible();
+
+    // Click a needs_review document card's "Review" button
     await page.locator('a:has-text("Review")').first().click();
     await expect(page.locator("h1")).toContainText("Review extracted values");
 
@@ -39,9 +40,9 @@ test.describe("T27 E2E demo flow", () => {
 
     // Check-in with chest pain → urgent dialog
     await page.click('a:has-text("Check-in")');
-    await page.check('text="Chest pain"');
+    await page.click('text="Chest pain"');
     await page.click('button:has-text("Save check-in")');
-    await expect(page.locator('text="This may need urgent care"')).toBeVisible();
+    await expect(page.locator("text=This may need urgent care")).toBeVisible();
 
     // Timeline
     await page.click('a:has-text("Timeline")');
@@ -70,8 +71,19 @@ test.describe("T27 E2E demo flow", () => {
     await page.locator('a:has-text("যাচাই করুন")').first().click();
     await expect(page.locator("h1")).toContainText("তথ্য যাচাই করুন");
 
-    await page.locator('text="চেক-ইন"').click();
-    await page.check('text="বুকের ব্যাথা"');
+    // Tick every checkbox
+    const checkboxes = page.locator('input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      await checkboxes.nth(i).check();
+    }
+
+    await page.click('button:has-text("নিশ্চিত করুন")');
+    await expect(page).toHaveURL("/documents");
+
+    // Check-in with chest pain → urgent dialog
+    await page.click('text="চেক-ইন"');
+    await page.click('text="বুকের ব্যাথা"');
     await page.click('button:has-text("সংরক্ষণ করুন")');
     await expect(page.locator("text=এটি জরুরি চিকিৎসার")).toBeVisible();
 

@@ -128,7 +128,6 @@ export default function DocumentsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{dict.documents.title}</CardTitle>
-            <CardDescription>{dict.documents.empty}</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (

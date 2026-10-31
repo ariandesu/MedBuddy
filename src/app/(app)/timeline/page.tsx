@@ -361,12 +361,13 @@ export default function TimelinePage() {
                               );
                           }}
                           disabled={!!explanations[rec.id]}
+                          className="flex items-center gap-1 text-left"
                         >
                           <Sparkles className="size-3 mr-1" aria-hidden />
                           {explanations[rec.id] ? (
-                            <>
+                            <span className="truncate">
                               {dict.common.retry} {explanations[rec.id]}
-                            </>
+                            </span>
                           ) : (
                             dict.timeline.explain
                           )}

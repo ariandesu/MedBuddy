@@ -65,11 +65,8 @@ export default function CheckinPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [sleepHours, setSleepHours] = useState<number | null>(null);
-  const [sleepSkip, setSleepSkip] = useState(true);
   const [waterGlasses, setWaterGlasses] = useState<number | null>(null);
-  const [waterSkip, setWaterSkip] = useState(true);
   const [activityMinutes, setActivityMinutes] = useState<number | null>(null);
-  const [activitySkip, setActivitySkip] = useState(true);
   const [energy, setEnergy] = useState<1 | 2 | 3 | 4 | null>(null);
   const [symptomLevel, setSymptomLevel] = useState<SymptomLevel | null>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
@@ -78,6 +75,7 @@ export default function CheckinPage() {
   const redFlag = isRedFlag({ symptomLevel, symptoms });
 
   async function handleSave() {
+    // Safety: show urgent dialog before or regardless of network result.
     if (redFlag) {
       setOpen(true);
     }
@@ -86,10 +84,9 @@ export default function CheckinPage() {
     setError(null);
     try {
       const body: Record<string, unknown> = {};
-      if (!sleepSkip && sleepHours != null) body.sleepHours = sleepHours;
-      if (!waterSkip && waterGlasses != null) body.waterGlasses = waterGlasses;
-      if (!activitySkip && activityMinutes != null)
-        body.activityMinutes = activityMinutes;
+      if (sleepHours != null) body.sleepHours = sleepHours;
+      if (waterGlasses != null) body.waterGlasses = waterGlasses;
+      if (activityMinutes != null) body.activityMinutes = activityMinutes;
       if (energy != null) body.energy = energy;
       if (symptomLevel != null) body.symptomLevel = symptomLevel;
       if (symptoms.length) body.symptoms = symptoms;
@@ -115,6 +112,14 @@ export default function CheckinPage() {
     router.push("/timeline");
   }
 
+  function toggleSymptom(value: string) {
+    setSymptoms((prev) =>
+      prev.includes(value)
+        ? prev.filter((x) => x !== value)
+        : [...prev, value]
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto">
       <div className="flex flex-col items-center text-center">
@@ -138,114 +143,91 @@ export default function CheckinPage() {
           <CardTitle>{dict.checkin.title}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Sleep */}
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setSleepHours((v) => (v == null ? 7 : null))}>
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.sleep.color}`}>
                 <Moon className="size-4" aria-hidden />
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium">{dict.checkin.sleep}</label>
-                <Checkbox
-                  checked={sleepSkip}
-                  onCheckedChange={setSleepSkip}
-                  aria-label={dict.checkin.skipSlider}
-                />
-              </div>
-            </div>
-            {!sleepSkip && (
-              <>
-                <Slider
-                  value={sleepHours ?? 7}
-                  onValueChange={(value) => {
-                    setSleepSkip(false);
-                    setSleepHours(typeof value === "number" ? value : null);
-                  }}
-                  min={0}
-                  max={24}
-                  step={0.5}
-                  disabled={sleepSkip}
-                />
                 <p className="text-xs text-muted-foreground">
                   {sleepHours == null
                     ? dict.checkin.notSet
                     : `${sleepHours} ${dict.checkin.hrs}`}
                 </p>
-              </>
+              </div>
+            </div>
+            {sleepHours != null && (
+              <Slider
+                value={sleepHours ?? 7}
+                onValueChange={(value) => {
+                  setSleepHours(typeof value === "number" ? value : null);
+                }}
+                min={0}
+                max={24}
+                step={0.5}
+              />
             )}
           </div>
 
+          {/* Water */}
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setWaterGlasses((v) => (v == null ? 6 : null))}>
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.water.color}`}>
                 <GlassWater className="size-4" aria-hidden />
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium">{dict.checkin.water}</label>
-                <Checkbox
-                  checked={waterSkip}
-                  onCheckedChange={setWaterSkip}
-                  aria-label={dict.checkin.skipSlider}
-                />
-              </div>
-            </div>
-            {!waterSkip && (
-              <>
-                <Slider
-                  value={waterGlasses ?? 6}
-                  onValueChange={(value) => {
-                    setWaterSkip(false);
-                    setWaterGlasses(typeof value === "number" ? value : null);
-                  }}
-                  min={0}
-                  max={30}
-                  step={1}
-                  disabled={waterSkip}
-                />
                 <p className="text-xs text-muted-foreground">
                   {waterGlasses == null
                     ? dict.checkin.notSet
                     : `${waterGlasses} ${dict.checkin.glasses}`}
                 </p>
-              </>
+              </div>
+            </div>
+            {waterGlasses != null && (
+              <Slider
+                value={waterGlasses ?? 6}
+                onValueChange={(value) => {
+                  setWaterGlasses(typeof value === "number" ? value : null);
+                }}
+                min={0}
+                max={30}
+                step={1}
+              />
             )}
           </div>
 
+          {/* Activity */}
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActivityMinutes((v) => (v == null ? 30 : null))}>
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.activity.color}`}>
                 <Activity className="size-4" aria-hidden />
               </div>
               <div className="flex-1">
                 <label className="text-sm font-medium">{dict.checkin.activity}</label>
-                <Checkbox
-                  checked={activitySkip}
-                  onCheckedChange={setActivitySkip}
-                  aria-label={dict.checkin.skipSlider}
-                />
-              </div>
-            </div>
-            {!activitySkip && (
-              <>
-                <Slider
-                  value={activityMinutes ?? 30}
-                  onValueChange={(value) => {
-                    setActivitySkip(false);
-                    setActivityMinutes(typeof value === "number" ? value : null);
-                  }}
-                  min={0}
-                  max={1440}
-                  step={5}
-                  disabled={activitySkip}
-                />
                 <p className="text-xs text-muted-foreground">
                   {activityMinutes == null
                     ? dict.checkin.notSet
                     : `${activityMinutes} ${dict.checkin.min}`}
                 </p>
-              </>
+              </div>
+            </div>
+            {activityMinutes != null && (
+              <Slider
+                value={activityMinutes ?? 30}
+                onValueChange={(value) => {
+                  setActivityMinutes(typeof value === "number" ? value : null);
+                }}
+                min={0}
+                max={1440}
+                step={5}
+              />
             )}
           </div>
 
+          {/* Energy */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.energy.color}`}>
@@ -261,7 +243,7 @@ export default function CheckinPage() {
                     const key = `energy${v === 1 ? "Low" : v === 4 ? "High" : v}`;
                     const label = (dict.checkin as Record<string, string>)[key];
                     return (
-                      <div key={v} className="flex items-center gap-2">
+                      <div key={v} className="flex items-center gap-2 cursor-pointer">
                         <RadioGroupItem value={String(v)} id={`energy-${v}`} />
                         <label htmlFor={`energy-${v}`} className="text-sm">
                           {label}
@@ -274,6 +256,7 @@ export default function CheckinPage() {
             </div>
           </div>
 
+          {/* Symptom level */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.symptomLevel.color}`}>
@@ -282,14 +265,14 @@ export default function CheckinPage() {
               <div className="flex-1">
                 <label className="text-sm font-medium">{dict.checkin.symptomLevel}</label>
                 <RadioGroup
-                  value={symptomLevel ?? undefined}
+                  value={symptomLevel ?? ""}
                   onValueChange={(value) => setSymptomLevel(value as SymptomLevel)}
                 >
                   {["none", "mild", "moderate", "severe"].map((v) => {
                     const key = `symptom${v.charAt(0).toUpperCase() + v.slice(1)}`;
                     const label = (dict.checkin as Record<string, string>)[key];
                     return (
-                      <div key={v} className="flex items-center gap-2">
+                      <div key={v} className="flex items-center gap-2 cursor-pointer">
                         <RadioGroupItem value={v} id={`sev-${v}`} />
                         <label htmlFor={`sev-${v}`} className="text-sm">
                           {label}
@@ -302,6 +285,7 @@ export default function CheckinPage() {
             </div>
           </div>
 
+          {/* Symptoms - tapping text ticks the box */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.symptoms.color}`}>
@@ -310,135 +294,90 @@ export default function CheckinPage() {
               <div className="flex-1">
                 <label className="text-sm font-medium">{dict.checkin.symptoms}</label>
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("chest pain")}>
                     <Checkbox
                       checked={symptoms.includes("chest pain")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "chest pain"]
-                          : symptoms.filter((x) => x !== "chest pain")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("chest pain")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomChestPain}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("difficulty breathing")}>
                     <Checkbox
                       checked={symptoms.includes("difficulty breathing")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "difficulty breathing"]
-                          : symptoms.filter((x) => x !== "difficulty breathing")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("difficulty breathing")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomDifficultyBreathing}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("fainting")}>
                     <Checkbox
                       checked={symptoms.includes("fainting")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "fainting"]
-                          : symptoms.filter((x) => x !== "fainting")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("fainting")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomFainting}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("severe bleeding")}>
                     <Checkbox
                       checked={symptoms.includes("severe bleeding")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "severe bleeding"]
-                          : symptoms.filter((x) => x !== "severe bleeding")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("severe bleeding")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomSevereBleeding}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("confusion")}>
                     <Checkbox
                       checked={symptoms.includes("confusion")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "confusion"]
-                          : symptoms.filter((x) => x !== "confusion")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("confusion")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomConfusion}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("stroke signs")}>
                     <Checkbox
                       checked={symptoms.includes("stroke signs")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "stroke signs"]
-                          : symptoms.filter((x) => x !== "stroke signs")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("stroke signs")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomStrokeSigns}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("headache")}>
                     <Checkbox
                       checked={symptoms.includes("headache")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "headache"]
-                          : symptoms.filter((x) => x !== "headache")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("headache")}
                     />
                     <div className="flex items-center gap-1">
                       <Thermometer className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomHeadache}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("fever")}>
                     <Checkbox
                       checked={symptoms.includes("fever")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "fever"]
-                          : symptoms.filter((x) => x !== "fever")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("fever")}
                     />
                     <div className="flex items-center gap-1">
                       <Thermometer className="size-3 text-muted-foreground" aria-hidden />
                       <label className="text-sm">{dict.checkin.symptomFever}</label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => toggleSymptom("cough")}>
                     <Checkbox
                       checked={symptoms.includes("cough")}
-                      onCheckedChange={(value) => {
-                        setSymptoms(value
-                          ? [...symptoms, "cough"]
-                          : symptoms.filter((x) => x !== "cough")
-                        );
-                      }}
+                      onCheckedChange={() => toggleSymptom("cough")}
                     />
                     <div className="flex items-center gap-1">
                       <AlertTriangle className="size-3 text-muted-foreground" aria-hidden />
@@ -450,6 +389,7 @@ export default function CheckinPage() {
             </div>
           </div>
 
+          {/* Note */}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded flex items-center justify-center ${FIELD_ICONS.note.color}`}>

@@ -291,7 +291,7 @@ export default async function DashboardPage() {
                       {dict.dashboard.noSummary}
                     </p>
                     <Link
-                      href="/generate-summary"
+                      href="/summary"
                       className={buttonVariants({ variant: "default", size: "sm", className: "w-full" })}
                     >
                       {dict.summary.generate}
