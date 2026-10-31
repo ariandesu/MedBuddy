@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { HeartPulse } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoutButton } from "@/components/logout-button";
+import { NAV_ITEMS } from "@/components/nav-items";
+import { usePathname } from "next/navigation";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import type { SessionUser } from "@/server/auth";
 
@@ -16,6 +20,7 @@ export function Header({
   dict: Dictionary;
   user: SessionUser | null;
 }) {
+  const pathname = usePathname();
   return (
     <header className="no-print sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4">
@@ -30,6 +35,29 @@ export function Header({
             </span>
           </span>
         </Link>
+
+        {/* Desktop nav (hidden on mobile) */}
+        {user ? (
+          <nav className="hidden md:flex items-center gap-6">
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.Icon;
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={`text-sm font-medium min-h-[44px] ${
+                    active ? "text-primary" : "text-muted-foreground hover:text-primary"
+                  }`}
+                >
+                  <Icon className="size-4 mr-1.5" aria-hidden />
+                  {dict.nav[item.key as keyof typeof dict.nav]}
+                </Link>
+              );
+            })}
+          </nav>
+        ) : null}
+
         <div className="flex items-center gap-2">
           <LanguageSwitcher locale={locale} label={dict.header.language} />
           {user ? (

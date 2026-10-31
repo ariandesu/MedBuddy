@@ -63,7 +63,7 @@ export default async function RootLayout({
               {dict.footer.disclaimer}
             </p>
           </footer>
-          <BottomNav dict={dict} />
+          <BottomNav dict={dict} user={user} />
           <Toaster richColors position="top-center" />
         </TooltipProvider>
       </body>
