@@ -1,8 +1,8 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 test.use({ baseURL: "http://localhost:3131" });
 
-async function demoLogin(page: any) {
+async function demoLogin(page: Page) {
   await page.goto("/login");
   await expect(page).toHaveURL("/login");
   await page.click('button:has-text("Try the demo")');
@@ -23,7 +23,7 @@ test.describe("T27 E2E demo flow", () => {
     await expect(page.locator("table tbody tr").first()).toBeVisible();
 
     // Click a needs_review document
-    await page.click('a:has-text("Review")').first();
+    await page.locator('a:has-text("Review")').first().click();
     await expect(page.locator("h1")).toContainText("Review extracted values");
 
     // Tick every "I checked this" box
@@ -67,10 +67,10 @@ test.describe("T27 E2E demo flow", () => {
     await page.click('text="কাগজপত্র"');
     await expect(page.locator("h1")).toContainText("কাগজপত্র");
 
-    await page.click('a:has-text("যাচাই করুন")').first();
+    await page.locator('a:has-text("যাচাই করুন")').first().click();
     await expect(page.locator("h1")).toContainText("তথ্য যাচাই করুন");
 
-    await page.click('text="চেক-ইন"');
+    await page.locator('text="চেক-ইন"').click();
     await page.check('text="বুকের ব্যাথা"');
     await page.click('button:has-text("সংরক্ষণ করুন")');
     await expect(page.locator("text=এটি জরুরি চিকিৎসার")).toBeVisible();

@@ -1,5 +1,7 @@
 # AGENTS.md — MediSathi build spec (for autonomous coding agent)
 
+> Active work order: FIX_PLAN.md. Where it conflicts with this file, FIX_PLAN.md wins.
+
 Read this whole file before writing code. Follow milestones in order. Commit and push after every milestone.
 If something here conflicts with a library's current docs, follow the docs and note it in `docs/DECISIONS.md`.
 

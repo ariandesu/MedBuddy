@@ -19,20 +19,19 @@ their own records, and print a doctor-ready report. It is explicitly **not** a d
 ## Demo
 
 - Repo: https://github.com/ariandesu/MedBuddy
-- Demo login: `demo@medisathi.app` / `demo1234`
+- Live: https://medbuddy-tau.vercel.app
 - Default language: Bangla (`bn`), switchable in the header (cookie `medisathi-locale`)
 
 ### Test without uploading real data (demo mode)
 
-In demo mode the app seeds synthetic records on every visit — no upload needed:
+Click **"Try the demo"** on the login page — you get your own private per-visitor seeded demo account with synthetic records:
 
-1. **Documents** — see 4 sample files (2 `confirmed`, 2 `needs_review`: a lipid profile and a handwritten-style prescription).
-2. Click a `needs_review` document → review extracted values vs. OCR (mismatches flagged) → **Confirm** to create a medical record.
-3. **Check-in** → save a wellness entry → urgent-care dialog fires only if you select red-flag symptoms.
-4. **Timeline** → merged records + check-ins with trend charts (missing days shown as gaps, never treated as 0).
-5. **Summary** → **Generate summary** → source-linked summary (live Muse AI in production).
-6. **Ask** → grounded Q&A with citations.
-7. **Report** → print-optimized doctor report (`window.print()`).
+1. **Documents** — see 4 sample files (2 `confirmed`, 2 `needs_review`). Click a `needs_review` document → review extracted values vs. OCR (mismatches flagged, tick every "I checked this" box) → **Confirm** to create a medical record.
+2. **Check-in** → save a wellness entry → urgent-care dialog fires if you select red-flag symptoms (e.g. chest pain).
+3. **Timeline** → merged records + check-ins with trend charts (missing days shown as gaps, never treated as 0).
+4. **Summary** → **Generate summary** → source-linked summary (live Muse AI when `MODEL_API_KEY` is set).
+5. **Ask** → grounded Q&A with citations linking to timeline records.
+6. **Report** → print-optimized doctor report (`window.print()`).
 
 All fixture data is synthetic and clearly watermarked **"SAMPLE — NOT REAL PATIENT DATA"**.
 
