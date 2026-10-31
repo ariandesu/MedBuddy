@@ -82,7 +82,10 @@
     "title": "Ask about your records",
     "placeholder": "Ask a question…",
     "send": "Send",
-    "notFound": "I couldn't find this in your records."
+    "notFound": "I couldn't find this in your records.",
+    "invalidBody": "Invalid body",
+    "questionRequired": "Question is required",
+    "modelUnavailable": "Model unavailable; no grounded answer."
   },
   "report": {
     "title": "Doctor report",

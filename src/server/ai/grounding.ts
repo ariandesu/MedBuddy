@@ -9,13 +9,14 @@ import type { MedicalRecord } from "@/lib/schemas/record";
 import type { HealthSummary } from "@/lib/schemas/summary";
 import type { ObservedChange } from "@/lib/schemas/summary";
 
+import { normalizeDigits } from "@/lib/digits";
+
 function tokens(text: string): Set<string> {
   return new Set(
-    text
+    normalizeDigits(text)
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, " ")
-      .split(/\s+/)
-      .filter(Boolean)
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((t) => t.length > 1)
   );
 }
 
