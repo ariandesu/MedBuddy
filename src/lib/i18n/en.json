@@ -127,7 +127,9 @@
     "referenceRange": "Reference range",
     "entries": "Entries",
     "checkin": "Check-in",
-    "undated": "Undated"
+    "undated": "Undated",
+    "explain": "Explain in simple words",
+    "explainTitle": "Plain-language explanation"
   },
   "summary": {
     "title": "Health summary",
@@ -206,10 +208,11 @@
   "common": {
     "loading": "Loading…",
     "error": "Something went wrong.",
-    "retry": "Try again",
+    "retry": "Retry",
     "cancel": "Cancel",
     "save": "Save",
-    "back": "Back"
+    "back": "Back",
+    "close": "Close"
   },
   "footer": {
     "disclaimer": "MediSathi explains your records in simple language. It is not a diagnostic tool and never replaces a doctor."

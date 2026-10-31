@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { weeklyAverages, missingDays, deltas, series } from "@/server/trends";
 import { useDictionary } from "@/lib/use-dictionary";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -90,8 +91,8 @@ export default function TimelinePage() {
   const [serverRecords, setServerRecords] = useState<MedicalRecord[]>([]);
   const [serverWellness, setServerWellness] = useState<WellnessEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [explanations, setExplanations] = useState<Record<string, string>>({});
 
-  // Compute dates inside the component (not at module load).
   const { from: FROM_DATE, to: TO_DATE } = useMemo(() => {
     /* eslint-disable-next-line */
     const to = getLocalDate();
@@ -113,7 +114,6 @@ export default function TimelinePage() {
       }
     };
 
-    // Fetch without from/to to include records with null recordDate.
     fetch(`/api/medical-records`)
       .then((res) => (res.ok ? res.json() : { records: [] }))
       .then((data) => {
@@ -135,14 +135,12 @@ export default function TimelinePage() {
     };
   }, [FROM_DATE, TO_DATE]);
 
-  // Fill missing days so charts show gaps (null = no entry).
   const filledWellness = fillMissingDays(serverWellness, FROM_DATE, TO_DATE);
   const avg = weeklyAverages(filledWellness);
   const missing = missingDays(serverWellness, FROM_DATE, TO_DATE);
   const delta = deltas(filledWellness);
   const wellnessSeries = series(filledWellness);
 
-  // Lab trends: observations with numericValue, grouped by name.
   const labGroups: Record<string, {
     points: { date: string; value: number }[];
     range: string | null;
@@ -162,7 +160,6 @@ export default function TimelinePage() {
     g.points.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   }
 
-  // Merged list sorted by date (newest first).
   const merged: TimelineEntry[] = [];
   for (const r of serverRecords) {
     merged.push({ date: r.recordDate ?? "", type: "record", id: r.id, record: r });
@@ -185,7 +182,6 @@ export default function TimelinePage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">{dict.timeline.title}</h1>
 
-      {/* Wellness trends: three small charts */}
       <section className="grid gap-4 md:grid-cols-3">
         {wellnessSeries.map((s) => {
           const key = s.name.toLowerCase();
@@ -213,7 +209,6 @@ export default function TimelinePage() {
         })}
       </section>
 
-      {/* Averages */}
       <Card className="flex-1">
         <CardHeader>
           <CardTitle>{dict.timeline.averages}</CardTitle>
@@ -250,7 +245,6 @@ export default function TimelinePage() {
         </div>
       )}
 
-      {/* Lab trends */}
       {Object.keys(labGroups).length > 0 && (
         <section>
           <h2 className="text-lg font-semibold mb-3">{dict.timeline.labTrends}</h2>
@@ -276,56 +270,105 @@ export default function TimelinePage() {
         </section>
       )}
 
-      {/* Entries: merged list, newest first */}
       <section>
         <h2 className="text-lg font-semibold mb-3">{dict.timeline.entries}</h2>
         {merged.length === 0 ? (
           <p className="text-sm text-muted-foreground">{dict.timeline.empty}</p>
         ) : (
           <ul className="space-y-2">
-            {merged.map((e) => (
-              <li key={e.id} className="border-b pb-2 text-sm" id={`rec-${e.id}`}>
-                {e.type === "record" && e.record ? (
-                  <>
-                    <div className="flex justify-between">
-                      <span>
-                        {RECORD_TYPE_LABELS[e.record.recordType] ?? e.record.recordType}
-                      </span>
-                      <span>
-                        {e.record.recordDate ?? dict.timeline.undated}
-                      </span>
-                    </div>
-                    {e.record.observations.length > 0 && (
+            {merged.map((e) => {
+              const rec = e.type === "record" ? e.record : undefined;
+              return (
+                <li key={e.id} className="border-b pb-2 text-sm" id={`rec-${e.id}`}>
+                  {rec ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span>
+                          {RECORD_TYPE_LABELS[rec.recordType] ?? rec.recordType}
+                        </span>
+                        <span>{rec.recordDate ?? dict.timeline.undated}</span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setExplanations((prev) => ({
+                              ...prev,
+                              [rec.id]: "Loading…",
+                            }));
+                            fetch(`/api/medical-records/${rec.id}/explain`, {
+                              method: "POST",
+                            })
+                              .then((res) => res.json())
+                              .then((data) =>
+                                setExplanations((prev) => ({
+                                  ...prev,
+                                  [rec.id]: data.plainLanguage,
+                                }))
+                              )
+                              .catch(() =>
+                                setExplanations((prev) => ({
+                                  ...prev,
+                                  [rec.id]: dict.common.error,
+                                }))
+                              );
+                          }}
+                          disabled={!!explanations[rec.id]}
+                        >
+                          {explanations[rec.id] ? (
+                            <>
+                              {dict.common.retry} {explanations[rec.id]}
+                            </>
+                          ) : (
+                            dict.timeline.explain
+                          )}
+                        </Button>
+                      </div>
+                      {rec.observations.length > 0 && (
+                        <ul className="text-xs text-muted-foreground mt-1">
+                          {rec.observations.map((o) => (
+                            <li key={o.name}>
+                              {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {rec.medications.length > 0 && (
+                        <ul className="text-xs text-muted-foreground mt-1 list-disc ml-4">
+                          {rec.medications.map((m) => (
+                            <li key={m.nameAsWritten}>
+                              {m.nameAsWritten} — {m.doseAsWritten}, {m.frequencyAsWritten}, {m.durationAsWritten}
+                              {m.uncertain ? " (uncertain)" : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {explanations[rec.id] && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {explanations[rec.id]}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span>{dict.timeline.checkin}</span>
+                        <span>{e.wellness!.date}</span>
+                      </div>
                       <ul className="text-xs text-muted-foreground mt-1">
-                        {e.record.observations.map((o) => (
-                          <li key={o.name}>
-                            {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""}
-                          </li>
-                        ))}
+                        {e.wellness!.sleepHours != null && (
+                          <li>Sleep: {e.wellness!.sleepHours} hrs</li>
+                        )}
+                        {e.wellness!.waterGlasses != null && (
+                          <li>Water: {e.wellness!.waterGlasses}</li>
+                        )}
+                        {e.wellness!.activityMinutes != null && (
+                          <li>Activity: {e.wellness!.activityMinutes} min</li>
+                        )}
                       </ul>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <div className="flex justify-between">
-                      <span>{dict.timeline.checkin}</span>
-                      <span>{e.wellness!.date}</span>
-                    </div>
-                    <ul className="text-xs text-muted-foreground mt-1">
-                      {e.wellness!.sleepHours != null && (
-                        <li>Sleep: {e.wellness!.sleepHours} hrs</li>
-                      )}
-                      {e.wellness!.waterGlasses != null && (
-                        <li>Water: {e.wellness!.waterGlasses}</li>
-                      )}
-                      {e.wellness!.activityMinutes != null && (
-                        <li>Activity: {e.wellness!.activityMinutes} min</li>
-                      )}
-                    </ul>
-                  </>
-                )}
-              </li>
-            ))}
+                    </>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
