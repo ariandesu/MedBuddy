@@ -73,7 +73,9 @@
     },
     "edited": "সম্পাদিত",
     "checkThis": "আমি যাচাই করেছি",
-    "originalDocumentAlt": "মূল কাগজপত্র"
+    "originalDocumentAlt": "মূল কাগজপত্র",
+    "openPdf": "পিডিএফ খুলুন",
+    "noPreview": "নমুনা কাগজ — কোনো ছবি নেই (কৃত্রিম তথ্য)"
   },
   "checkin": {
     "title": "দৈনিক চেক-ইন",

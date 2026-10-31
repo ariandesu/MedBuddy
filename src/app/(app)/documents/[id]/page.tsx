@@ -73,6 +73,7 @@ export default function DocumentReviewPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imgFailed, setImgFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -241,11 +242,32 @@ export default function DocumentReviewPage() {
           <div className="hidden md:flex gap-6">
             {/* Original — left */}
             <div className="flex-1 border rounded-lg overflow-hidden bg-muted/50">
-              <img
-                src={`/api/documents/${doc.id}/file`}
-                alt={dict.review.originalDocumentAlt}
-                className="w-full h-auto block max-h-[60vh] object-contain mx-auto"
-              />
+              {doc.mimeType === "application/pdf" || imgFailed ? (
+                <div className="flex flex-col items-center justify-center h-full p-4 text-muted-foreground">
+                  {doc.mimeType === "application/pdf" ? (
+                    <>
+                      <a
+                        href={`/api/documents/${doc.id}/file`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm underline"
+                      >
+                        {dict.review.openPdf}
+                      </a>
+                      <p className="text-xs mt-2">{dict.review.noPreview}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm">{dict.review.noPreview}</p>
+                  )}
+                </div>
+              ) : (
+                <img
+                  src={`/api/documents/${doc.id}/file`}
+                  alt={dict.review.originalDocumentAlt}
+                  className="w-full h-auto block max-h-[60vh] object-contain mx-auto"
+                  onError={() => setImgFailed(true)}
+                />
+              )}
             </div>
             {/* Extracted — right */}
             <div className="flex-1">
@@ -319,11 +341,32 @@ export default function DocumentReviewPage() {
               <TabsTrigger value="extracted">{dict.review.extracted}</TabsTrigger>
             </TabsList>
             <TabsContent value="original" className="border border-border rounded-lg p-3 bg-muted/50">
-              <img
-                src={`/api/documents/${doc.id}/file`}
-                alt={dict.review.originalDocumentAlt}
-                className="w-full h-auto block max-h-[50vh] object-contain mx-auto"
-              />
+              {doc.mimeType === "application/pdf" || imgFailed ? (
+                <div className="flex flex-col items-center justify-center h-full p-4 text-muted-foreground">
+                  {doc.mimeType === "application/pdf" ? (
+                    <>
+                      <a
+                        href={`/api/documents/${doc.id}/file`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm underline"
+                      >
+                        {dict.review.openPdf}
+                      </a>
+                      <p className="text-xs mt-2">{dict.review.noPreview}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm">{dict.review.noPreview}</p>
+                  )}
+                </div>
+              ) : (
+                <img
+                  src={`/api/documents/${doc.id}/file`}
+                  alt={dict.review.originalDocumentAlt}
+                  className="w-full h-auto block max-h-[50vh] object-contain mx-auto"
+                  onError={() => setImgFailed(true)}
+                />
+              )}
             </TabsContent>
             <TabsContent value="extracted">
               <div className="overflow-x-auto">

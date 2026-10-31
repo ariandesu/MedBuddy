@@ -73,7 +73,9 @@
     },
     "edited": "edited",
     "checkThis": "I checked this",
-    "originalDocumentAlt": "Original document"
+    "originalDocumentAlt": "Original document",
+    "openPdf": "Open PDF",
+    "noPreview": "Sample document — no image (synthetic data)"
   },
   "checkin": {
     "title": "Daily check-in",

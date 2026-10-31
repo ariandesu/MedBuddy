@@ -171,7 +171,14 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
   async function handleSample(fileName: string) {
     setUploading(true);
     try {
-      const res = await fetch("/api/documents/sample", { method: "POST" });
+      const index = ["Sample CBC Report.jpg", "Sample Prescription.jpg"].indexOf(
+        fileName
+      );
+      const res = await fetch("/api/documents/sample", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index }),
+      });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to load sample");

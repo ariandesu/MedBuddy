@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
-import { isDemoDataMode } from "@/server/env";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -155,26 +155,44 @@ const SAMPLES: Array<{
   },
 ];
 
-export async function POST(): Promise<NextResponse> {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Demo mode only — never create sample data against a real database.
-  if (!isDemoDataMode()) {
+  // Allow demo accounts (email starts with demo- and ends with @medisathi.app)
+  // or demo data mode. Never create sample data against a real production DB
+  // for a real user.
+  const isDemoAccount =
+    user.email.startsWith("demo-") && user.email.endsWith("@medisathi.app");
+  if (!isDemoAccount) {
     return NextResponse.json(
-      { error: "Sample data is only available in demo mode" },
+      { error: "Sample data is only available for demo accounts" },
       { status: 403 }
     );
   }
 
-  const repo = getRepo();
-  const sample = SAMPLES[Math.floor(Math.random() * SAMPLES.length)];
+  let body: { index?: number };
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
+  const sampleIndex = z
+    .number()
+    .int()
+    .min(0)
+    .max(SAMPLES.length - 1)
+    .safeParse(body.index);
+  const sample = SAMPLES[
+    sampleIndex.success ? sampleIndex.data : Math.floor(Math.random() * SAMPLES.length)
+  ];
   const crypto = await import("node:crypto");
   const checksum = crypto
     .createHash("sha256")
     .update(`${sample.fileName}-${Date.now()}`)
     .digest("hex");
   const fileRef = `sample/${user.id}/${Date.now()}-${sample.fileName}`;
+  const repo = getRepo();
 
   await repo.storeFile(
     user.id,
@@ -204,24 +222,11 @@ export async function POST(): Promise<NextResponse> {
     ocrText: sample.ocrText,
   });
 
-  // Return full document + extraction so the client can persist them in
-  // localStorage. Demo mode uses in-memory storage that doesn't survive
-  // across Vercel serverless instances.
   return NextResponse.json(
     {
       id: doc.id,
       status: "needs_review",
       fileName: doc.fileName,
-      document: doc,
-      extraction: {
-        id: extraction.id,
-        documentId: doc.id,
-        documentType: sample.documentType,
-        documentDateRaw: sample.documentDateRaw,
-        documentDate: sample.documentDate,
-        fields: sample.fields,
-        ocrText: sample.ocrText,
-      },
       message: "Sample document created — review it in Documents.",
     },
     { status: 201 }
