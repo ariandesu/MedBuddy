@@ -7,34 +7,32 @@ import { toExtractedField } from "@/lib/schemas/ai";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
-const Magic: Record<string, Buffer> = {
-  jpg: Buffer.from([0xff, 0xd8, 0xff]),
-  png: Buffer.from([0x89, 0x50, 0x4e, 0x47]),
-  pdf: Buffer.from([0x25, 0x50, 0x44, 0x46]),
-};
+const JPEG_MAGIC = Buffer.from([0xff, 0xd8, 0xff]);
+const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+const PDF_MAGIC = Buffer.from([0x25, 0x50, 0x44, 0x46]);
 
-function mimeFromExt(name: string): string | null {
-  const ext = name.split(".").pop()?.toLowerCase() ?? "";
-  switch (ext) {
-    case "jpg":
-    case "jpeg":
-      return "image/jpeg";
-    case "png":
-      return "image/png";
-    case "pdf":
-      return "application/pdf";
-    default:
-      return null;
-  }
-}
+type SupportedMime = "image/jpeg" | "image/png" | "application/pdf";
 
-function magicMatches(mime: string, buf: Buffer): boolean {
-  const key =
-    mime === "image/jpeg" ? "jpg" : mime === "image/png" ? "png" : "pdf";
-  const m = Magic[key];
-  if (!m || buf.length < m.length) return false;
-  for (let i = 0; i < m.length; i++) if (buf[i] !== m[i]) return false;
-  return true;
+function sniffMime(buf: Buffer): SupportedMime | null {
+  if (buf.length >= JPEG_MAGIC.length && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff)
+    return "image/jpeg";
+  if (
+    buf.length >= PNG_MAGIC.length &&
+    buf[0] === 0x89 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x4e &&
+    buf[3] === 0x47
+  )
+    return "image/png";
+  if (
+    buf.length >= PDF_MAGIC.length &&
+    buf[0] === 0x25 &&
+    buf[1] === 0x50 &&
+    buf[2] === 0x44 &&
+    buf[3] === 0x46
+  )
+    return "application/pdf";
+  return null;
 }
 
 export const dynamic = "force-dynamic";
@@ -74,23 +72,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
-  const mime = mimeFromExt(file.name);
+  const arrayBuf = await file.arrayBuffer();
+  const buf = Buffer.from(arrayBuf);
+  const mime = sniffMime(buf);
   if (!mime) {
     return NextResponse.json({ error: "Unsupported file type" }, { status: 400 });
   }
-
-  const arrayBuf = await file.arrayBuffer();
-  const buf = Buffer.from(arrayBuf);
   if (buf.length > MAX_FILE_BYTES) {
     return NextResponse.json(
       { error: `File too large (max ${MAX_FILE_BYTES / 1024 / 1024} MB)` },
       { status: 413 }
-    );
-  }
-  if (!magicMatches(mime, buf)) {
-    return NextResponse.json(
-      { error: "File contents do not match declared type" },
-      { status: 400 }
     );
   }
 

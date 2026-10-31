@@ -32,6 +32,8 @@
     "upload": "Upload",
     "empty": "No documents yet.",
     "uploaded": "Uploaded — review your extracted values",
+    "ocrReady": "Text read — check it, then press Upload",
+    "tooLarge": "File is too large (max 4 MB).",
     "help": "JPG/PNG/PDF · ≤ 4 MB · max 5 PDF pages · OCR runs in your browser",
     "colFile": "File",
     "colType": "Type",

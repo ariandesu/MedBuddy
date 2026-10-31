@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { createWorker, type Worker } from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
@@ -110,6 +111,9 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       let text = "";
 
       if (mime === "application/pdf") {
+        if (selected.size > MAX_BYTES) {
+          throw new Error(dict.documents.tooLarge);
+        }
         const arrayBuf = await selected.arrayBuffer();
         const loadingTask = pdfjsLib.getDocument({ data: arrayBuf });
         const pdf = await loadingTask.promise;
@@ -130,7 +134,8 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
           throw new Error("Image too large after compression");
         }
         text = await runOcr(blob);
-        fileToUpload = new File([blob], selected.name, { type: "image/jpeg" });
+        const jpgName = selected.name.replace(/\.[^.]+$/, "") + ".jpg";
+        fileToUpload = new File([blob], jpgName, { type: "image/jpeg" });
       } else {
         throw new Error("Unsupported file type");
       }
@@ -152,7 +157,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       const result = await processFile(selected);
       setFile(result.file as File);
       setOcrText(result.ocrText);
-      toast.success(dict.common.save);
+      toast.success(dict.documents.ocrReady);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : dict.common.error
@@ -231,10 +236,11 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
           <Label className="text-xs font-semibold mb-1 block">
             OCR text (review before upload)
           </Label>
-          <Input
+          <Textarea
             value={ocrText}
             onChange={(e) => setOcrText(e.target.value)}
-            className="h-32 font-mono text-xs"
+            rows={6}
+            className="font-mono text-xs"
             disabled={uploading}
           />
         </div>
