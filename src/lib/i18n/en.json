@@ -151,7 +151,20 @@
     "print": "Print",
     "from": "From",
     "to": "To",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "doctorReport": "Doctor Report",
+    "generatedOn": "Generated on",
+    "recordsMeds": "Records & medications (as written)",
+    "noRecords": "No confirmed records in range.",
+    "noRange": "no range",
+    "outsideRange": "outside printed range",
+    "uncertain": "uncertain",
+    "wellness": "Wellness check-ins",
+    "noCheckins": "No check-ins in range.",
+    "latestSummary": "Latest summary",
+    "questionsForDoctor": "Questions for doctor",
+    "disclaimer": "Generated from your confirmed records. This is not a diagnostic tool; please discuss with a doctor.",
+    "undated": "Undated"
   },
   "auth": {
     "loginTitle": "Log in to MediSathi",

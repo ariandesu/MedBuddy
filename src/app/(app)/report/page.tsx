@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,23 @@ type Summary = {
   generatedAt: string;
 };
 
+type Session = { user?: { id?: string; email?: string } };
+
 const TODAY = new Date().toISOString().slice(0, 10);
 const THIRTY_DAYS_AGO = new Date(Date.now() - 29 * 86_400_000)
   .toISOString()
   .slice(0, 10);
+
+function isOutOfRange(rawValue: string | null | undefined, referenceRangeRaw: string | null | undefined): boolean {
+  if (!rawValue || !referenceRangeRaw) return false;
+  const numMatch = rawValue.match(/-?\d+(\.\d+)?/);
+  const rangeMatch = referenceRangeRaw.match(/^(\d+(\.\d+)?)\s*-\s*(\d+(\.\d+)?)$/);
+  if (!numMatch || !rangeMatch) return false;
+  const val = Number(numMatch[0]);
+  const lo = Number(rangeMatch[1]);
+  const hi = Number(rangeMatch[3]);
+  return val < lo || val > hi;
+}
 
 export function ReportPage() {
   const dict = useDictionary();
@@ -51,22 +63,26 @@ export function ReportPage() {
   const [records, setRecords] = useState<Record[]>([]);
   const [wellness, setWellness] = useState<Wellness[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function load() {
     setLoading(true);
     try {
-      const [rRes, wRes, sRes] = await Promise.all([
-        fetch(`/api/medical-records?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+      const [rRes, wRes, sRes, sesRes] = await Promise.all([
+        fetch(`/api/medical-records`),
         fetch(`/api/wellness?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
         fetch("/api/summaries"),
+        fetch("/api/auth/session"),
       ]);
       const r = await rRes.json();
       const w = await wRes.json();
       const s = await sRes.json();
+      const ses = (await sesRes.json()) as Session;
       setRecords(r.records ?? []);
       setWellness(w.entries ?? []);
       setSummary(s.summary ?? null);
+      setSession(ses);
     } catch {
       // silent; empty state shown
     } finally {
@@ -75,10 +91,16 @@ export function ReportPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [from, to]);
 
+  // Split dated and undated records
+  const datedRecords = records.filter((r) => r.recordDate != null && r.recordDate >= from && r.recordDate <= to);
+  const undatedRecords = records.filter((r) => r.recordDate == null);
+
   const print = () => window.print();
+  const generatedOn = new Date().toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto">
@@ -114,67 +136,119 @@ export function ReportPage() {
         </div>
       </div>
 
-      {loading && <div className="h-64 flex items-center justify-center">Loading…</div>}
+      {loading && <div className="h-64 flex items-center justify-center">{dict.common.loading}</div>}
 
       {!loading && (
         <div className="print-section">
           <div className="text-center mb-8">
-            <h2 className="text-lg font-bold">Doctor Report</h2>
+            <h2 className="text-lg font-bold">{dict.report.doctorReport}</h2>
             <p className="text-sm text-muted-foreground">
-              {from} to {to}
+              {session?.user?.email ?? ""}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {dict.report.generatedOn} {generatedOn}
             </p>
           </div>
 
+          {/* Dated records */}
           <Card>
             <CardHeader>
-              <CardTitle>Records &amp; medications (as written)</CardTitle>
+              <CardTitle>{dict.report.recordsMeds}</CardTitle>
             </CardHeader>
             <CardContent>
-              {records.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No confirmed records in range.</p>
+              {datedRecords.length === 0 && undatedRecords.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{dict.report.noRecords}</p>
               ) : (
-                <ul className="space-y-4">
-                  {records.map((r) => (
-                    <li key={r.id} className="border-b pb-3 last:border-0">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">{r.recordType}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {r.recordDate ?? "—"}
-                        </Badge>
-                      </div>
-                      {r.observations.map((o) => (
-                        <p key={o.name} className="text-sm ml-2">
-                          {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""} (
-                          {o.referenceRangeRaw ?? "no range"})
-                        </p>
+                <>
+                  {datedRecords.length > 0 && (
+                    <ul className="space-y-4">
+                      {datedRecords.map((r) => (
+                        <li key={r.id} className="border-b pb-3 last:border-0">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">
+                              {dict.recordType[r.recordType as keyof typeof dict.recordType] ?? r.recordType}
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {r.recordDate ?? dict.report.noRange}
+                            </Badge>
+                          </div>
+                          {r.observations.map((o) => {
+                            const outOfRange = isOutOfRange(o.rawValue, o.referenceRangeRaw);
+                            return (
+                              <p key={o.name} className="text-sm ml-2">
+                                {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""}
+                                {o.referenceRangeRaw ? (
+                                  <span className="text-xs text-muted-foreground ml-1">
+                                    ({o.referenceRangeRaw}){outOfRange ? " " + dict.report.outsideRange : ""}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground ml-1"> ({dict.report.noRange})</span>
+                                )}
+                              </p>
+                            );
+                          })}
+                          {r.medications.length > 0 && (
+                            <ul className="text-sm ml-4 mt-2 list-disc">
+                              {r.medications.map((m) => (
+                                <li key={m.nameAsWritten}>
+                                  {m.nameAsWritten} — {m.doseAsWritten},{" "}
+                                  {m.frequencyAsWritten}, {m.durationAsWritten}
+                                  {m.uncertain ? " (" + dict.report.uncertain + ")" : ""}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
                       ))}
-                      {r.medications.length > 0 && (
-                        <ul className="text-sm ml-4 mt-2 list-disc">
-                          {r.medications.map((m) => (
-                            <li key={m.nameAsWritten}>
-                              {m.nameAsWritten} — {m.doseAsWritten},{" "}
-                              {m.frequencyAsWritten}, {m.durationAsWritten}
-                              {m.uncertain ? " (uncertain)" : ""}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                    </ul>
+                  )}
+                  {undatedRecords.length > 0 && (
+                    <>
+                      <h3 className="text-sm font-semibold mt-6 mb-2">{dict.report.undated}</h3>
+                      <ul className="space-y-4">
+                        {undatedRecords.map((r) => (
+                          <li key={r.id} className="border-b pb-3 last:border-0">
+                            <div className="flex justify-between text-sm">
+                              <span className="font-medium">
+                                {dict.recordType[r.recordType as keyof typeof dict.recordType] ?? r.recordType}
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {dict.report.undated}
+                              </Badge>
+                            </div>
+                            {r.observations.map((o) => (
+                              <p key={o.name} className="text-sm ml-2">
+                                {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""}
+                              </p>
+                            ))}
+                            {r.medications.length > 0 && (
+                              <ul className="text-sm ml-4 mt-2 list-disc">
+                                {r.medications.map((m) => (
+                                  <li key={m.nameAsWritten}>
+                                    {m.nameAsWritten} — {m.doseAsWritten},{" "}
+                                    {m.frequencyAsWritten}, {m.durationAsWritten}
+                                    {m.uncertain ? " (" + dict.report.uncertain + ")" : ""}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Wellness check-ins</CardTitle>
+              <CardTitle>{dict.report.wellness}</CardTitle>
             </CardHeader>
             <CardContent>
               {wellness.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No check-ins in range.
-                </p>
+                <p className="text-sm text-muted-foreground">{dict.report.noCheckins}</p>
               ) : (
                 <ul className="space-y-2 text-sm">
                   {wellness.map((w) => (
@@ -185,6 +259,8 @@ export function ReportPage() {
                         {(w.waterGlasses != null ? `Water ${w.waterGlasses}` : "")}{" "}
                         {(w.activityMinutes != null ? `Activity ${w.activityMinutes}min` : "")}{" "}
                         {w.energy != null ? `Energy ${w.energy}/4` : ""}
+                        {w.symptomLevel ? ` Symptom: ${w.symptomLevel}` : ""}
+                        {w.symptoms?.length ? ` Symptoms: ${w.symptoms.join(", ")}` : ""}
                       </span>
                     </li>
                   ))}
@@ -196,13 +272,13 @@ export function ReportPage() {
           {summary && (
             <Card>
               <CardHeader>
-                <CardTitle>Latest summary</CardTitle>
+                <CardTitle>{dict.report.latestSummary}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm">{summary.payload.summary}</p>
                 {summary.payload.questionsForDoctor.length > 0 && (
                   <div className="mt-3">
-                    <h3 className="text-xs font-semibold mb-1">Questions for doctor</h3>
+                    <h3 className="text-xs font-semibold mb-1">{dict.report.questionsForDoctor}</h3>
                     <ul className="text-sm list-disc ml-4 space-y-1">
                       {summary.payload.questionsForDoctor.map((q) => (
                         <li key={q}>{q}</li>
@@ -215,8 +291,7 @@ export function ReportPage() {
           )}
 
           <p className="text-xs text-muted-foreground mt-6">
-            Generated from your confirmed records. This is not a diagnostic
-            tool; please discuss with a doctor.
+            {dict.report.disclaimer}
           </p>
         </div>
       )}
