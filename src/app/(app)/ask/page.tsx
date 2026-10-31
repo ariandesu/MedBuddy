@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -16,7 +17,7 @@ export function AskPage() {
   const dict = useDictionary();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
-  const [citations, setCitations] = useState<string[]>([]);
+  const [citations, setCitations] = useState<{ id: string; label: string }[]>([]);
   const [limitations, setLimitations] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,19 +88,27 @@ export function AskPage() {
       {answer && (
         <Card>
           <CardHeader>
-            <CardTitle>Answer</CardTitle>
+            <CardTitle>{dict.ask.answer}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm">{answer}</p>
             {citations.length > 0 && (
               <div className="border-t pt-3 text-xs text-muted-foreground">
-                <span className="font-semibold">Sources:</span>{" "}
-                {citations.join(", ")}
+                <span className="font-semibold">{dict.ask.sources}:</span>{" "}
+                {citations.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/timeline#rec-${c.id}`}
+                    className="underline underline-offset-4 hover:underline"
+                  >
+                    {c.label}
+                  </Link>
+                ))}
               </div>
             )}
             {limitations.length > 0 && (
               <div className="border rounded-lg p-3 bg-amber-50 text-amber-800 text-xs">
-                <p className="font-semibold mb-1">Limitations</p>
+                <p className="font-semibold mb-1">{dict.ask.limitations}</p>
                 <ul className="space-y-1">
                   {limitations.map((l) => (
                     <li key={l}>• {l}</li>

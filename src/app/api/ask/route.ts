@@ -6,6 +6,12 @@ import { getLocaleAndDict } from "@/lib/i18n/server";
 import { wrapDocument } from "@/server/ai/prompts";
 import { retrieveRecords, buildContext, groundCitations } from "@/server/ai/grounding";
 
+const RECORD_TYPE_LABELS: Record<string, string> = {
+  lab_report: "Lab report",
+  prescription: "Prescription",
+  other: "Other",
+};
+
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
@@ -40,7 +46,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const context = buildContext(hits, latest);
 
   let answerText: string;
-  let citations: string[];
+  let citationIds: string[];
   let limitations: string[];
   try {
     const ai = await getAI().answerQuestion(
@@ -50,17 +56,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
     const allowed = new Set([...hits.map((r) => r.id), ...(latest ? [latest.id] : [])]);
     answerText = ai.answer;
-    citations = groundCitations(ai.citations, allowed);
+    citationIds = groundCitations(ai.citations, allowed);
     limitations = ai.limitations;
   } catch {
     answerText = dict.ask.notFound;
-    citations = [];
+    citationIds = [];
     limitations = [dict.ask.modelUnavailable];
   }
 
-  if (citations.length === 0 && hits.length === 0 && !latest) {
+  if (citationIds.length === 0 && hits.length === 0 && !latest) {
     answerText = dict.ask.notFound;
   }
+
+  // Build citation labels: ${recordTypeLabel} · ${recordDate ?? undated}
+  // or Summary v${version} for a summary id.
+  const recordById = new Map(records.map((r) => [r.id, r]));
+  const citations = citationIds.map((id) => {
+    if (latest && id === latest.id) {
+      return { id, label: `Summary v${latest.version}` };
+    }
+    const r = recordById.get(id);
+    if (r) {
+      const typeLabel =
+        RECORD_TYPE_LABELS[r.recordType] ?? r.recordType;
+      return {
+        id,
+        label: `${typeLabel} · ${r.recordDate ?? dict.ask.undated}`,
+      };
+    }
+    return { id, label: id };
+  });
 
   return NextResponse.json({ answer: answerText, citations, limitations });
 }

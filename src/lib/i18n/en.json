@@ -129,7 +129,17 @@
   "summary": {
     "title": "Health summary",
     "generate": "Generate summary",
-    "empty": "No summary yet."
+    "empty": "No summary yet.",
+    "changesObserved": "Changes observed",
+    "missingInfo": "Missing information",
+    "questionsForDoctor": "Questions for your doctor",
+    "limitations": "Limitations",
+    "uncertainty": "Uncertainty",
+    "generated": "Generated",
+    "sourceRecords": "source record(s)",
+    "noRecords": "No records found to summarize. Upload a document first.",
+    "toastGenerated": "Summary generated",
+    "uploadDocument": "Upload document"
   },
   "ask": {
     "title": "Ask about your records",
@@ -138,7 +148,11 @@
     "notFound": "I couldn't find this in your records.",
     "invalidBody": "Invalid body",
     "questionRequired": "Question is required",
-    "modelUnavailable": "Model unavailable; no grounded answer."
+    "modelUnavailable": "Model unavailable; no grounded answer.",
+    "undated": "Undated",
+    "answer": "Answer",
+    "sources": "Sources",
+    "limitations": "Limitations"
   },
   "recordType": {
     "lab_report": "Lab report",

@@ -129,7 +129,17 @@
   "summary": {
     "title": "স্বাস্থ্য সারাংশ",
     "generate": "সারাংশ তৈরি করুন",
-    "empty": "এখনও সারাংশ নেই।"
+    "empty": "এখনও সারাংশ নেই।",
+    "changesObserved": "পারিবর্তন লক্ষ্য করা হয়েছে",
+    "missingInfo": "অনুপস্থিত তথ্য",
+    "questionsForDoctor": "ডাক্তারের জন্য প্রশ্ন",
+    "limitations": "সীমাবদ্ধতা",
+    "uncertainty": "অনিশ্চিততা",
+    "generated": "তৈরি করা হয়েছে",
+    "sourceRecords": "উৎস রেকর্ড",
+    "noRecords": "সংক্ষেপ করার জন্য কোনো রেকর্ড পাওয়াগেল না। প্রথমে একটি ডকুমেন্ট আপলোড করুন।",
+    "toastGenerated": "সারাংশ তৈরি করা হয়েছে",
+    "uploadDocument": "ডকুমেন্ট আপলোড করুন"
   },
   "ask": {
     "title": "আপনার রেকর্ড নিয়ে প্রশ্ন করুন",
@@ -138,7 +148,11 @@
     "notFound": "আপনার রেকর্ডে এটি পাইনি।",
     "invalidBody": "অবৈধ বডি",
     "questionRequired": "প্রশ্ন প্রয়োজন",
-    "modelUnavailable": "মডেল উপলব্ধ নয়; গ্রাউন্ডেড উত্তর নেই।"
+    "modelUnavailable": "মডেল উপলব্ধ নয়; গ্রাউন্ডেড উত্তর নেই।",
+    "undated": "তারিখহীন",
+    "answer": "উত্তর",
+    "sources": "উত্স",
+    "limitations": "সীমাবদ্ধতা"
   },
   "recordType": {
     "lab_report": "ল্যাব রিপোর্ট",
