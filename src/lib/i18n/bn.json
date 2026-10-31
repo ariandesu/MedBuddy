@@ -26,7 +26,16 @@
     "welcome": "স্বাগতম",
     "empty": "এখনও কোনো রেকর্ড নেই। শুরু করতে একটি প্রেসক্রিপশন বা ল্যাব রিপোর্ট আপলোড করুন।",
     "uploadCta": "কাগজ আপলোড করুন",
-    "checkinCta": "আজকের চেক-ইন"
+    "checkinCta": "আজকের চেক-ইন",
+    "needsReview": "নথি যাচাই অপেক্ষায়",
+    "reviewNow": "এখন যাচাই করুন",
+    "todayCheckin": "আজকের চেক-ইন নেই",
+    "checkinNow": "এখন চেক-ইন করুন",
+    "recentDocuments": "সাম্প্রতিক নথি",
+    "noDocuments": "এখনও কোনো নথি নেই।",
+    "latestSummary": "শেষ সারাংশ",
+    "viewSummary": "সারাংশ দেখুন",
+    "noSummary": "এখনও সারাংশ নেই।"
   },
   "documents": {
     "title": "কাগজপত্র",

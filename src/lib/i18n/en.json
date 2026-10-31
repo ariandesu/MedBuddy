@@ -26,7 +26,16 @@
     "welcome": "Welcome",
     "empty": "No records yet. Upload a prescription or lab report to get started.",
     "uploadCta": "Upload document",
-    "checkinCta": "Today's check-in"
+    "checkinCta": "Today's check-in",
+    "needsReview": "documents need review",
+    "reviewNow": "Review now",
+    "todayCheckin": "Today's check-in missing",
+    "checkinNow": "Check in now",
+    "recentDocuments": "Recent documents",
+    "noDocuments": "No documents yet.",
+    "latestSummary": "Latest summary",
+    "viewSummary": "View summary",
+    "noSummary": "No summary yet."
   },
   "documents": {
     "title": "Documents",
