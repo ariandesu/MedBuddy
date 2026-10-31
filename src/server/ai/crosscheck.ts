@@ -1,19 +1,6 @@
-const BANGLA_DIGITS: Record<string, string> = {
-  "\u0966": "0",
-  "\u0967": "1",
-  "\u0968": "2",
-  "\u0969": "3",
-  "\u096A": "4",
-  "\u096B": "5",
-  "\u096C": "6",
-  "\u096D": "7",
-  "\u096E": "8",
-  "\u096F": "9",
-};
+import { normalizeDigits } from "@/lib/digits";
 
-export function normalizeDigits(s: string): string {
-  return s.replace(/[\u0966-\u096F]/g, (d) => BANGLA_DIGITS[d]);
-}
+export { normalizeDigits };
 
 export function normalizeValue(value: string | null): string | null {
   if (value === null || value === undefined) return null;

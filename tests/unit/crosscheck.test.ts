@@ -5,14 +5,15 @@ import {
   normalizeValue,
 } from "@/server/ai/crosscheck";
 
-// Bengali digits as unicode escapes (U+0966..U+096F): ২=\u0968 ০=\u0966 ১=\u0967 ৩=\u0969
-const BN_201 = "\u0968\u0966\u0967";
-const BN_130H = "\u0967\u0969\u0966 H";
+// Bengali digits (U+09E6..U+09EF): ২=\u09e8 ০=\u09e6 ১=\u09e7 ৩=\u09e9
+const BN_201 = "\u09e8\u09e6\u09e7";
+const BN_130H = "\u09e7\u09e9\u09e6 H";
 
 describe("cross-check (M5)", () => {
-  it("normalizes Bangla digits to ASCII", () => {
+  it("normalizes Bengali digits to ASCII", () => {
     expect(normalizeDigits(BN_201)).toBe("201");
     expect(normalizeValue(BN_201)).toBe("201");
+    expect(normalizeDigits("১২.৫")).toBe("12.5");
   });
 
   it("matching values with both sources => match, no review", () => {
