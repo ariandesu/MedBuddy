@@ -60,7 +60,7 @@ const STATUS_CONFIG: Record<
   failed: { labelKey: "failed", badge: "destructive", Icon: AlertCircle },
 };
 
-export default function DocumentsPage() {
+export function DocumentsView({ embedded = false }: { embedded?: boolean }) {
   const dict = useDictionary();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,12 +105,12 @@ export default function DocumentsPage() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between gap-4">
+        {!embedded && (
           <div className="flex items-center gap-2">
             <FileText className="size-5 text-primary" aria-hidden />
             <h1 className="text-2xl font-bold">{dict.documents.title}</h1>
           </div>
-        </div>
+        )}
 
         <Card>
           <CardHeader>
@@ -151,7 +151,7 @@ export default function DocumentsPage() {
                       <CardHeader className="pb-2">
                         <div className="flex items-center justify-between">
                           <DocIcon className="size-4 text-muted-foreground" aria-hidden />
-                          <Badge variant={status.badge} className="text-xs">
+                          <Badge variant={status.badge} className="text-sm">
                             {dict.documents.status[status.labelKey as keyof typeof dict.documents.status] ?? d.status}
                           </Badge>
                         </div>
@@ -160,7 +160,7 @@ export default function DocumentsPage() {
                         </Link>
                       </CardHeader>
                       <CardContent className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <span>{d.mimeType.replace("image/", "").toUpperCase()}</span>
                           <span>{((d.sizeBytes || 0) / 1024).toFixed(0)} KB</span>
                         </div>

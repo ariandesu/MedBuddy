@@ -1,6 +1,6 @@
 /**
- * Simple per-user, per-route rate limiter.
- * Limit: 20 requests per hour per route per user.
+ * Simple per-key, per-route rate limiter (key = user id or client IP).
+ * Default limit: 20 requests per hour per route per key.
  * Memory mode: in-memory Map.
  * Mongo mode: rate_limits collection with TTL index.
  */
@@ -19,10 +19,25 @@ function keyFor(userId: string, route: string): string {
   return `${userId}:${route}`;
 }
 
+/**
+ * Best-effort client IP for unauthenticated routes (demo start, sign-up).
+ * On Vercel the first x-forwarded-for entry is the real client.
+ */
+export function clientIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) {
+    const first = fwd.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return req.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
 export async function rateLimitCheck(
   userId: string,
-  route: string
+  route: string,
+  limit: number = LIMIT
 ): Promise<{ allowed: boolean; remaining: number }> {
+  const LIMIT_FOR_CALL = limit;
   const uri = getMongoUri();
 
   if (uri) {
@@ -43,7 +58,6 @@ export async function rateLimitCheck(
       };
     };
     const nowMs = now();
-    const windowStart = nowMs - WINDOW_MS;
     const key = keyFor(userId, route);
 
     // Remove expired.
@@ -62,7 +76,7 @@ export async function rateLimitCheck(
 
     const count = existing ? (existing.count ?? 0) : 0;
 
-    if (count >= LIMIT) {
+    if (count >= LIMIT_FOR_CALL) {
       return { allowed: false, remaining: 0 };
     }
 
@@ -79,7 +93,7 @@ export async function rateLimitCheck(
         { upsert: true }
       );
 
-    return { allowed: true, remaining: LIMIT - count - 1 };
+    return { allowed: true, remaining: LIMIT_FOR_CALL - count - 1 };
   }
 
   // Memory mode.
@@ -94,7 +108,7 @@ export async function rateLimitCheck(
   const current = memoryStore.get(key);
   const count = current ? current.count : 0;
 
-  if (count >= LIMIT) {
+  if (count >= LIMIT_FOR_CALL) {
     return { allowed: false, remaining: 0 };
   }
 
@@ -103,5 +117,5 @@ export async function rateLimitCheck(
     resetAt: nowMs + WINDOW_MS,
   });
 
-  return { allowed: true, remaining: LIMIT - count - 1 };
+  return { allowed: true, remaining: LIMIT_FOR_CALL - count - 1 };
 }

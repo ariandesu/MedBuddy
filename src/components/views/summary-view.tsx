@@ -1,6 +1,7 @@
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getLocaleAndDict } from "@/lib/i18n/server";
+import { formatDate, toLocaleDigits } from "@/lib/digits";
 import { GenerateSummaryButton } from "@/components/generate-summary-button";
 import {
   FileText,
@@ -13,26 +14,20 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const RECORD_TYPE_CONFIG: Record<string, { label: string; Icon: React.ElementType }> = {
-  lab_report: { label: "Lab report", Icon: FileText },
-  prescription: { label: "Prescription", Icon: FileText },
-  other: { label: "Other", Icon: FileText },
-};
-
-export const dynamic = "force-dynamic";
-
-export default async function SummaryPage() {
-  const { dict } = await getLocaleAndDict();
+export async function SummaryView({ embedded = false }: { embedded?: boolean }) {
+  const { dict, locale } = await getLocaleAndDict();
   const user = await getSessionUser();
   const repo = getRepo();
   const summary = user ? await repo.getLatestHealthSummary(user.id) : null;
 
   return (
     <div className="flex flex-col gap-6 max-w-3xl mx-auto">
-      <div className="flex items-center gap-2">
-        <FileText className="size-5 text-primary" aria-hidden />
-        <h1 className="text-2xl font-bold">{dict.summary.title}</h1>
-      </div>
+      {!embedded && (
+        <div className="flex items-center gap-2">
+          <FileText className="size-5 text-primary" aria-hidden />
+          <h1 className="text-2xl font-bold">{dict.summary.title}</h1>
+        </div>
+      )}
       <GenerateSummaryButton dict={dict} />
 
       {!user || !summary ? (
@@ -56,11 +51,11 @@ export default async function SummaryPage() {
                 {summary.payload.observedChanges.map((c) => (
                   <li key={c.description} className="border-l border-primary pl-3 py-1">
                     <p>{c.description}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {dict.summary.uncertainty}: {c.uncertainty}
                     </p>
                     {c.sourceRecordIds.length > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
                         <Link className="size-3" aria-hidden />
                         {dict.summary.sourceRecords}:{" "}
                         {c.sourceRecordIds.map((id) => (
@@ -115,7 +110,7 @@ export default async function SummaryPage() {
           )}
 
           {summary.payload.limitations.length > 0 && (
-            <section className="border rounded-lg p-3 bg-amber-50 text-amber-800 text-sm">
+            <section className="rounded-xl p-3 bg-warning/15 text-warning-foreground text-sm">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="size-4" aria-hidden />
                 <h2 className="text-sm font-semibold">{dict.summary.limitations}</h2>
@@ -123,7 +118,7 @@ export default async function SummaryPage() {
               <ul className="space-y-1">
                 {summary.payload.limitations.map((l) => (
                   <li key={l} className="flex items-center gap-1">
-                    <AlertTriangle className="size-3 text-amber-600" aria-hidden />
+                    <AlertTriangle className="size-3" aria-hidden />
                     {l}
                   </li>
                 ))}
@@ -132,14 +127,10 @@ export default async function SummaryPage() {
           )}
 
           <div className="pt-4 border-t">
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="size-3" aria-hidden />
-              {dict.summary.generated} {new Date(summary.generatedAt).toLocaleDateString(undefined, {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })} • {summary.isSample ? "Sample (demo)" : summary.model} •
-              {summary.sourceRecordIds.length} {dict.summary.sourceRecords}
+              {dict.summary.generated} {formatDate(summary.generatedAt, locale)}.{" "}
+              {toLocaleDigits(String(summary.sourceRecordIds.length), locale)} {dict.summary.sourceRecords}
             </p>
           </div>
         </div>

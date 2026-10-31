@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { HeartPulse } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { LogoutButton } from "@/components/logout-button";
-import { NAV_ITEMS } from "@/components/nav-items";
+import { NAV_ITEMS, isNavActive } from "@/components/nav-items";
 import { usePathname } from "next/navigation";
 import type { Dictionary, Locale } from "@/lib/i18n";
 import type { SessionUser } from "@/server/auth";
@@ -23,62 +21,57 @@ export function Header({
 }) {
   const pathname = usePathname();
   return (
-    <header className="no-print sticky top-0 z-50 border-b bg-background/95 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4">
-        <Link href="/dashboard" className="flex min-h-[44px] items-center gap-2">
-          <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <HeartPulse className="size-6" aria-hidden />
+    <header className="no-print sticky top-0 z-40 border-b bg-background">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4">
+        <Link
+          href={user ? "/dashboard" : "/"}
+          className="flex min-h-11 shrink-0 items-center gap-2 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <HeartPulse className="size-5" aria-hidden />
           </span>
-          <span className="leading-tight">
-            <span className="block text-lg font-bold">{dict.appName}</span>
-            <span className="hidden text-xs text-muted-foreground sm:block">
-              {dict.tagline}
-            </span>
-          </span>
+          <span className="font-heading text-lg font-semibold">{dict.appName}</span>
         </Link>
 
-        {/* Desktop nav (hidden on mobile) */}
         {user ? (
-          <nav className="hidden md:flex items-center gap-3">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-              const Icon = item.Icon;
-              return (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className={buttonVariants({
-                    variant: active ? "default" : "ghost",
-                    size: "sm",
-                    className: cn(
-                      "flex items-center gap-2 min-h-[40px] px-3",
-                      active
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    ),
-                  })}
-                >
-                  <Icon className="size-4" aria-hidden />
-                  {dict.nav[item.key as keyof typeof dict.nav]}
-                </Link>
-              );
-            })}
+          <nav aria-label={dict.nav.primary} className="hidden flex-1 justify-center md:flex">
+            <ul className="flex items-center gap-1">
+              {NAV_ITEMS.map((item) => {
+                const active = isNavActive(item, pathname);
+                const { Icon } = item;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3 font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="size-4 lg:inline hidden" aria-hidden />
+                      {dict.nav[item.key]}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </nav>
-        ) : null}
+        ) : (
+          <div className="flex-1" />
+        )}
 
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher locale={locale} label={dict.header.language} />
+        <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-0">
+          <LanguageSwitcher locale={locale} />
           {user ? (
-            <>
-              <Avatar title={user.email} className="size-8">
-                <AvatarFallback>
-                  {user.email.slice(0, 1).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <LogoutButton label={dict.header.logout} />
-            </>
+            <LogoutButton label={dict.header.logout} />
           ) : (
-            <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm" })}>
+            <Link
+              href="/login"
+              className="flex min-h-11 items-center rounded-full border px-4 font-medium hover:bg-muted"
+            >
               {dict.header.login}
             </Link>
           )}

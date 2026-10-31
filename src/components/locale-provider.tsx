@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useCallback, useContext } from "react";
+import { useRouter } from "next/navigation";
 import en from "@/lib/i18n/en.json";
 import bn from "@/lib/i18n/bn.json";
 import type { Dictionary, Locale } from "@/lib/i18n";
@@ -14,6 +15,11 @@ interface LocaleContextType {
 
 const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 
+/**
+ * The server reads the locale cookie on every request and passes it in, so the
+ * prop is the single source of truth. (Keeping a copy in state meant client
+ * pages kept the old language after switching until a full reload.)
+ */
 export function LocaleProvider({
   children,
   initialLocale,
@@ -21,27 +27,19 @@ export function LocaleProvider({
   children: React.ReactNode;
   initialLocale: Locale;
 }) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const router = useRouter();
+  const locale = initialLocale;
   const dict: Dictionary = locale === "bn" ? bn : en;
 
-  const setLocale = useCallback((nextLocale: Locale) => {
-    setLocaleState(nextLocale);
-    try {
-      document.cookie = `${LOCALE_COOKIE}=${nextLocale}; path=/; max-age=31536000`;
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    if (typeof document !== "undefined") {
-      const m = document.cookie.match(
-        new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]+)`)
-      );
-      if (m?.[1] === "bn" || m?.[1] === "en") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setLocaleState(m?.[1] as Locale);
-      }
-    }
-  }, []);
+  const setLocale = useCallback(
+    (nextLocale: Locale) => {
+      try {
+        document.cookie = `${LOCALE_COOKIE}=${nextLocale}; path=/; max-age=31536000`;
+      } catch {}
+      router.refresh();
+    },
+    [router]
+  );
 
   return (
     <LocaleContext.Provider value={{ locale, dict, setLocale }}>

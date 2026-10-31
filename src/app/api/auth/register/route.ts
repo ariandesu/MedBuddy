@@ -1,11 +1,11 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getRepo } from "@/server/repo/index";
-import { rateLimitCheck } from "@/server/rate-limit";
+import { clientIp, rateLimitCheck } from "@/server/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-// Stricter limit for sign-up: 10 per hour per user (email).
+// Sign-up: 10 per hour per client IP (per-email limits are trivially bypassed).
 const SIGNUP_LIMIT = 10;
 
 const schema = z.object({
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid input" }, { status: 400 });
   }
 
-  const rateLimit = await rateLimitCheck(parsed.data.email.toLowerCase(), "signup");
+  const rateLimit = await rateLimitCheck(`ip:${clientIp(req)}`, "signup", SIGNUP_LIMIT);
   if (!rateLimit.allowed) {
     return Response.json(
       { error: "Rate limit exceeded. Try again later." },

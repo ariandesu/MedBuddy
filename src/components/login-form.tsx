@@ -30,8 +30,25 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
     };
   }, []);
 
+  async function getCsrf(): Promise<string | null> {
+    if (csrfToken) return csrfToken;
+    try {
+      const data = await fetch("/api/auth/csrf").then((r) => r.json());
+      if (data?.csrfToken) {
+        setCsrfToken(data.csrfToken);
+        return data.csrfToken as string;
+      }
+    } catch {}
+    return null;
+  }
+
   async function submit(email: string, password: string) {
-    if (!csrfToken) return;
+    // Don't silently drop a fast tap made before the token loaded: fetch it now.
+    const token = await getCsrf();
+    if (!token) {
+      setError(dict.auth.error);
+      return;
+    }
     setPending(true);
     setError(null);
     try {
@@ -46,7 +63,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
         credentials: "include",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-          csrfToken,
+          csrfToken: token,
           email,
           password,
           callbackUrl: finalCallbackUrl,

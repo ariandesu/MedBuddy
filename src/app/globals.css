@@ -21,10 +21,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-heading);
-  --font-body: var(--font-body);
+  --font-sans: var(--font-noto), "Noto Sans Bengali", system-ui, sans-serif;
+  --font-heading: var(--font-anek), "Anek Bangla", var(--font-noto), system-ui, sans-serif;
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -64,51 +64,46 @@
 }
 
 :root {
-  /* Paper background */
-  --background: oklch(0.963 0.008 142.1); /* #F6F8F6 */
-  /* Ink foreground */
-  --foreground: oklch(0.196 0.012 142.0); /* #18282A */
-
+  /* Values below are the DESIGN.md hex colors converted to OKLCH (checked, not guessed). */
+  --background: oklch(0.9771 0.0034 145.6); /* Paper #F6F8F6 */
+  --foreground: oklch(0.2635 0.0217 205.8); /* Ink #18282A */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.196 0.012 142.0);
+  --card-foreground: oklch(0.2635 0.0217 205.8);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.196 0.012 142.0);
-  /* Shapla teal primary */
-  --primary: oklch(0.521 0.134 160.0); /* #0E6B5E */
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.963 0.008 142.1);
-  --secondary-foreground: oklch(0.686 0.155 46.0); /* #E3A72F */
-  --muted: oklch(0.94 0.006 142.0);
-  --muted-foreground: oklch(0.439 0.01 142.0);
-  --accent: oklch(0.963 0.008 142.1);
-  --accent-foreground: oklch(0.196 0.012 142.0);
-  /* Alarm destructive */
-  --destructive: oklch(0.542 0.174 26.4); /* #C2402F */
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.888 0.006 142.0);
-  --input: oklch(0.888 0.006 142.0);
-  --ring: oklch(0.521 0.134 160.0);
-  --chart-1: oklch(0.521 0.134 160.0);
-  --chart-2: oklch(0.686 0.155 46.0);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.963 0.008 142.1);
-  --sidebar-foreground: oklch(0.196 0.012 142.0);
-  --sidebar-primary: oklch(0.521 0.134 160.0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.963 0.008 142.1);
-  --sidebar-accent-foreground: oklch(0.196 0.012 142.0);
-  --sidebar-border: oklch(0.888 0.006 142.0);
-  --sidebar-ring: oklch(0.521 0.134 160.0);
+  --popover-foreground: oklch(0.2635 0.0217 205.8);
+  --primary: oklch(0.4748 0.0823 180.2); /* Shapla teal #0E6B5E — 6.4:1 on white */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.9472 0.0109 167.8); /* #E7F0EC teal tint */
+  --secondary-foreground: oklch(0.2635 0.0217 205.8);
+  --muted: oklch(0.9498 0.0075 164.9); /* #EAF0ED */
+  --muted-foreground: oklch(0.5194 0.0214 179.6); /* Mist text #5C6D69 — 5.1:1 on paper */
+  --accent: oklch(0.9472 0.0109 167.8);
+  --accent-foreground: oklch(0.2635 0.0217 205.8);
+  --destructive: oklch(0.5548 0.169 30.55); /* Alarm #C2402F — urgent only */
+  --destructive-foreground: oklch(1 0 0);
+  /* Haldi #E3A72F: fills/dots only (too light for text). Text uses the dark amber. */
+  --warning: oklch(0.7659 0.1449 79.78);
+  --warning-foreground: oklch(0.4707 0.0987 76.33); /* #7A5200 — 6.2:1 on Haldi tint */
+  --border: oklch(0.9116 0.0101 164.9); /* Mist #DCE4E0 */
+  --input: oklch(0.9116 0.0101 164.9);
+  --ring: oklch(0.4748 0.0823 180.2);
+  --chart-1: oklch(0.4748 0.0823 180.2);
+  --chart-2: oklch(0.7659 0.1449 79.78);
+  --chart-3: oklch(0.5194 0.0214 179.6);
+  --chart-4: oklch(0.6 0.06 180);
+  --chart-5: oklch(0.5548 0.169 30.55);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.9771 0.0034 145.6);
+  --sidebar-foreground: oklch(0.2635 0.0217 205.8);
+  --sidebar-primary: oklch(0.4748 0.0823 180.2);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.9472 0.0109 167.8);
+  --sidebar-accent-foreground: oklch(0.2635 0.0217 205.8);
+  --sidebar-border: oklch(0.9116 0.0101 164.9);
+  --sidebar-ring: oklch(0.4748 0.0823 180.2);
 }
 
-/* Force light theme — no dark mode toggle */
-.dark {
-  --background: oklch(0.963 0.008 142.1);
-  --foreground: oklch(0.196 0.012 142.0);
-}
+/* Light theme only — no dark mode toggle. */
 
 @layer base {
   * {
@@ -123,16 +118,24 @@
     @apply bg-background text-foreground;
   }
   /* Large tap targets for low-literacy / mobile users (≥48px) */
-  button,
+  button:not([role="checkbox"]):not([role="radio"]):not([role="switch"]):not([role="tab"]),
   a[role="button"],
   input[type="button"],
   input[type="submit"] {
     min-height: 48px;
   }
-  nav a,
-  nav button {
-    min-height: 48px;
-    min-width: 48px;
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
   /* Bangla line height */
   html[lang="bn"] {
