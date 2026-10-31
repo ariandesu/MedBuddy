@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
-import { getAI } from "@/server/ai/index";
 import { getLocale } from "@/lib/i18n/server";
-import { crossCheckField } from "@/server/ai/crosscheck";
-import { toExtractedField } from "@/lib/schemas/ai";
+import { processDocumentExtraction } from "@/server/extract-document";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
@@ -105,35 +103,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     await repo.updateDocumentStatus(user.id, doc.id, "processing");
 
-    // AI extraction + deterministic cross-check.
-    // Keep the browser OCR text (don't overwrite with the model's echo).
-    const ocrText = clientOcrText;
-    let aiResult;
-    try {
-      aiResult = await getAI().extractDocument(buf, mime, ocrText, doc.id, locale);
-    } catch {
-      await repo.updateDocumentStatus(user.id, doc.id, "failed");
+    const result = await processDocumentExtraction({
+      userId: user.id,
+      doc,
+      buf,
+      mime,
+      clientOcrText,
+      locale,
+    });
+
+    if (result.status === "failed") {
       return NextResponse.json(
-        { id: doc.id, status: "failed", fileName: doc.fileName },
+        { id: doc.id, status: "failed", error: "ai_failed", fileName: doc.fileName },
         { status: 502 }
       );
     }
-
-    const fields = aiResult.fields.map((f) => {
-      const { agreement, needsReview } = crossCheckField(f, ocrText);
-      return toExtractedField(f, agreement, needsReview);
-    });
-
-    await repo.createExtraction({
-      userId: user.id,
-      documentId: doc.id,
-      documentType: aiResult.documentType,
-      documentDateRaw: aiResult.documentDateRaw,
-      documentDate: aiResult.documentDate,
-      fields,
-      ocrText,
-    });
-    await repo.updateDocumentStatus(user.id, doc.id, "needs_review");
 
     return NextResponse.json(
       {
@@ -145,9 +129,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status: 201 }
     );
   } catch {
-    try {
-      await repo.updateDocumentStatus(user.id, doc!.id, "failed");
-    } catch {}
+    if (doc) {
+      try {
+        await repo.updateDocumentStatus(user.id, doc.id, "failed");
+      } catch {}
+    }
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

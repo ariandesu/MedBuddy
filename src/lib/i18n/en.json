@@ -34,6 +34,7 @@
     "uploaded": "Uploaded — review your extracted values",
     "ocrReady": "Text read — check it, then press Upload",
     "tooLarge": "File is too large (max 4 MB).",
+    "aiFailed": "Could not read this document. You can try again.",
     "help": "JPG/PNG/PDF · ≤ 4 MB · max 5 PDF pages · OCR runs in your browser",
     "colFile": "File",
     "colType": "Type",
@@ -48,7 +49,8 @@
       "needs_review": "Needs review",
       "confirmed": "Confirmed",
       "failed": "Failed"
-    }
+    },
+    "retry": "Retry"
   },
   "review": {
     "title": "Review extracted values",

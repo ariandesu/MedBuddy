@@ -139,18 +139,33 @@ export default function DocumentsPage() {
                     </TableCell>
                     <TableCell className="text-center">{statusBadge(d.status)}</TableCell>
                     <TableCell className="text-center">
-                      <Link
-                        href={`/documents/${d.id}`}
-                        className={buttonVariants({
-                          variant: d.status === "needs_review" ? "secondary" : "outline",
-                          size: "sm",
-                          className: "min-h-[44px]",
-                        })}
-                      >
-                        {d.status === "needs_review"
-                          ? dict.documents.review
-                          : dict.documents.view}
-                      </Link>
+                      {d.status === "failed" ? (
+                        <Button
+                          onClick={() => {
+                            void fetch(`/api/documents/${d.id}/retry`, {
+                              method: "POST",
+                            }).then(() => load());
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="min-h-[44px]"
+                        >
+                          {dict.documents.retry}
+                        </Button>
+                      ) : (
+                        <Link
+                          href={`/documents/${d.id}`}
+                          className={buttonVariants({
+                            variant: d.status === "needs_review" ? "secondary" : "outline",
+                            size: "sm",
+                            className: "min-h-[44px]",
+                          })}
+                        >
+                          {d.status === "needs_review"
+                            ? dict.documents.review
+                            : dict.documents.view}
+                        </Link>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
