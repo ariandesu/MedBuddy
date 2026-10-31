@@ -15,7 +15,11 @@ import { NAV_ITEMS, MORE_ITEMS } from "@/components/nav-items";
 import type { Dictionary } from "@/lib/i18n";
 
 const MAIN_ITEMS = NAV_ITEMS.filter(
-  (i) => i.key !== "summary" && i.key !== "report" && i.key !== "ask"
+  (i) =>
+    i.key === "dashboard" ||
+    i.key === "documents" ||
+    i.key === "checkin" ||
+    i.key === "timeline"
 );
 
 export function BottomNav({ dict, user }: { dict: Dictionary; user?: { email?: string } | null }) {

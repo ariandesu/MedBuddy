@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Hind_Siliguri } from "next/font/google";
+import { Anek_Bangla, Noto_Sans_Bengali } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
@@ -13,15 +13,16 @@ import { getSessionUser } from "@/server/auth";
 
 export const dynamic = "force-dynamic";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+const anekBangla = Anek_Bangla({
+  variable: "--font-anek",
+  subsets: ["bengali"],
+  weight: ["400", "500", "600", "700"],
 });
 
-const hindSiliguri = Hind_Siliguri({
-  variable: "--font-hind",
+const notoSansBengali = Noto_Sans_Bengali({
+  variable: "--font-noto",
   subsets: ["bengali", "latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -40,13 +41,13 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${inter.variable} ${hindSiliguri.variable} h-full antialiased`}
+      className={`${anekBangla.variable} ${notoSansBengali.variable} h-full antialiased`}
     >
       <body
         className="flex min-h-full flex-col"
         style={{
           fontFamily:
-            "var(--font-inter), var(--font-hind), system-ui, sans-serif",
+            "var(--font-noto), var(--font-anek), system-ui, sans-serif",
         }}
       >
         <TooltipProvider>
