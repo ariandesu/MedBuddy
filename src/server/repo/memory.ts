@@ -217,6 +217,34 @@ export class MemoryRepository implements Repository {
     return clone(doc);
   }
 
+  async deleteDocument(userId: string, id: string): Promise<boolean> {
+    const doc = this.documents.get(id);
+    if (!doc || doc.userId !== userId) return false;
+    this.files.delete(`${userId}:${doc.fileRef}`);
+    this.documents.delete(id);
+    // Delete related extractions and records
+    for (const [key, ext] of this.extractions) {
+      if (ext.userId === userId && ext.documentId === id) {
+        this.extractions.delete(key);
+      }
+    }
+    for (const [key, rec] of this.records) {
+      if (rec.userId === userId && rec.documentId === id) {
+        this.records.delete(key);
+      }
+    }
+    return true;
+  }
+
+  async findDocumentByChecksum(userId: string, checksum: string): Promise<Document | null> {
+    for (const doc of this.documents.values()) {
+      if (doc.userId === userId && doc.checksum === checksum) {
+        return clone(doc);
+      }
+    }
+    return null;
+  }
+
   async storeFile(
     userId: string,
     fileRef: string,

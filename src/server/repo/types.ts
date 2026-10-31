@@ -82,6 +82,9 @@ export interface Repository {
   getUserByEmail(email: string): Promise<User | null>;
   getUserById(id: string): Promise<User | null>;
 
+  deleteDocument(userId: string, id: string): Promise<boolean>;
+  findDocumentByChecksum(userId: string, checksum: string): Promise<Document | null>;
+
   createDocument(input: CreateDocumentInput): Promise<Document>;
   getDocument(userId: string, id: string): Promise<Document | null>;
   listDocuments(userId: string): Promise<Document[]>;

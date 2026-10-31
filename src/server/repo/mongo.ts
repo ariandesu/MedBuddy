@@ -195,6 +195,34 @@ export class MongoRepository implements Repository {
     return this.getDocument(userId, id);
   }
 
+  async deleteDocument(userId: string, id: string): Promise<boolean> {
+    const db = await this.db();
+    const doc = await db
+      .collection<FlexDoc>(COLLECTIONS.documents)
+      .findOne({ _id: id, userId });
+    if (!doc) return false;
+    const bucket = new GridFSBucket(db, { bucketName: FILES_BUCKET });
+    const files = await bucket
+      .find({ filename: (doc as { fileRef?: string }).fileRef ?? "" })
+      .toArray();
+    for (const f of files) {
+      await bucket.delete(f._id);
+    }
+    await db.collection<FlexDoc>(COLLECTIONS.documents).deleteOne({ _id: id, userId });
+    await db.collection<FlexDoc>(COLLECTIONS.extractions).deleteMany({ documentId: id, userId });
+    await db.collection<FlexDoc>(COLLECTIONS.medicalRecords).deleteMany({ documentId: id, userId });
+    return true;
+  }
+
+  async findDocumentByChecksum(userId: string, checksum: string): Promise<Document | null> {
+    const db = await this.db();
+    const doc = await db
+      .collection<FlexDoc>(COLLECTIONS.documents)
+      .findOne({ userId, checksum });
+    if (!doc) return null;
+    return fromDoc<Document>(doc as Record<string, unknown>);
+  }
+
   async storeFile(
     userId: string,
     fileRef: string,

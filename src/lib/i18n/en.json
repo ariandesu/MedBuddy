@@ -60,7 +60,10 @@
       "confirmed": "Confirmed",
       "failed": "Failed"
     },
-    "retry": "Retry"
+    "retry": "Retry",
+    "delete": "Delete",
+    "deleteConfirm": "Delete document",
+    "deleteConfirmDesc": "Are you sure you want to delete"
   },
   "review": {
     "title": "Review extracted values",

@@ -15,6 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { UploadZone } from "@/components/upload-zone";
 import { useDictionary } from "@/lib/use-dictionary";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Doc = {
   id: string;
@@ -29,6 +38,7 @@ export default function DocumentsPage() {
   const dict = useDictionary();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState<{ id: string; name: string } | null>(null);
 
   const load = useCallback(async () => {
     const serverDocs: Doc[] = [];
@@ -81,10 +91,11 @@ export default function DocumentsPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{dict.documents.title}</h1>
-      </div>
+    <>
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">{dict.documents.title}</h1>
+        </div>
 
       <Card>
         <CardHeader>
@@ -166,6 +177,14 @@ export default function DocumentsPage() {
                             : dict.documents.view}
                         </Link>
                       )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteDialog({ id: d.id, name: d.fileName })}
+                        className="min-h-[44px] ml-2"
+                      >
+                        {dict.documents.delete}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -175,5 +194,39 @@ export default function DocumentsPage() {
         </CardContent>
       </Card>
     </div>
+
+    {deleteDialog && (
+      <AlertDialog open={true} onOpenChange={(open) => {
+        if (!open) setDeleteDialog(null);
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>{dict.documents.deleteConfirm}</AlertDialogHeader>
+          <AlertDialogDescription>
+            {dict.documents.deleteConfirmDesc}{" "}
+            <strong>{deleteDialog.name}</strong>?
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteDialog(null)}>
+              {dict.common.cancel}
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                const res = await fetch(`/api/documents/${deleteDialog.id}`, {
+                  method: "DELETE",
+                });
+                if (res.ok) {
+                  setDeleteDialog(null);
+                  load();
+                }
+              }}
+            >
+              {dict.documents.delete}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    )}
+    </>
   );
 }

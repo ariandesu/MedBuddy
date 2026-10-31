@@ -87,9 +87,18 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const crypto = await import("node:crypto");
   const checksum = crypto.createHash("sha256").update(buf).digest("hex");
-  const fileRef = `${user.id}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
 
   const repo = getRepo();
+  // Duplicate detection
+  const existing = await repo.findDocumentByChecksum(user.id, checksum);
+  if (existing) {
+    return NextResponse.json(
+      { error: "duplicate", id: existing.id },
+      { status: 409 }
+    );
+  }
+
+  const fileRef = `${user.id}/${Date.now()}-${file.name.replace(/\s+/g, "_")}`;
   let doc;
   try {
     await repo.storeFile(user.id, fileRef, buf, mime, file.name);
