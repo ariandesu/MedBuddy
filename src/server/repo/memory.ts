@@ -340,13 +340,13 @@ export class MemoryRepository implements Repository {
       id: existing?.id ?? randomUUID(),
       userId,
       date,
-      sleepHours: data.sleepHours ?? existing?.sleepHours,
-      waterGlasses: data.waterGlasses ?? existing?.waterGlasses,
-      activityMinutes: data.activityMinutes ?? existing?.activityMinutes,
-      energy: data.energy ?? existing?.energy,
-      symptomLevel: data.symptomLevel ?? existing?.symptomLevel,
-      symptoms: data.symptoms ?? existing?.symptoms,
-      note: data.note ?? existing?.note,
+      sleepHours: "sleepHours" in data ? data.sleepHours ?? undefined : existing?.sleepHours,
+      waterGlasses: "waterGlasses" in data ? data.waterGlasses ?? undefined : existing?.waterGlasses,
+      activityMinutes: "activityMinutes" in data ? data.activityMinutes ?? undefined : existing?.activityMinutes,
+      energy: "energy" in data ? data.energy ?? undefined : existing?.energy,
+      symptomLevel: "symptomLevel" in data ? data.symptomLevel ?? undefined : existing?.symptomLevel,
+      symptoms: "symptoms" in data ? data.symptoms : existing?.symptoms,
+      note: "note" in data ? data.note ?? undefined : existing?.note,
     };
     this.wellness.set(key, entry);
     return clone(entry);

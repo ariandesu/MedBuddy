@@ -4,13 +4,14 @@ import { getSessionUser } from "@/server/auth";
 import { z } from "zod";
 
 const wellnessSchema = z.object({
-  sleepHours: z.number().min(0).max(24).optional(),
-  waterGlasses: z.number().int().min(0).max(30).optional(),
-  activityMinutes: z.number().int().min(0).max(1440).optional(),
-  energy: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
-  symptomLevel: z.enum(["none", "mild", "moderate", "severe"]).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  sleepHours: z.number().min(0).max(24).optional().nullable(),
+  waterGlasses: z.number().int().min(0).max(30).optional().nullable(),
+  activityMinutes: z.number().int().min(0).max(1440).optional().nullable(),
+  energy: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional().nullable(),
+  symptomLevel: z.enum(["none", "mild", "moderate", "severe"]).optional().nullable(),
   symptoms: z.array(z.string()).optional(),
-  note: z.string().max(500).optional(),
+  note: z.string().max(500).optional().nullable(),
 });
 
 export const dynamic = "force-dynamic";
@@ -30,10 +31,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid check-in" }, { status: 400 });
   }
 
-  // date = today in local timezone (YYYY-MM-DD)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const date = today.toISOString().slice(0, 10);
+  // Use client-provided local date (YYYY-MM-DD), default to today.
+  const date = parsed.data.date ?? new Date().toISOString().slice(0, 10);
+  // Reject dates more than 1 day in the future.
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+  if (date > tomorrow) {
+    return NextResponse.json({ error: "Date cannot be in the future" }, { status: 400 });
+  }
 
   const entry = await getRepo().upsertWellnessEntry(user.id, date, parsed.data);
   return NextResponse.json(entry, { status: 201 });

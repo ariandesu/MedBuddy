@@ -53,13 +53,14 @@ export interface CreateMedicalRecordInput {
 }
 
 export interface WellnessUpsertInput {
-  sleepHours?: number;
-  waterGlasses?: number;
-  activityMinutes?: number;
-  energy?: 1 | 2 | 3 | 4;
-  symptomLevel?: "none" | "mild" | "moderate" | "severe";
+  date?: string;
+  sleepHours?: number | null;
+  waterGlasses?: number | null;
+  activityMinutes?: number | null;
+  energy?: 1 | 2 | 3 | 4 | null;
+  symptomLevel?: "none" | "mild" | "moderate" | "severe" | null;
   symptoms?: string[];
-  note?: string;
+  note?: string | null;
 }
 
 export interface CreateHealthSummaryInput {

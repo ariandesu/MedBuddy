@@ -351,10 +351,16 @@ export class MongoRepository implements Repository {
     data: WellnessUpsertInput
   ): Promise<WellnessEntry> {
     const db = await this.db();
+    // Convert null → undefined so stripUndefined drops it (client wants to clear).
+    // Undefined (key absent) = keep existing value.
+    const cleared: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(data)) {
+      cleared[k] = v === null ? undefined : v;
+    }
     await db.collection<FlexDoc>(COLLECTIONS.wellness).updateOne(
       { userId, date },
       {
-        $set: stripUndefined({ ...data, userId, date }),
+        $set: stripUndefined({ ...cleared, userId, date }),
         $setOnInsert: { _id: newId() },
       },
       { upsert: true }
