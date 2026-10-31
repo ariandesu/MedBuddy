@@ -79,24 +79,77 @@ export class MuseAI implements AIProvider {
     );
   }
 
+  private async chatWithParts<T>(
+    schema: z.ZodType<T>,
+    parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }>,
+    systemContent: string,
+    schemaName: string
+  ): Promise<T> {
+    const client = this.getClient();
+    const model = getMuseModel();
+    const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>;
+    // No response_format for multimodal; parse JSON from text response.
+    const completion = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemContent },
+        { role: "user", content: parts },
+      ],
+      store: false,
+    });
+    const raw = completion.choices[0]?.message.content ?? "";
+    return schema.parse(JSON.parse(raw));
+  }
+
   async extractDocument(
     fileBytes: Buffer,
     mimeType: string,
     ocrText: string,
-    documentId: string
+    documentId: string,
+    locale: "bn" | "en" = "en"
   ): Promise<AIExtractionResult> {
     const content = wrapDocument(
       documentId,
       `MIME: ${mimeType}\nOCR text:\n${ocrText}\n`
     );
+    const textContent = `Extract all fields from this health document. Return values exactly as written, including Bangla digits. ${content}`;
+
+    // For images, send multimodal content (image + text). If the endpoint
+    // rejects image input (400), fall back to text-only once.
+    if (mimeType.startsWith("image/")) {
+      const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [
+        { type: "text", text: textContent },
+        {
+          type: "image_url",
+          image_url: { url: `data:${mimeType};base64,${fileBytes.toString("base64")}` },
+        },
+      ];
+      try {
+        return await this.chatWithParts(aiExtractionResultSchema, parts, systemPrompt(locale), "extraction_result");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("400")) {
+          // eslint-disable-next-line no-console
+          console.warn("muse: image input rejected, text-only fallback");
+          return this.chat(
+            aiExtractionResultSchema,
+            [
+              { role: "system", content: systemPrompt(locale) },
+              { role: "user", content: textContent },
+            ],
+            REASONING_EFFORT_EXTRACTION,
+            "extraction_result"
+          );
+        }
+        throw err;
+      }
+    }
+
     return this.chat(
       aiExtractionResultSchema,
       [
-        { role: "system", content: systemPrompt("en") },
-        {
-          role: "user",
-          content: `Extract all fields from this health document. Return values exactly as written, including Bangla digits. ${content}`,
-        },
+        { role: "system", content: systemPrompt(locale) },
+        { role: "user", content: textContent },
       ],
       REASONING_EFFORT_EXTRACTION,
       "extraction_result"

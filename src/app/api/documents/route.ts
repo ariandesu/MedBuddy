@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getAI } from "@/server/ai/index";
+import { getLocale } from "@/lib/i18n/server";
 import { crossCheckField } from "@/server/ai/crosscheck";
 import { toExtractedField } from "@/lib/schemas/ai";
 
@@ -58,6 +59,7 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const locale = await getLocale();
 
   let formData: FormData;
   try {
@@ -104,11 +106,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     await repo.updateDocumentStatus(user.id, doc.id, "processing");
 
     // AI extraction + deterministic cross-check.
-    let ocrText = clientOcrText;
+    // Keep the browser OCR text (don't overwrite with the model's echo).
+    const ocrText = clientOcrText;
     let aiResult;
     try {
-      aiResult = await getAI().extractDocument(buf, mime, ocrText, doc.id);
-      ocrText = aiResult.ocrText ?? ocrText;
+      aiResult = await getAI().extractDocument(buf, mime, ocrText, doc.id, locale);
     } catch {
       await repo.updateDocumentStatus(user.id, doc.id, "failed");
       return NextResponse.json(

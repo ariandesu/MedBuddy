@@ -47,8 +47,7 @@ export function crossCheckField(
     agreement = "single_source";
   }
 
-  const tokens = ocrTokens(ocrText);
-  const valueInOCR = muse != null && tokens.has(muse);
+  const valueInOCR = muse != null && (normalizeValue(ocrText)?.includes(muse) ?? false);
 
   let needsReview = false;
   if (agreement === "mismatch") needsReview = true;

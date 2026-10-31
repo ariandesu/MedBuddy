@@ -11,7 +11,8 @@ export interface AIProvider {
     fileBytes: Buffer,
     mimeType: string,
     ocrText: string,
-    documentId: string
+    documentId: string,
+    locale: "bn" | "en"
   ): Promise<AIExtractionResult>;
   explainRecord(
     record: MedicalRecord,

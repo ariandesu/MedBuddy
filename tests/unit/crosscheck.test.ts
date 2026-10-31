@@ -71,4 +71,32 @@ describe("cross-check (M5)", () => {
     expect(r.agreement).toBe("single_source");
     expect(r.needsReview).toBe(true);
   });
+
+  it("multi-word value present in OCR => no review needed", () => {
+    const r = crossCheckField(
+      {
+        rawValue: "12.5 mg/dL",
+        numericValue: 12.5,
+        confidence: 0.9,
+        sources: { muse: "12.5 mg/dL", ocr: "12.5 mg/dL" },
+      },
+      "Take 12.5 mg/dL twice daily"
+    );
+    expect(r.agreement).toBe("match");
+    expect(r.needsReview).toBe(false);
+  });
+
+  it("Bangla-digit value vs ASCII OCR => match", () => {
+    const r = crossCheckField(
+      {
+        rawValue: "১২.৫",
+        numericValue: 12.5,
+        confidence: 0.9,
+        sources: { muse: "১২.৫", ocr: "12.5" },
+      },
+      "Value 12.5 mg/dL"
+    );
+    expect(r.agreement).toBe("match");
+    expect(r.needsReview).toBe(false);
+  });
 });

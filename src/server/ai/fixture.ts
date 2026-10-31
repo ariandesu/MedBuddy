@@ -24,7 +24,8 @@ export class FixtureAI implements AIProvider {
     fileBytes: Buffer,
     mimeType: string,
     ocrText: string,
-    documentId: string
+    documentId: string,
+    _locale: "bn" | "en"
   ): Promise<AIExtractionResult> {
     const byId: Record<string, AIExtractionResult> =
       (loadFixture("extraction", {
