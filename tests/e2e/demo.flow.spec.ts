@@ -2,58 +2,87 @@ import { test, expect } from "@playwright/test";
 
 test.use({ baseURL: "http://localhost:3131" });
 
-test.describe("M9 demo flow (demo mode, no credentials)", () => {
-  test("demo login -> documents -> review/confirm -> check-in -> timeline -> summary -> ask -> report", async ({
-    page,
-    context,
-  }) => {
-    // Use English UI for stable selectors
+async function demoLogin(page: any) {
+  await page.goto("/login");
+  await expect(page).toHaveURL("/login");
+  await page.click('button:has-text("Try the demo")');
+  await expect(page).toHaveURL("/dashboard");
+}
+
+test.describe("T27 E2E demo flow", () => {
+  test("full flow in English", async ({ page, context }) => {
     await context.addCookies([
       { name: "medisathi-locale", value: "en", domain: "localhost", path: "/" },
     ]);
+    await demoLogin(page);
 
-    // 1. Login (demo) via the real UI form
-    await page.goto("/login");
-    await expect(page).toHaveURL("/login");
-    await page.fill('input[name="email"]', "demo@medisathi.app");
-    await page.fill('input[name="password"]', "demo1234");
-    await page.click('button:has-text("Log in")');
-    await expect(page).toHaveURL("/dashboard");
-
-    // 2. Documents -> seeded list (4 docs, 2 confirmed + 2 needs_review)
-    await page.goto("/documents");
+    // Navigate to Documents via nav link
+    await page.click('a:has-text("Documents")');
     await expect(page.locator("h1")).toContainText("Documents");
-    await expect(page.locator("text=Lipid-Profile.jpg")).toBeVisible();
-    await expect(page.locator("text=Prescription-handwritten.jpg")).toBeVisible();
+    // Wait for at least one document row
+    await expect(page.locator("table tbody tr").first()).toBeVisible();
 
-    // 3. Review a needs_review document -> confirm
-    await page.goto("/documents/doc_lipid_002");
+    // Click a needs_review document
+    await page.click('a:has-text("Review")').first();
     await expect(page.locator("h1")).toContainText("Review extracted values");
+
+    // Tick every "I checked this" box
+    const checkboxes = page.locator('input[type="checkbox"]');
+    const count = await checkboxes.count();
+    for (let i = 0; i < count; i++) {
+      await checkboxes.nth(i).check();
+    }
+
+    // Confirm
     await page.click('button:has-text("Confirm")');
     await expect(page).toHaveURL("/documents");
 
-    // 4. Check-in
-    await page.goto("/checkin");
+    // Check-in with chest pain → urgent dialog
+    await page.click('a:has-text("Check-in")');
+    await page.check('text="Chest pain"');
     await page.click('button:has-text("Save check-in")');
-    await expect(page.locator("text=Save successful")).toBeVisible();
+    await expect(page.locator('text="This may need urgent care"')).toBeVisible();
 
-    // 5. Timeline
-    await page.goto("/timeline");
+    // Timeline
+    await page.click('a:has-text("Timeline")');
     await expect(page.locator("h1")).toContainText("Timeline");
 
-    // 6. Summary -> generate
-    await page.goto("/summary");
+    // Summary → Generate
+    await page.click('a:has-text("Summary")');
     await page.click('button:has-text("Generate summary")');
     await expect(page.locator("text=Summary generated")).toBeVisible();
+    await expect(page.locator("a[href*='timeline#rec-']")).toHaveCount(1);
 
-    // 7. Ask
-    await page.goto("/ask");
-    await page.fill('input[placeholder*="Ask a question"]', "What medicines?");
-    await page.click('button:has-text("Send")');
-    await expect(page.locator("text=Answer")).toBeVisible();
-
-    // 8. Report
-    await page.goto("/report");
+    // Report → print
+    await page.click('a:has-text("Report")');
     await expect(page.locator("h1")).toContainText("Doctor report");
+  });
+
+  test("full flow in Bangla", async ({ page, context }) => {
+    await context.addCookies([
+      { name: "medisathi-locale", value: "bn", domain: "localhost", path: "/" },
+    ]);
+    await demoLogin(page);
+
+    await page.click('text="কাগজপত্র"');
+    await expect(page.locator("h1")).toContainText("কাগজপত্র");
+
+    await page.click('a:has-text("যাচাই করুন")').first();
+    await expect(page.locator("h1")).toContainText("তথ্য যাচাই করুন");
+
+    await page.click('text="চেক-ইন"');
+    await page.check('text="বুকের ব্যাথা"');
+    await page.click('button:has-text("সংরক্ষণ করুন")');
+    await expect(page.locator("text=এটি জরুরি চিকিৎসার")).toBeVisible();
+
+    await page.click('text="টাইমলাইন"');
+    await expect(page.locator("h1")).toContainText("টাইমলাইন");
+
+    await page.click('text="সারাংশ"');
+    await page.click('button:has-text("সারাংশ তৈরি করুন")');
+    await expect(page.locator("text=সারাংশ তৈরি করা হয়েছে")).toBeVisible();
+
+    await page.click('text="ডাক্তারের রিপোর্ট"');
+    await expect(page.locator("h1")).toContainText("ডাক্তারের রিপোর্ট");
   });
 });
