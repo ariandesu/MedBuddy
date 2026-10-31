@@ -15,6 +15,18 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import {
+  FileText,
+  ClipboardList,
+  File,
+  Moon,
+  GlassWater,
+  Activity,
+  HeartPulse,
+  Sparkles,
+  Clock,
+  AlertTriangle,
+} from "lucide-react";
 
 type WellnessEntry = {
   id?: string;
@@ -80,10 +92,27 @@ function fillMissingDays(
   return filled.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }
 
-const RECORD_TYPE_LABELS: Record<string, string> = {
-  lab_report: "Lab report",
-  prescription: "Prescription",
-  other: "Other",
+const RECORD_TYPE_CONFIG: Record<string, { label: string; Icon: React.ElementType; color: string }> = {
+  lab_report: { label: "Lab report", Icon: FileText, color: "bg-blue-50 text-blue-600" },
+  prescription: { label: "Prescription", Icon: ClipboardList, color: "bg-green-50 text-green-600" },
+  other: { label: "Other", Icon: File, color: "bg-gray-50 text-gray-600" },
+};
+
+function renderRecordType(recordType: string): React.ReactNode {
+  const config =
+    RECORD_TYPE_CONFIG[recordType] ?? RECORD_TYPE_CONFIG.other;
+  return (
+    <>
+      <config.Icon className="size-4" aria-hidden />
+      <span className="font-medium text-sm">{config.label}</span>
+    </>
+  );
+}
+
+const WELLNESS_ICONS: Record<string, { Icon: React.ElementType; color: string }> = {
+  sleep: { Icon: Moon, color: "bg-indigo-50 text-indigo-600" },
+  water: { Icon: GlassWater, color: "bg-blue-50 text-blue-600" },
+  activity: { Icon: Activity, color: "bg-green-50 text-green-600" },
 };
 
 export default function TimelinePage() {
@@ -94,12 +123,9 @@ export default function TimelinePage() {
   const [explanations, setExplanations] = useState<Record<string, string>>({});
 
   const { from: FROM_DATE, to: TO_DATE } = useMemo(() => {
-    /* eslint-disable-next-line */
     const to = getLocalDate();
-    /* eslint-disable-next-line */
-    const from = new Date(Date.now() - 29 * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
+    // eslint-disable-next-line
+    const from = new Date(Date.now() - 29 * 86_400_000).toISOString().slice(0, 10);
     return { from, to };
   }, []);
 
@@ -141,10 +167,7 @@ export default function TimelinePage() {
   const delta = deltas(filledWellness);
   const wellnessSeries = series(filledWellness);
 
-  const labGroups: Record<string, {
-    points: { date: string; value: number }[];
-    range: string | null;
-  }> = {};
+  const labGroups: Record<string, { points: { date: string; value: number }[]; range: string | null }> = {};
   for (const r of serverRecords) {
     if (!r.recordDate) continue;
     for (const o of r.observations) {
@@ -172,7 +195,10 @@ export default function TimelinePage() {
   if (loading) {
     return (
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold">{dict.timeline.title}</h1>
+        <div className="flex items-center gap-2">
+          <Clock className="size-5 text-primary" aria-hidden />
+          <h1 className="text-2xl font-bold">{dict.timeline.title}</h1>
+        </div>
         <div className="h-64 flex items-center justify-center">{dict.common.loading}</div>
       </div>
     );
@@ -180,7 +206,10 @@ export default function TimelinePage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">{dict.timeline.title}</h1>
+      <div className="flex items-center gap-2">
+        <Clock className="size-5 text-primary" aria-hidden />
+        <h1 className="text-2xl font-bold">{dict.timeline.title}</h1>
+      </div>
 
       <section className="grid gap-4 md:grid-cols-3">
         {wellnessSeries.map((s) => {
@@ -190,9 +219,11 @@ export default function TimelinePage() {
             : key.includes("water")
             ? "waterGlasses"
             : "activityMinutes";
+          const iconConfig = WELLNESS_ICONS[avgKey.replace("Hours", "").replace("Minutes", "").replace("Glasses", "")];
           return (
             <Card key={s.name} className="flex-1">
-              <CardHeader>
+              <CardHeader className="flex items-center gap-2">
+                {iconConfig && <iconConfig.Icon className="size-4" aria-hidden />}
                 <CardTitle>{s.name}</CardTitle>
               </CardHeader>
               <CardContent>
@@ -210,44 +241,53 @@ export default function TimelinePage() {
       </section>
 
       <Card className="flex-1">
-        <CardHeader>
+        <CardHeader className="flex items-center gap-2">
+          <AlertTriangle className="size-4 text-muted-foreground" aria-hidden />
           <CardTitle>{dict.timeline.averages}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {avg.sleepHours != null && (
-            <div className="flex justify-between text-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <Moon className="size-3 text-muted-foreground" aria-hidden />
               <span>{dict.chart.sleep}</span>
-              <span>{avg.sleepHours.toFixed(1)} hrs</span>
+              <span className="ml-auto">{avg.sleepHours.toFixed(1)} hrs</span>
             </div>
           )}
           {avg.waterGlasses != null && (
-            <div className="flex justify-between text-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <GlassWater className="size-3 text-muted-foreground" aria-hidden />
               <span>{dict.chart.water}</span>
-              <span>{avg.waterGlasses.toFixed(1)} glasses</span>
+              <span className="ml-auto">{avg.waterGlasses.toFixed(1)} glasses</span>
             </div>
           )}
           {avg.activityMinutes != null && (
-            <div className="flex justify-between text-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <Activity className="size-3 text-muted-foreground" aria-hidden />
               <span>{dict.chart.activity}</span>
-              <span>{Math.round(avg.activityMinutes)} min</span>
+              <span className="ml-auto">{Math.round(avg.activityMinutes)} min</span>
             </div>
           )}
-          <div className="flex justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="size-3" aria-hidden />
             <span>{dict.timeline.daysWithData}</span>
-            <span>{avg.daysWithData}</span>
+            <span className="ml-auto">{avg.daysWithData}</span>
           </div>
         </CardContent>
       </Card>
 
       {missing.length > 0 && (
-        <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+        <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 flex items-center gap-2">
+          <AlertTriangle className="size-4" aria-hidden />
           {dict.chart.missingDays.replace("{{count}}", String(missing.length))}
         </div>
       )}
 
       {Object.keys(labGroups).length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold mb-3">{dict.timeline.labTrends}</h2>
+          <div className="flex items-center gap-2 mb-3">
+            <HeartPulse className="size-5 text-primary" aria-hidden />
+            <h2 className="text-lg font-semibold">{dict.timeline.labTrends}</h2>
+          </div>
           <div className="grid gap-4 md:grid-cols-2">
             {Object.entries(labGroups).map(([name, g]) => (
               <Card key={name} className="flex-1">
@@ -259,7 +299,8 @@ export default function TimelinePage() {
                     <WellnessChart points={g.points} title={name} />
                   </div>
                   {g.range && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <AlertTriangle className="size-3" aria-hidden />
                       {dict.timeline.referenceRange}: {g.range}
                     </p>
                   )}
@@ -271,22 +312,30 @@ export default function TimelinePage() {
       )}
 
       <section>
-        <h2 className="text-lg font-semibold mb-3">{dict.timeline.entries}</h2>
+        <div className="flex items-center gap-2 mb-3">
+          <FileText className="size-5 text-primary" aria-hidden />
+          <h2 className="text-lg font-semibold">{dict.timeline.entries}</h2>
+        </div>
         {merged.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{dict.timeline.empty}</p>
+          <div className="flex flex-col items-center justify-center text-center py-12">
+            <FileText className="size-12 text-muted-foreground mb-3" aria-hidden />
+            <p className="text-sm text-muted-foreground">{dict.timeline.empty}</p>
+          </div>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {merged.map((e) => {
               const rec = e.type === "record" ? e.record : undefined;
               return (
-                <li key={e.id} className="border-b pb-2 text-sm" id={`rec-${e.id}`}>
+                <li key={e.id} className="border-b pb-3 last:border-0" id={`rec-${e.id}`}>
                   {rec ? (
                     <>
-                      <div className="flex justify-between">
-                        <span>
-                          {RECORD_TYPE_LABELS[rec.recordType] ?? rec.recordType}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {renderRecordType(rec.recordType)}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {rec.recordDate ?? dict.timeline.undated}
                         </span>
-                        <span>{rec.recordDate ?? dict.timeline.undated}</span>
                         <Button
                           size="sm"
                           onClick={() => {
@@ -313,6 +362,7 @@ export default function TimelinePage() {
                           }}
                           disabled={!!explanations[rec.id]}
                         >
+                          <Sparkles className="size-3 mr-1" aria-hidden />
                           {explanations[rec.id] ? (
                             <>
                               {dict.common.retry} {explanations[rec.id]}
@@ -323,16 +373,17 @@ export default function TimelinePage() {
                         </Button>
                       </div>
                       {rec.observations.length > 0 && (
-                        <ul className="text-xs text-muted-foreground mt-1">
+                        <ul className="text-xs text-muted-foreground mt-2">
                           {rec.observations.map((o) => (
-                            <li key={o.name}>
+                            <li key={o.name} className="flex items-center gap-1">
+                              <FileText className="size-2 text-muted-foreground" aria-hidden />
                               {o.name}: {o.rawValue}{o.unit ? ` ${o.unit}` : ""}
                             </li>
                           ))}
                         </ul>
                       )}
                       {rec.medications.length > 0 && (
-                        <ul className="text-xs text-muted-foreground mt-1 list-disc ml-4">
+                        <ul className="text-xs text-muted-foreground mt-2 list-disc ml-4">
                           {rec.medications.map((m) => (
                             <li key={m.nameAsWritten}>
                               {m.nameAsWritten} — {m.doseAsWritten}, {m.frequencyAsWritten}, {m.durationAsWritten}
@@ -349,19 +400,31 @@ export default function TimelinePage() {
                     </>
                   ) : (
                     <>
-                      <div className="flex justify-between">
-                        <span>{dict.timeline.checkin}</span>
-                        <span>{e.wellness!.date}</span>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <ClipboardList className="size-4 text-muted-foreground" aria-hidden />
+                          <span className="font-medium text-sm">{dict.timeline.checkin}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{e.wellness!.date}</span>
                       </div>
-                      <ul className="text-xs text-muted-foreground mt-1">
+                      <ul className="text-xs text-muted-foreground mt-2">
                         {e.wellness!.sleepHours != null && (
-                          <li>Sleep: {e.wellness!.sleepHours} hrs</li>
+                          <li className="flex items-center gap-1">
+                            <Moon className="size-3" aria-hidden />
+                            Sleep: {e.wellness!.sleepHours} hrs
+                          </li>
                         )}
                         {e.wellness!.waterGlasses != null && (
-                          <li>Water: {e.wellness!.waterGlasses}</li>
+                          <li className="flex items-center gap-1">
+                            <GlassWater className="size-3" aria-hidden />
+                            Water: {e.wellness!.waterGlasses}
+                          </li>
                         )}
                         {e.wellness!.activityMinutes != null && (
-                          <li>Activity: {e.wellness!.activityMinutes} min</li>
+                          <li className="flex items-center gap-1">
+                            <Activity className="size-3" aria-hidden />
+                            Activity: {e.wellness!.activityMinutes} min
+                          </li>
                         )}
                       </ul>
                     </>
