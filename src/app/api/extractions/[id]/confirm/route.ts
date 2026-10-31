@@ -35,7 +35,9 @@ function extractionToRecord(
       if (!medsByIndex[idx])
         medsByIndex[idx] = { name: "", dose: "", frequency: "", duration: "" };
       medsByIndex[idx][which] = f.rawValue ?? "";
-      medsByIndex[idx].uncertain = Boolean(f.agreement !== "match" || f.needsReview);
+      medsByIndex[idx].uncertain =
+        medsByIndex[idx].uncertain ||
+        Boolean(f.agreement !== "match" || f.needsReview);
     } else {
       observations.push({
         name: f.label ?? key,
@@ -80,6 +82,12 @@ export async function POST(
   const repo = getRepo();
   const extraction = await repo.getExtraction(user.id, id);
   if (!extraction) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const doc = await repo.getDocument(user.id, extraction.documentId);
+  if (!doc) return NextResponse.json({ error: "Document not found" }, { status: 404 });
+  if (doc.status === "confirmed") {
+    return NextResponse.json({ error: "already_confirmed" }, { status: 409 });
+  }
 
   const input = extractionToRecord(
     user.id,

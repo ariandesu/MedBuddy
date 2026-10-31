@@ -56,7 +56,24 @@
     "extracted": "পাওয়া তথ্য",
     "confirm": "নিশ্চিত করুন",
     "mismatch": "অমিল",
-    "needsReview": "যাচাই দরকার"
+    "needsReview": "যাচাই দরকার",
+    "noExtraction": "কোনো নিষ্পত্তি পাওয়া যায়নি",
+    "saveFailed": "সম্পাদনা সংরক্ষণে ব্যর্থ",
+    "confirmFailed": "নিশ্চিতকরণ ব্যর্থ",
+    "alreadyConfirmed": "পূর্বে নিশ্চিত করা আছে",
+    "checkAllFirst": "{{count}} টি ফিল্ড আগে যাচাই করুন",
+    "colField": "ক্ষেত্র",
+    "colValue": "লিখित মান",
+    "colRefRange": "প্রতেধার সীমা",
+    "colAgreement": "একমত",
+    "agreement": {
+      "match": "মিলেছে",
+      "mismatch": "অমিল",
+      "single_source": "একাধिकार 출처"
+    },
+    "edited": "সম্পাদিত",
+    "checkThis": "আমি যাচাই করেছি",
+    "originalDocumentAlt": "মূল কাগজপত্র"
   },
   "checkin": {
     "title": "দৈনিক চেক-ইন",

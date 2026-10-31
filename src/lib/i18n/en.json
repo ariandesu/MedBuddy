@@ -56,7 +56,24 @@
     "extracted": "Extracted",
     "confirm": "Confirm",
     "mismatch": "Mismatch",
-    "needsReview": "Needs review"
+    "needsReview": "needs review",
+    "noExtraction": "No extraction found",
+    "saveFailed": "Failed to save edits",
+    "confirmFailed": "Confirm failed",
+    "alreadyConfirmed": "Already confirmed",
+    "checkAllFirst": "Please check {{count}} field(s) first",
+    "colField": "Field",
+    "colValue": "Value (as written)",
+    "colRefRange": "Ref. range",
+    "colAgreement": "Agreement",
+    "agreement": {
+      "match": "Match",
+      "mismatch": "Mismatch",
+      "single_source": "Single source"
+    },
+    "edited": "edited",
+    "checkThis": "I checked this",
+    "originalDocumentAlt": "Original document"
   },
   "checkin": {
     "title": "Daily check-in",
