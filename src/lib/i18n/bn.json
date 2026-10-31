@@ -117,7 +117,14 @@
   },
   "timeline": {
     "title": "টাইমলাইন",
-    "empty": "এখনও কিছু নেই।"
+    "empty": "এখনও কিছু নেই।",
+    "averages": "গড় (শেষ ৩০ দিন)",
+    "daysWithData": "ডেটা আছে এমন দিন",
+    "labTrends": "ল্যাব ট্রেন্ড",
+    "referenceRange": "প্রতিধার সীমা",
+    "entries": "এন্ট্রি",
+    "checkin": "চেক-ইন",
+    "undated": "তারিখহীন"
   },
   "summary": {
     "title": "স্বাস্থ্য সারাংশ",
@@ -132,6 +139,11 @@
     "invalidBody": "অবৈধ বডি",
     "questionRequired": "প্রশ্ন প্রয়োজন",
     "modelUnavailable": "মডেল উপলব্ধ নয়; গ্রাউন্ডেড উত্তর নেই।"
+  },
+  "recordType": {
+    "lab_report": "ল্যাব রিপোর্ট",
+    "prescription": "প্রেসক্রিপশন",
+    "other": "অন্যান্য"
   },
   "report": {
     "title": "ডাক্তারের রিপোর্ট",

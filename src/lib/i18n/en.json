@@ -117,7 +117,14 @@
   },
   "timeline": {
     "title": "Timeline",
-    "empty": "No entries yet."
+    "empty": "No entries yet.",
+    "averages": "Averages (last 30 days)",
+    "daysWithData": "Days with data",
+    "labTrends": "Lab trends",
+    "referenceRange": "Reference range",
+    "entries": "Entries",
+    "checkin": "Check-in",
+    "undated": "Undated"
   },
   "summary": {
     "title": "Health summary",
@@ -132,6 +139,11 @@
     "invalidBody": "Invalid body",
     "questionRequired": "Question is required",
     "modelUnavailable": "Model unavailable; no grounded answer."
+  },
+  "recordType": {
+    "lab_report": "Lab report",
+    "prescription": "Prescription",
+    "other": "Other"
   },
   "report": {
     "title": "Doctor report",
