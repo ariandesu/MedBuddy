@@ -35,7 +35,10 @@
     "noDocuments": "No documents yet.",
     "latestSummary": "Latest summary",
     "viewSummary": "View summary",
-    "noSummary": "No summary yet."
+    "noSummary": "No summary yet.",
+    "reviewNowDesc": "Documents waiting for your review",
+    "checkinDesc": "Log your daily wellness check-in",
+    "askDesc": "Ask questions about your health records"
   },
   "documents": {
     "title": "Documents",

@@ -26,9 +26,9 @@ export function BottomNav({ dict, user }: { dict: Dictionary; user?: { email?: s
   return (
     <nav
       aria-label="Primary"
-      className="no-print fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 backdrop-blur md:hidden"
+      className="no-print fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur-md md:hidden"
     >
-      <ul className="mx-auto grid max-w-5xl grid-cols-5 gap-1 px-2 py-2">
+      <ul className="mx-auto grid max-w-md grid-cols-5 gap-0.5 px-1 py-1">
         {MAIN_ITEMS.map(({ href, key, Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -37,13 +37,13 @@ export function BottomNav({ dict, user }: { dict: Dictionary; user?: { email?: s
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-lg px-1 py-1 text-xs font-medium",
+                  "flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] font-medium leading-tight",
                   active
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/10 text-primary border border-primary/20"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
-                <Icon className="size-6" aria-hidden />
+                <Icon className="size-5" aria-hidden />
                 <span className="leading-none">{dict.nav[key as keyof typeof dict.nav]}</span>
               </Link>
             </li>
@@ -56,17 +56,17 @@ export function BottomNav({ dict, user }: { dict: Dictionary; user?: { email?: s
                 href="#more"
                 aria-current={moreActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-lg px-1 py-1 text-xs font-medium",
+                  "flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-md px-1 py-1 text-[10px] font-medium leading-tight",
                   moreActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary/10 text-primary border border-primary/20"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
               >
-                <MoreHorizontal className="size-6" aria-hidden />
+                <MoreHorizontal className="size-5" aria-hidden />
                 <span className="leading-none">{dict.nav.more}</span>
               </Link>
             </SheetTrigger>
-            <SheetContent>
+            <SheetContent className="w-[260px] p-3">
               {MORE_ITEMS.map(({ href, key, Icon }) => {
                 const active = pathname === href || pathname.startsWith(`${href}/`);
                 return (
@@ -74,13 +74,13 @@ export function BottomNav({ dict, user }: { dict: Dictionary; user?: { email?: s
                     key={href}
                     href={href}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium",
+                      "flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium",
                       active
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                     )}
                   >
-                    <Icon className="size-5" aria-hidden />
+                    <Icon className="size-4" aria-hidden />
                     {dict.nav[key as keyof typeof dict.nav]}
                   </Link>
                 );
