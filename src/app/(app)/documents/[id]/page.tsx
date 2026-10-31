@@ -25,6 +25,18 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDictionary } from "@/lib/use-dictionary";
 import { normalizeDigits } from "@/lib/digits";
+import {
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  Info,
+  ArrowLeft,
+  Check,
+  Image,
+  RefreshCw,
+  Eye,
+  Pencil,
+} from "lucide-react";
 
 type Field = {
   key: string;
@@ -40,6 +52,43 @@ type Field = {
   needsReview: boolean;
   userEdited: boolean;
 };
+
+type AgreementCellProps = {
+  field: Field;
+  isConfirmed: boolean;
+  dict: ReturnType<typeof useDictionary>;
+  onToggleReview: (key: string) => void;
+};
+
+function AgreementCell({
+  field,
+  isConfirmed,
+  dict,
+  onToggleReview,
+}: AgreementCellProps) {
+  const config =
+    AGREEMENT_CONFIG[field.agreement] ?? AGREEMENT_CONFIG.single_source;
+  return (
+    <>
+      <Badge variant={config.badge} className="text-xs">
+        {config.labelKey}
+      </Badge>
+      {field.userEdited && (
+        <Badge variant="outline" className="ml-1 text-xs">
+          {dict.review.edited}
+        </Badge>
+      )}
+      {!isConfirmed && field.needsReview && (
+        <Checkbox
+          checked={false}
+          onCheckedChange={() => onToggleReview(field.key)}
+          className="ml-2 mt-1"
+          aria-label={dict.review.checkThis}
+        />
+      )}
+    </>
+  );
+}
 
 type Extraction = {
   id: string;
@@ -57,6 +106,15 @@ function parseNumber(raw: string): number | null {
     .match(/-?\d+(\.\d+)?/);
   return m ? Number(m[0]) : null;
 }
+
+const AGREEMENT_CONFIG: Record<
+  string,
+  { labelKey: string; badge: "default" | "destructive" | "secondary"; Icon: React.ElementType }
+> = {
+  match: { labelKey: "match", badge: "default", Icon: CheckCircle2 },
+  mismatch: { labelKey: "mismatch", badge: "destructive", Icon: AlertTriangle },
+  single_source: { labelKey: "single_source", badge: "secondary", Icon: Info },
+};
 
 export default function DocumentReviewPage() {
   const dict = useDictionary();
@@ -154,7 +212,6 @@ export default function DocumentReviewPage() {
     setSaving(true);
     setError(null);
     try {
-      // Patch extraction with edited fields.
       const patchRes = await fetch(`/api/extractions/${extId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -195,26 +252,33 @@ export default function DocumentReviewPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{dict.review.title}</h1>
+        <div className="flex items-center gap-2">
+          <ArrowLeft className="size-5 text-primary" aria-hidden />
+          <h1 className="text-2xl font-bold">{dict.review.title}</h1>
+        </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => router.push("/documents")}
             disabled={saving || isConfirmed}
+            className="flex items-center gap-2"
           >
+            <ArrowLeft className="size-4" aria-hidden />
             {dict.common.back}
           </Button>
           {!isConfirmed && (
             <Button
               onClick={handleConfirm}
               disabled={saving || needsReviewCount > 0}
-              className="min-h-[44px]"
+              className="min-h-[44px] flex items-center gap-2"
             >
+              <Check className="size-4" aria-hidden />
               {saving ? dict.common.loading : dict.review.confirm}
             </Button>
           )}
           {isConfirmed && (
-            <span className="text-xs font-semibold text-muted-foreground">
+            <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+              <CheckCircle2 className="size-4 text-green-600" aria-hidden />
               {dict.review.alreadyConfirmed}
             </span>
           )}
@@ -228,14 +292,29 @@ export default function DocumentReviewPage() {
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>{doc.fileName}</CardTitle>
-          <CardDescription>
-            {dict.documents.status[
-              doc.status as keyof typeof dict.documents.status
-            ] ?? doc.status}
-            {needsReviewCount > 0 ? ` · ${needsReviewCount} ${dict.review.needsReview}` : ""}
-            {mismatchCount > 0 ? ` · ${mismatchCount} ${dict.review.mismatch}` : ""}
+        <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FileText className="size-4 text-primary" aria-hidden />
+            <CardTitle>{doc.fileName}</CardTitle>
+          </div>
+          <CardDescription className="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2">
+            <span className="text-xs font-medium">
+              {dict.documents.status[
+                doc.status as keyof typeof dict.documents.status
+              ] ?? doc.status}
+            </span>
+            {needsReviewCount > 0 && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <AlertTriangle className="size-3" aria-hidden />
+                {needsReviewCount} {dict.review.needsReview}
+              </span>
+            )}
+            {mismatchCount > 0 && (
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Info className="size-3" aria-hidden />
+                {mismatchCount} {dict.review.mismatch}
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -246,6 +325,7 @@ export default function DocumentReviewPage() {
                 <div className="flex flex-col items-center justify-center h-full p-4 text-muted-foreground">
                   {doc.mimeType === "application/pdf" ? (
                     <>
+                      <FileText className="size-8 text-muted-foreground mb-2" aria-hidden />
                       <a
                         href={`/api/documents/${doc.id}/file`}
                         target="_blank"
@@ -257,7 +337,10 @@ export default function DocumentReviewPage() {
                       <p className="text-xs mt-2">{dict.review.noPreview}</p>
                     </>
                   ) : (
-                    <p className="text-sm">{dict.review.noPreview}</p>
+                    <>
+                      <Image className="size-8 text-muted-foreground mb-2" aria-hidden />
+                      <p className="text-sm">{dict.review.noPreview}</p>
+                    </>
                   )}
                 </div>
               ) : (
@@ -288,43 +371,30 @@ export default function DocumentReviewPage() {
                           {f.label}
                         </TableCell>
                         <TableCell>
-                          <Input
-                            value={f.rawValue}
-                            onChange={(e) =>
-                              handleChange(f.key, e.target.value)
-                            }
-                            className="text-sm bg-transparent border-0 focus:ring-0 h-auto min-h-[44px] py-1"
-                            disabled={isConfirmed}
-                          />
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={f.rawValue}
+                              onChange={(e) =>
+                                handleChange(f.key, e.target.value)
+                              }
+                              className="text-sm bg-transparent border-0 focus:ring-0 h-auto min-h-[44px] py-1 flex-1"
+                              disabled={isConfirmed}
+                            />
+                            {f.userEdited && (
+                              <Pencil className="size-3 text-muted-foreground" aria-hidden />
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-center text-xs text-muted-foreground">
                           {f.referenceRangeRaw ?? "—"}
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge
-                            variant={
-                              f.agreement === "match"
-                                ? "default"
-                                : f.agreement === "mismatch"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                          >
-                            {dict.review.agreement[f.agreement]}
-                          </Badge>
-                          {f.userEdited && (
-                            <Badge variant="outline" className="ml-1 text-xs">
-                              {dict.review.edited}
-                            </Badge>
-                          )}
-                          {!isConfirmed && f.needsReview && (
-                            <Checkbox
-                              checked={false}
-                              onCheckedChange={() => handleToggleReview(f.key)}
-                              className="ml-2"
-                              aria-label={dict.review.checkThis}
-                            />
-                          )}
+                          <AgreementCell
+                            field={f}
+                            isConfirmed={isConfirmed}
+                            dict={dict}
+                            onToggleReview={handleToggleReview}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -345,6 +415,7 @@ export default function DocumentReviewPage() {
                 <div className="flex flex-col items-center justify-center h-full p-4 text-muted-foreground">
                   {doc.mimeType === "application/pdf" ? (
                     <>
+                      <FileText className="size-8 text-muted-foreground mb-2" aria-hidden />
                       <a
                         href={`/api/documents/${doc.id}/file`}
                         target="_blank"
@@ -356,7 +427,10 @@ export default function DocumentReviewPage() {
                       <p className="text-xs mt-2">{dict.review.noPreview}</p>
                     </>
                   ) : (
-                    <p className="text-sm">{dict.review.noPreview}</p>
+                    <>
+                      <Image className="size-8 text-muted-foreground mb-2" aria-hidden />
+                      <p className="text-sm">{dict.review.noPreview}</p>
+                    </>
                   )}
                 </div>
               ) : (
@@ -395,17 +469,12 @@ export default function DocumentReviewPage() {
                           />
                         </TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={f.agreement === "match" ? "default" : "destructive"}>
-                            {dict.review.agreement[f.agreement]}
-                          </Badge>
-                          {!isConfirmed && f.needsReview && (
-                            <Checkbox
-                              checked={false}
-                              onCheckedChange={() => handleToggleReview(f.key)}
-                              className="ml-2"
-                              aria-label={dict.review.checkThis}
-                            />
-                          )}
+                          <AgreementCell
+                            field={f}
+                            isConfirmed={isConfirmed}
+                            dict={dict}
+                            onToggleReview={handleToggleReview}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
