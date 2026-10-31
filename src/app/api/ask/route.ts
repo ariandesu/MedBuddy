@@ -5,6 +5,7 @@ import { getAI } from "@/server/ai/index";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { wrapDocument } from "@/server/ai/prompts";
 import { retrieveRecords, buildContext, groundCitations } from "@/server/ai/grounding";
+import { rateLimitCheck } from "@/server/rate-limit";
 
 const RECORD_TYPE_LABELS: Record<string, string> = {
   lab_report: "Lab report",
@@ -18,6 +19,11 @@ export const maxDuration = 60;
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rateLimit = await rateLimitCheck(user.id, "ask");
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
 
   const { locale, dict } = await getLocaleAndDict();
   const repo = getRepo();

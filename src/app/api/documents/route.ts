@@ -3,6 +3,7 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getLocale } from "@/lib/i18n/server";
 import { processDocumentExtraction } from "@/server/extract-document";
+import { rateLimitCheck } from "@/server/rate-limit";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
@@ -58,6 +59,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const locale = await getLocale();
+
+  const rateLimit = await rateLimitCheck(user.id, "documents");
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
 
   let formData: FormData;
   try {

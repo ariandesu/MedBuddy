@@ -5,6 +5,7 @@ import { getAI } from "@/server/ai/index";
 import { getLocale } from "@/lib/i18n/server";
 import { groundSummaryChanges } from "@/server/ai/grounding";
 import { isDemoAiMode, getMuseModel } from "@/server/env";
+import { rateLimitCheck } from "@/server/rate-limit";
 import type { HealthSummaryPayload } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,11 @@ export async function POST(
 ): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rateLimit = await rateLimitCheck(user.id, "summaries");
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
 
   const locale = await getLocale();
   const repo = getRepo();
