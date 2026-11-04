@@ -44,6 +44,24 @@ function stripMarkdown(raw: string): string {
   return match ? match[1] : trimmed;
 }
 
+/**
+ * Extract JSON from free-text model output.
+ * Tries direct parse, then first { ... last } substring.
+ */
+function extractJson(raw: string): unknown {
+  const cleaned = stripMarkdown(raw);
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+    throw new Error(`Model did not return JSON: ${cleaned.slice(0, 120)}`);
+  }
+}
+
 export class MuseAI implements AIProvider {
   private client: OpenAI | null = null;
 
@@ -77,8 +95,8 @@ export class MuseAI implements AIProvider {
           response_format: chatResponseFormat(schemaName, jsonSchema),
           store: false,
         });
-        const raw = stripMarkdown(completion.choices[0]?.message.content ?? "");
-        return schema.parse(JSON.parse(raw));
+        const raw = completion.choices[0]?.message.content ?? "";
+        return schema.parse(extractJson(raw));
       } catch (err) {
         lastError.push(err);
       }
@@ -98,7 +116,24 @@ export class MuseAI implements AIProvider {
     const client = this.getClient();
     const model = getMuseModel();
     const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>;
-    // No response_format for multimodal; parse JSON from text response.
+    // Try structured output first; fall back to plain-text JSON parse.
+    try {
+      const completion = await client.chat.completions.create({
+        model,
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: parts },
+        ],
+        response_format: chatResponseFormat(schemaName, jsonSchema),
+        store: false,
+      });
+      const raw = completion.choices[0]?.message.content ?? "";
+      return schema.parse(extractJson(raw));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // If endpoint rejects response_format with image input, retry without it.
+      if (!msg.includes("400")) throw err;
+    }
     const completion = await client.chat.completions.create({
       model,
       messages: [
@@ -107,8 +142,8 @@ export class MuseAI implements AIProvider {
       ],
       store: false,
     });
-    const raw = stripMarkdown(completion.choices[0]?.message.content ?? "");
-    return schema.parse(JSON.parse(raw));
+    const raw = completion.choices[0]?.message.content ?? "";
+    return schema.parse(extractJson(raw));
   }
 
   async extractDocument(
@@ -122,10 +157,10 @@ export class MuseAI implements AIProvider {
       documentId,
       `MIME: ${mimeType}\nOCR text:\n${ocrText}\n`
     );
-    const textContent = `Extract all fields from this health document. Return values exactly as written, including Bangla digits. ${content}`;
+    const textContent = `Extract all fields from this health document. Return values exactly as written, including Bangla digits. Return ONLY a JSON object with keys documentType ("lab_report"|"prescription"|"other"), documentDateRaw (string|null), documentDate (string|null), fields (array of {key,label,rawValue,numericValue,unit,referenceRangeRaw,page,sources:{muse,ocr},confidence}), ocrText (string). If the image is blank or unreadable, return documentType "other", empty fields, null dates. ${content}`;
 
     // For images, send multimodal content (image + text). If the endpoint
-    // rejects image input (400), fall back to text-only once.
+    // rejects image input (400) or image parse fails, fall back to text-only once.
     if (mimeType.startsWith("image/")) {
       const parts: Array<{ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }> = [
         { type: "text", text: textContent },
@@ -138,20 +173,17 @@ export class MuseAI implements AIProvider {
         return await this.chatWithParts(aiExtractionResultSchema, parts, systemPrompt(locale), "extraction_result");
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes("400")) {
-          // eslint-disable-next-line no-console
-          console.warn("muse: image input rejected, text-only fallback");
-          return this.chat(
-            aiExtractionResultSchema,
-            [
-              { role: "system", content: systemPrompt(locale) },
-              { role: "user", content: textContent },
-            ],
-            REASONING_EFFORT_EXTRACTION,
-            "extraction_result"
-          );
-        }
-        throw err;
+        // eslint-disable-next-line no-console
+        console.warn(`muse: image extraction failed, text-only fallback (${msg.slice(0, 80)})`);
+        return this.chat(
+          aiExtractionResultSchema,
+          [
+            { role: "system", content: systemPrompt(locale) },
+            { role: "user", content: textContent },
+          ],
+          REASONING_EFFORT_EXTRACTION,
+          "extraction_result"
+        );
       }
     }
 
