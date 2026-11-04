@@ -27,6 +27,8 @@ import { SleepWeek } from "@/components/sleep-week";
 import { weekEstimates, weeklyAverages } from "@/server/trends";
 import { DEMO_EMAIL, isDemoAccountEmail } from "@/lib/demo";
 import { PageTitle } from "@/components/page-title";
+import { MyReadings } from "@/components/my-readings";
+import { latestReadings } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -49,11 +51,12 @@ export default async function DashboardPage() {
     new Date(Date.parse(`${today}T00:00:00Z`) - (6 - i) * 86_400_000).toISOString().slice(0, 10)
   );
   // Parallel: each Mongo query costs a full Atlas RTT from serverless.
-  const [docs, week, summary, records] = await Promise.all([
+  const [docs, week, summary, records, readings] = await Promise.all([
     user ? repo.listDocuments(user.id) : Promise.resolve([]),
     user ? repo.listWellnessEntries(user.id, weekDates[0], today) : Promise.resolve([]),
     user ? repo.getLatestHealthSummary(user.id) : Promise.resolve(null),
     user ? repo.listMedicalRecords(user.id) : Promise.resolve([]),
+    user ? repo.listDeviceReadings(user.id) : Promise.resolve([]),
   ]);
   const needsReview = docs.filter((d) => d.status === "needs_review");
   const todayCheckin = week.some((w) => w.date === today);
@@ -185,6 +188,8 @@ export default async function DashboardPage() {
           <p className="text-sm text-muted-foreground">{t.estimatesNote}</p>
         </section>
       )}
+
+      <MyReadings latest={latestReadings(readings).map(({ id, date, kind, value, value2 }) => ({ id, date, kind, value, value2 }))} />
 
       <nav aria-label={t.title}>
         <ul className="divide-y rounded-2xl border bg-card px-4">

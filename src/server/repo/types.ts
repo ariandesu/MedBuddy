@@ -8,6 +8,8 @@ import type {
   Observation,
   MedicationAsWritten,
   WellnessEntry,
+  DeviceReading,
+  ReadingInput,
   HealthSummary,
   HealthSummaryPayload,
 } from "@/lib/schemas";
@@ -183,6 +185,10 @@ export interface Repository {
     from: string,
     to: string
   ): Promise<WellnessEntry[]>;
+
+  upsertDeviceReading(userId: string, date: string, input: ReadingInput): Promise<DeviceReading>;
+  listDeviceReadings(userId: string, opts?: { from?: string; to?: string }): Promise<DeviceReading[]>;
+  deleteDeviceReading(userId: string, id: string): Promise<boolean>;
 
   createHealthSummary(input: CreateHealthSummaryInput): Promise<HealthSummary>;
   getHealthSummary(userId: string, id: string): Promise<HealthSummary | null>;

@@ -16,6 +16,7 @@ import { parseRange, previousObservation, rangeStatus } from "@/lib/range";
 import { localISODate } from "@/lib/use-today-checkin";
 import { URGENT_SYMPTOMS } from "@/lib/safety/redflags";
 import { weeklyAverages } from "@/server/trends";
+import { formatReading, READING_KINDS, type ReadingKind } from "@/lib/schemas";
 
 type Wellness = {
   date: string;
@@ -51,6 +52,8 @@ type Summary = {
 
 type Doc = { id: string; fileName: string; status: string };
 
+type Reading = { id: string; date: string; kind: ReadingKind; value: number; value2?: number };
+
 const URGENT_VALUES: string[] = URGENT_SYMPTOMS.map((s) => s.value);
 
 function isOutOfRange(o: Observation): boolean {
@@ -75,6 +78,7 @@ export function ReportView() {
   const [wellness, setWellness] = useState<Wellness[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
+  const [readings, setReadings] = useState<Reading[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -101,13 +105,15 @@ export function ReportView() {
       get(`/api/wellness?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
       get("/api/summaries"),
       get("/api/documents"),
+      get(`/api/readings?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
     ])
-      .then(([rec, well, sum, doc]) => {
+      .then(([rec, well, sum, doc, read]) => {
         if (cancelled) return;
         setRecords(rec.records ?? []);
         setWellness(well.entries ?? []);
         setSummary(sum.summary ?? null);
         setDocs(doc.documents ?? []);
+        setReadings(read.readings ?? []);
         setFailed(false);
       })
       .catch(() => {
@@ -153,6 +159,11 @@ export function ReportView() {
   const symptomsNoted = [...symptomDays.entries()]
     .map(([s, count]) => t.symptomDays.replace("{{symptom}}", sym(s)).replace("{{count}}", n(count)))
     .join(", ");
+
+  const readingLabels = dict.dashboard.readings;
+  const readingLabel = (kind: ReadingKind) => `${readingLabels.kinds[kind]} (${readingLabels.units[kind]})`;
+  const readingText = (x: Reading) => formatReading(x, (s) => toLocaleDigits(s, locale));
+  const readingsByKind = READING_KINDS.filter((k) => readings.some((x) => x.kind === k));
 
   const dateInput = "h-12 min-w-0 rounded-[1.125rem] border-input bg-popover text-base";
 
@@ -276,6 +287,24 @@ export function ReportView() {
                 </>
               )}
             </section>
+
+            {readings.length > 0 && (
+              <section aria-labelledby="readings-report-h" className="flex flex-col gap-2 rounded-2xl border bg-card p-4">
+                <h2 id="readings-report-h" className="font-heading text-lg font-semibold">{readingLabels.reportTitle}</h2>
+                <p className="text-sm text-muted-foreground">{readingLabels.reportNote}</p>
+                <ul className="divide-y">
+                  {readings.map((x) => (
+                    <li key={x.id} className="flex flex-wrap items-baseline justify-between gap-x-3 py-2">
+                      <span>{readingLabel(x.kind)}</span>
+                      <span>
+                        <span className="font-semibold tabular-nums">{readingText(x)}</span>
+                        <span className="ml-2 text-sm text-muted-foreground">{formatDate(x.date, locale, { withYear: false })}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             {summary && summary.payload.questionsForDoctor.length > 0 && (
               <section aria-labelledby="q-h" className="flex flex-col gap-2 rounded-2xl border bg-card p-4">
@@ -406,6 +435,33 @@ export function ReportView() {
                   ))}
                 </tbody>
               </table>
+            )}
+
+            {readings.length > 0 && (
+              <>
+                <h2 className="print-h2">{readingLabels.reportTitle}</h2>
+                <p>{readingLabels.reportNote}</p>
+                <table className="print-table">
+                  <thead>
+                    <tr>
+                      <th>{r.colDate}</th>
+                      <th>{readingLabels.reportColReading}</th>
+                      <th className="text-right">{t.colValue}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {readingsByKind.flatMap((k) =>
+                      readings.filter((x) => x.kind === k).map((x) => (
+                        <tr key={x.id}>
+                          <td className="whitespace-nowrap">{formatDate(x.date, locale, { withYear: false })}</td>
+                          <td>{readingLabel(x.kind)}</td>
+                          <td className="text-right font-semibold tabular-nums">{readingText(x)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </>
             )}
 
             {summary && (

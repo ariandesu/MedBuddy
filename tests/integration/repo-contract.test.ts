@@ -200,6 +200,7 @@ function runContractSuite(
           medications: [],
         });
         await repo.upsertWellnessEntry(u.id, "2026-01-01", { sleepHours: 7 });
+        await repo.upsertDeviceReading(u.id, "2026-01-01", { kind: "pulse", value: 72 });
         await repo.createHealthSummary({
           userId: u.id,
           coveredFrom: "",
@@ -227,6 +228,7 @@ function runContractSuite(
       expect(await repo.getExtractionByDocument(demo.user.id, demo.doc.id)).toBeNull();
       expect(await repo.listMedicalRecords(demo.user.id)).toHaveLength(0);
       expect(await repo.listWellnessEntries(demo.user.id, "2026-01-01", "2026-01-01")).toHaveLength(0);
+      expect(await repo.listDeviceReadings(demo.user.id)).toHaveLength(0);
       expect(await repo.getLatestHealthSummary(demo.user.id)).toBeNull();
 
       for (const kept of [lookalike, unrelated]) {
@@ -301,6 +303,25 @@ function runContractSuite(
       });
       expect(filtered).toHaveLength(1);
       expect(filtered[0].recordType).toBe("prescription");
+    });
+
+    it("readings: one per kind per day, newest first, scoped to the owner", async () => {
+      const first = await repo.upsertDeviceReading(userA, "2026-11-01", { kind: "blood_pressure", value: 150, value2: 95 });
+      const fixed = await repo.upsertDeviceReading(userA, "2026-11-01", { kind: "blood_pressure", value: 130, value2: 85 });
+      expect(fixed.id).toBe(first.id);
+      expect([fixed.value, fixed.value2]).toEqual([130, 85]);
+      await repo.upsertDeviceReading(userA, "2026-11-03", { kind: "pulse", value: 72 });
+      await repo.upsertDeviceReading(userB, "2026-11-02", { kind: "pulse", value: 90 });
+
+      const all = await repo.listDeviceReadings(userA);
+      expect(all.map((r) => r.date)).toEqual(["2026-11-03", "2026-11-01"]);
+      expect(all[0].value2).toBeUndefined();
+      expect(await repo.listDeviceReadings(userA, { from: "2026-11-02", to: "2026-11-30" })).toHaveLength(1);
+
+      expect(await repo.deleteDeviceReading(userB, first.id)).toBe(false);
+      expect(await repo.listDeviceReadings(userA)).toHaveLength(2);
+      expect(await repo.deleteDeviceReading(userA, first.id)).toBe(true);
+      expect(await repo.listDeviceReadings(userA)).toHaveLength(1);
     });
 
     it("wellness: null clears a value, a missing key keeps it", async () => {

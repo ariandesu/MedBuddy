@@ -7,6 +7,8 @@ import type {
   ExtractedField,
   MedicalRecord,
   WellnessEntry,
+  DeviceReading,
+  ReadingInput,
   HealthSummary,
 } from "@/lib/schemas";
 import type {
@@ -29,6 +31,7 @@ export const COLLECTIONS = {
   extractions: "extractions",
   medicalRecords: "medical_records",
   wellness: "wellness",
+  deviceReadings: "device_readings",
   healthSummaries: "health_summaries",
 } as const;
 
@@ -45,6 +48,7 @@ export async function ensureIndexes(db: Db): Promise<void> {
     db.collection<FlexDoc>(COLLECTIONS.extractions).createIndex({ userId: 1, documentId: 1 }),
     db.collection<FlexDoc>(COLLECTIONS.medicalRecords).createIndex({ userId: 1, recordDate: 1 }),
     db.collection<FlexDoc>(COLLECTIONS.wellness).createIndex({ userId: 1, date: 1 }, { unique: true }),
+    db.collection<FlexDoc>(COLLECTIONS.deviceReadings).createIndex({ userId: 1, date: 1, kind: 1 }, { unique: true }),
     db.collection<FlexDoc>(COLLECTIONS.healthSummaries).createIndex({ userId: 1, generatedAt: -1 }),
     // Rate limiter: TTL auto-expires old keys (no per-request cleanup).
     db.collection<FlexDoc>("rate_limits").createIndex({ key: 1 }, { unique: true }),
@@ -159,6 +163,7 @@ export class MongoRepository implements Repository {
         COLLECTIONS.extractions,
         COLLECTIONS.medicalRecords,
         COLLECTIONS.wellness,
+        COLLECTIONS.deviceReadings,
         COLLECTIONS.healthSummaries,
       ].map((c) => db.collection<FlexDoc>(c).deleteMany({ userId: { $in: ids } }))
     );
@@ -449,6 +454,44 @@ export class MongoRepository implements Repository {
       .findOne({ userId, date });
     if (!raw) throw new Error("Wellness upsert failed");
     return fromDoc<WellnessEntry>(raw as Record<string, unknown>);
+  }
+
+  async upsertDeviceReading(userId: string, date: string, input: ReadingInput): Promise<DeviceReading> {
+    const db = await this.db();
+    const filter = { userId, date, kind: input.kind };
+    await db.collection<FlexDoc>(COLLECTIONS.deviceReadings).updateOne(
+      filter,
+      {
+        // A kind either always has a second number or never does, so nothing stale can stay behind.
+        $set: { value: input.value, ...(input.value2 != null && { value2: input.value2 }) },
+        $setOnInsert: { _id: newId() },
+      },
+      { upsert: true }
+    );
+    const raw = await db.collection<FlexDoc>(COLLECTIONS.deviceReadings).findOne(filter);
+    if (!raw) throw new Error("Reading upsert failed");
+    return fromDoc<DeviceReading>(raw as Record<string, unknown>);
+  }
+
+  async listDeviceReadings(userId: string, opts: { from?: string; to?: string } = {}): Promise<DeviceReading[]> {
+    const db = await this.db();
+    const raws = await db
+      .collection<FlexDoc>(COLLECTIONS.deviceReadings)
+      .find({
+        userId,
+        ...((opts.from || opts.to) && {
+          date: { ...(opts.from && { $gte: opts.from }), ...(opts.to && { $lte: opts.to }) },
+        }),
+      })
+      .sort({ date: -1 })
+      .toArray();
+    return raws.map((r) => fromDoc<DeviceReading>(r as Record<string, unknown>));
+  }
+
+  async deleteDeviceReading(userId: string, id: string): Promise<boolean> {
+    const db = await this.db();
+    const res = await db.collection<FlexDoc>(COLLECTIONS.deviceReadings).deleteOne({ _id: id, userId });
+    return res.deletedCount === 1;
   }
 
   async listWellnessEntries(

@@ -210,3 +210,10 @@ The user asked for Ask to explain what a medicine is and why it is used, from of
 The user asked for more approximate vitals on Home, since the app has no medical equipment. Home shows rough weekly figures from
 what the person logged: water, walking, energy and days without symptoms. It does not show estimated heart rate, blood pressure,
 oxygen or temperature. Nothing in the app can produce those, so they would be invented numbers (`AGENTS.md`: never invent values).
+
+## Readings typed in from home devices (2026-11-04)
+
+People can type in blood pressure, pulse, oxygen, temperature and weight from their own devices. They live in `device_readings`, not on
+the check-in, because a saved wellness row marks today's check-in as done. One per kind per day. Limits only catch impossible numbers,
+and the app never labels a reading normal or high: choosing thresholds would be diagnosis. Instead, the entry form always shows the 999
+line. Readings go on Home and the doctor page, marked as typed in by the person. They are not sent to the AI.

@@ -9,6 +9,8 @@ import type {
   ExtractedField,
   MedicalRecord,
   WellnessEntry,
+  DeviceReading,
+  ReadingInput,
   HealthSummary,
 } from "@/lib/schemas";
 import type {
@@ -45,6 +47,7 @@ export class MemoryRepository implements Repository {
   private extractions = new Map<string, Extraction>();
   private records = new Map<string, MedicalRecord>();
   private wellness = new Map<string, WellnessEntry>();
+  private readings = new Map<string, DeviceReading>();
   private summaries = new Map<string, HealthSummary>();
   private readonly demoUserId: string;
 
@@ -176,7 +179,7 @@ export class MemoryRepository implements Repository {
       .filter((u) => isDemoAccountEmail(u.email) && u.createdAt < before)
       .slice(0, limit);
     for (const u of expired) {
-      for (const store of [this.documents, this.files, this.extractions, this.records, this.wellness, this.summaries]) {
+      for (const store of [this.documents, this.files, this.extractions, this.records, this.wellness, this.readings, this.summaries]) {
         for (const [key, row] of store as Map<string, { userId: string }>) {
           if (row.userId === u.id) store.delete(key);
         }
@@ -414,6 +417,34 @@ export class MemoryRepository implements Repository {
     };
     this.wellness.set(key, entry);
     return clone(entry);
+  }
+
+  async upsertDeviceReading(userId: string, date: string, input: ReadingInput): Promise<DeviceReading> {
+    const key = `${userId}:${date}:${input.kind}`;
+    const reading: DeviceReading = {
+      id: this.readings.get(key)?.id ?? randomUUID(),
+      userId,
+      date,
+      kind: input.kind,
+      value: input.value,
+      value2: input.value2,
+    };
+    this.readings.set(key, reading);
+    return clone(reading);
+  }
+
+  async listDeviceReadings(userId: string, opts: { from?: string; to?: string } = {}): Promise<DeviceReading[]> {
+    return [...this.readings.values()]
+      .filter((r) => r.userId === userId && (!opts.from || r.date >= opts.from) && (!opts.to || r.date <= opts.to))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .map((r) => clone(r));
+  }
+
+  async deleteDeviceReading(userId: string, id: string): Promise<boolean> {
+    for (const [key, r] of this.readings) {
+      if (r.id === id && r.userId === userId) return this.readings.delete(key);
+    }
+    return false;
   }
 
   async listWellnessEntries(

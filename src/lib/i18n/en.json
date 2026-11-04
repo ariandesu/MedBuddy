@@ -149,7 +149,44 @@
     "perDayMinutes": "min a day",
     "symptomFreeLabel": "Symptom-free days",
     "ofDaysAnswered": "of {{count}} answered",
-    "energyUnit": "of 4"
+    "energyUnit": "of 4",
+    "readings": {
+      "title": "Readings you entered",
+      "empty": "Have a blood pressure cuff, oximeter, thermometer or scale at home? Add its numbers here, to keep them and show your doctor.",
+      "note": "You typed these in from your own device. Not measured by MediSathi, and it doesn't judge them. Ask your doctor what they mean for you.",
+      "add": "Add a reading",
+      "sheetTitle": "Add a reading",
+      "sheetBody": "Copy the numbers from your device for today. Fill in only what you have. If you save one again today, it replaces the old one.",
+      "upper": "Upper number",
+      "lower": "Lower number",
+      "save": "Save readings",
+      "saved": "Readings saved",
+      "removed": "Reading removed",
+      "nothingEntered": "Type at least one number first.",
+      "checkNumber": "Check this number. It doesn't look like something the device would show.",
+      "urgent": "Feeling very unwell? Call 999 or go to the nearest hospital.",
+      "removeTitle": "Remove a mistake",
+      "removeLabel": "Remove {{name}}",
+      "keep": "Keep",
+      "confirmRemove": "Yes, remove",
+      "reportTitle": "Readings entered at home",
+      "reportNote": "Typed in by the person from their own device. Not checked by MediSathi.",
+      "reportColReading": "Reading",
+      "kinds": {
+        "blood_pressure": "Blood pressure",
+        "pulse": "Pulse",
+        "oxygen": "Oxygen",
+        "temperature": "Temperature",
+        "weight": "Weight"
+      },
+      "units": {
+        "blood_pressure": "mmHg",
+        "pulse": "beats/min",
+        "oxygen": "%",
+        "temperature": "°F",
+        "weight": "kg"
+      }
+    }
   },
   "documents": {
     "title": "Documents",
