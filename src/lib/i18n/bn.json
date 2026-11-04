@@ -141,7 +141,15 @@
     "noResultBody": "আপনার প্রথম ল্যাব মান এখানে এমন একটি দাগে দেখা যাবে।",
     "papersCount": "{{count}}টি কাগজ",
     "tourLink": "নমুনা ট্যুর",
-    "tourLinkDemo": "নমুনা ট্যুর ও অন্য প্রতিবেশী"
+    "tourLinkDemo": "নমুনা ট্যুর ও অন্য প্রতিবেশী",
+    "estimatesTitle": "এই সপ্তাহে, আনুমানিক",
+    "estimatesNote": "আপনি যা লিখেছেন তা থেকে মোটামুটি হিসাব। কোনো যন্ত্রে মাপা নয়, এবং চিকিৎসার ফলাফলও নয়।",
+    "about": "প্রায় {{value}}",
+    "perDayGlasses": "গ্লাস প্রতিদিন",
+    "perDayMinutes": "মিনিট প্রতিদিন",
+    "symptomFreeLabel": "উপসর্গ ছাড়া দিন",
+    "ofDaysAnswered": "(উত্তর দেওয়া {{count}} দিনের মধ্যে)",
+    "energyUnit": "(৪-এর মধ্যে)"
   },
   "documents": {
     "title": "কাগজপত্র",

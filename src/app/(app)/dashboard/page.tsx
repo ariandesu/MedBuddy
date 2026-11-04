@@ -7,7 +7,11 @@ import {
   Stethoscope,
   FileText,
   Check,
+  Footprints,
+  GlassWater,
+  HeartPulse,
   Repeat,
+  Zap,
 } from "lucide-react";
 import { DemoSwitchButton } from "@/components/demo-switch-button";
 import { getRepo } from "@/server/repo/index";
@@ -20,7 +24,7 @@ import { Tile } from "@/components/tile";
 import { previousObservation } from "@/lib/range";
 import { Badge } from "@/components/ui/badge";
 import { SleepWeek } from "@/components/sleep-week";
-import { weeklyAverages } from "@/server/trends";
+import { weekEstimates, weeklyAverages } from "@/server/trends";
 import { DEMO_EMAIL, isDemoAccountEmail } from "@/lib/demo";
 import { PageTitle } from "@/components/page-title";
 
@@ -79,6 +83,20 @@ export default async function DashboardPage() {
         : !todayCheckin
           ? { title: t.nextCheckinTitle, body: t.nextCheckinBody, cta: t.nextCheckinCta, href: "/checkin", Icon: ClipboardCheck }
           : { title: t.nextDoneTitle, body: t.nextDoneBody, cta: t.nextDoneCta, href: "/show-doctor", Icon: Stethoscope };
+
+  const estimates = weekEstimates(week);
+  const about = (v: number) => t.about.replace("{{value}}", toLocaleDigits(String(v), locale));
+  const estimateCells = [
+    estimates.waterGlasses != null && { label: dict.checkin.waterLabel, value: about(estimates.waterGlasses), unit: t.perDayGlasses, Icon: GlassWater },
+    estimates.activityMinutes != null && { label: dict.checkin.activityLabel, value: about(estimates.activityMinutes), unit: t.perDayMinutes, Icon: Footprints },
+    estimates.energy != null && { label: dict.checkin.energy, value: about(estimates.energy), unit: t.energyUnit, Icon: Zap },
+    estimates.symptomAnsweredDays > 0 && {
+      label: t.symptomFreeLabel,
+      value: n(estimates.symptomFreeDays),
+      unit: t.ofDaysAnswered.replace("{{count}}", n(estimates.symptomAnsweredDays)),
+      Icon: HeartPulse,
+    },
+  ].filter((cell) => cell !== false);
 
   const demoAccount = isDemoAccountEmail(user?.email);
   const showTour = demoAccount || user?.email === DEMO_EMAIL;
@@ -146,6 +164,27 @@ export default async function DashboardPage() {
       </section>
 
       {sleepAverage != null && <SleepWeek points={sleepPoints} average={sleepAverage} dict={dict} locale={locale} />}
+
+      {estimateCells.length > 0 && (
+        <section aria-labelledby="estimates-h" className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
+          <h2 id="estimates-h" className="font-heading text-lg font-semibold">{t.estimatesTitle}</h2>
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-4">
+            {estimateCells.map(({ label, value, unit, Icon }) => (
+              <div key={label} className="flex flex-col gap-0.5">
+                <dt className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Icon className="size-4 shrink-0" aria-hidden />
+                  {label}
+                </dt>
+                <dd className="font-heading text-xl font-semibold tabular-nums">
+                  {value}{" "}
+                  <span className="block text-sm font-normal text-muted-foreground">{unit}</span>
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="text-sm text-muted-foreground">{t.estimatesNote}</p>
+        </section>
+      )}
 
       <nav aria-label={t.title}>
         <ul className="divide-y rounded-2xl border bg-card px-4">

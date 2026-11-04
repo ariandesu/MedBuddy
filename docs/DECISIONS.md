@@ -204,3 +204,9 @@ The user asked for Ask to explain what a medicine is and why it is used, from of
 - A brand is never mapped to a generic. "Napa" gets "no official label found". The only aliases are one ingredient's two official
   names, such as paracetamol and acetaminophen.
 - The labels are American, so the answer says it is general information and that medicines in Bangladesh may differ.
+
+## Approximate figures on Home (2026-11-04)
+
+The user asked for more approximate vitals on Home, since the app has no medical equipment. Home shows rough weekly figures from
+what the person logged: water, walking, energy and days without symptoms. It does not show estimated heart rate, blood pressure,
+oxygen or temperature. Nothing in the app can produce those, so they would be invented numbers (`AGENTS.md`: never invent values).

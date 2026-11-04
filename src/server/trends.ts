@@ -147,3 +147,37 @@ export function missingDays(
   }
   return missing;
 }
+
+export type WeekEstimates = {
+  waterGlasses: number | null;
+  activityMinutes: number | null;
+  energy: number | null;
+  /** Days the person answered about symptoms, and how many of those had none. */
+  symptomFreeDays: number;
+  symptomAnsweredDays: number;
+};
+
+/**
+ * Rough weekly figures from what the person logged. Each average only counts days
+ * that have that value: a missing day is unknown, never zero. Rounded on purpose,
+ * because self-reported numbers aren't precise, and nothing here is measured.
+ */
+export function weekEstimates(
+  entries: (WellnessPoint & { energy?: number; symptomLevel?: string; symptoms?: string[] })[]
+): WeekEstimates {
+  const avg = (values: (number | undefined)[]) => {
+    const known = values.filter((v): v is number => v != null);
+    return known.length ? known.reduce((a, b) => a + b, 0) / known.length : null;
+  };
+  const water = avg(entries.map((e) => e.waterGlasses));
+  const walking = avg(entries.map((e) => e.activityMinutes));
+  const energy = avg(entries.map((e) => e.energy));
+  const answered = entries.filter((e) => e.symptomLevel != null || (e.symptoms?.length ?? 0) > 0);
+  return {
+    waterGlasses: water == null ? null : Math.round(water),
+    activityMinutes: walking == null ? null : Math.round(walking / 5) * 5,
+    energy: energy == null ? null : Math.round(energy * 10) / 10,
+    symptomFreeDays: answered.filter((e) => (e.symptomLevel ?? "none") === "none" && !e.symptoms?.length).length,
+    symptomAnsweredDays: answered.length,
+  };
+}

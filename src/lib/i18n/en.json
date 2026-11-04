@@ -141,7 +141,15 @@
     "noResultBody": "Your first lab value will show here, on a bar like this one.",
     "papersCount": "{{count}} papers",
     "tourLink": "Sample tour",
-    "tourLinkDemo": "Sample tour and other neighbors"
+    "tourLinkDemo": "Sample tour and other neighbors",
+    "estimatesTitle": "This week, approximately",
+    "estimatesNote": "Rough figures from what you logged. Not measured by a device, and not a medical result.",
+    "about": "about {{value}}",
+    "perDayGlasses": "glasses a day",
+    "perDayMinutes": "min a day",
+    "symptomFreeLabel": "Symptom-free days",
+    "ofDaysAnswered": "of {{count}} answered",
+    "energyUnit": "of 4"
   },
   "documents": {
     "title": "Documents",
