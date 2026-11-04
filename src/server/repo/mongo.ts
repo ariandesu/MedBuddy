@@ -83,7 +83,7 @@ function isDuplicateKeyError(err: unknown): boolean {
 
 export class MongoRepository implements Repository {
   private client: MongoClient | null = null;
-  private indexesReady = false;
+  private indexesPromise: Promise<void> | null = null;
 
   constructor(
     private readonly uri: string,
@@ -96,13 +96,16 @@ export class MongoRepository implements Repository {
       await this.client.connect();
     }
     const db = this.client.db(this.dbName);
-    if (!this.indexesReady) {
-      // Don't block the first request on index creation: indexes already exist
-      // in production (init-indexes script); createIndex is an idempotent no-op.
-      // Fire-and-forget so cold starts skip ~6 index round-trips.
-      this.indexesReady = true;
-      ensureIndexes(db).catch(() => {});
+    if (!this.indexesPromise) {
+      // Dedupe concurrent first-requests onto one run. Awaited: unique
+      // indexes (email, wellness) must exist before any write lands.
+      // One parallel batch (~1 Atlas RTT for all 8), then cached.
+      this.indexesPromise = ensureIndexes(db).catch((err) => {
+        this.indexesPromise = null;
+        throw err;
+      });
     }
+    await this.indexesPromise;
     return db;
   }
 
@@ -110,7 +113,7 @@ export class MongoRepository implements Repository {
     if (this.client) {
       await this.client.close();
       this.client = null;
-      this.indexesReady = false;
+      this.indexesPromise = null;
     }
   }
 
