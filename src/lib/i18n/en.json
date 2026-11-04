@@ -23,13 +23,13 @@
   "demo": {
     "dataBanner": "Demo: sample data. Changes may reset.",
     "aiBanner": "Demo: AI answers are samples.",
-    "bothBanner": "Demo: sample data and sample AI answers. Changes may reset."
+    "bothBanner": "Demo: sample data and AI answers. May reset."
   },
   "records": {
     "title": "Records",
     "subtitle": "Your prescriptions and lab reports, all in one place.",
     "empty": "No records yet. Upload a document to get started.",
-    "documents": "Documents",
+    "documents": "Papers",
     "timeline": "Timeline",
     "all": "All",
     "confirmed": "Confirmed",
@@ -62,7 +62,28 @@
     "noCheckins": "No check-ins in range.",
     "latestSummary": "Latest summary",
     "questionsForDoctor": "Questions for doctor",
-    "disclaimer": "Generated from your confirmed records. This is not a diagnostic tool; please discuss with a doctor."
+    "disclaimer": "Generated from your confirmed records. This is not a diagnostic tool; please discuss with a doctor.",
+    "dates": "Report dates",
+    "printCta": "Print or save as PDF",
+    "recordsAsWritten": "Records, as written",
+    "medicinesAsWritten": "Medicines, as written",
+    "noMedicines": "None saved yet.",
+    "stillToCheck": "{{count}} still to check",
+    "checkIt": "Check it",
+    "notIncluded": "{{count}} more uploaded and not yet checked, so not included here.",
+    "fromPaper": "From {{name}}",
+    "checkinsCount": "{{logged}} of {{total}} days. Blank days are not counted.",
+    "avgSleep": "hrs sleep, average",
+    "avgWater": "glasses water, average",
+    "avgWalking": "min walking, average",
+    "symptomDays": "{{symptom}} ({{count}} days)",
+    "symptomsNoted": "Symptoms noted: {{list}}",
+    "colTest": "Test",
+    "colValue": "Value",
+    "colRange": "Printed range",
+    "colSource": "Source paper",
+    "tabReport": "Report",
+    "tabSummary": "Summary"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -82,8 +103,8 @@
     "reviewNowDesc": "Documents waiting for your review",
     "checkinDesc": "Log your daily wellness check-in",
     "askDesc": "Ask questions about your health records",
-    "greeting": "Your health records",
-    "nextReviewTitle": "{{count}} document(s) to check",
+    "greeting": "Your health notebook",
+    "nextReviewTitle": "{{count}} papers to check",
     "nextReviewBody": "Check that the values were read correctly. It takes about a minute.",
     "nextReviewCta": "Start checking",
     "nextCheckinTitle": "How are you today?",
@@ -112,7 +133,15 @@
     "tourStep4": "4. Show the doctor",
     "tourStep4Body": "A print-ready page with values as written and the lab's own ranges.",
     "switchDemo": "Try another sample neighbor",
-    "switchDemoBody": "You're using sample data. Switch to a different recovering or healthy story."
+    "switchDemoBody": "You're using sample data. Switch to a different recovering or healthy story.",
+    "nextReviewTitleOne": "1 paper to check",
+    "sleepWeek": "Sleep this week",
+    "sleepPerNight": "hrs a night",
+    "sleepGaps": "No check-in on {{count}} of these days, so they stay empty.",
+    "noResultBody": "Your first lab value will show here, on a bar like this one.",
+    "papersCount": "{{count}} papers",
+    "tourLink": "Sample tour",
+    "tourLinkDemo": "Sample tour and other neighbors"
   },
   "documents": {
     "title": "Documents",
@@ -150,10 +179,24 @@
     "uploadFailed": "Upload didn't finish. Check your connection and try again.",
     "unsupported": "Use a JPG or PNG photo, or a PDF.",
     "stageOcr": "Reading the paper on this device…",
-    "stageAi": "Muse is reading the paper. This takes about 30 seconds…"
+    "stageAi": "Muse is reading the paper. This takes about 30 seconds…",
+    "toCheck": "To check",
+    "saved": "Saved",
+    "addPaper": "Add paper",
+    "sheetTitle": "Add a paper",
+    "takePhoto": "Take a photo",
+    "chooseFile": "Choose a file",
+    "limits": "Photo (JPG or PNG) or PDF, up to 4 MB and 5 pages.",
+    "privacy": "Your phone reads the text first. Then the file is sent to Meta's AI (Muse Spark) to read it too.",
+    "readingTitle": "Reading your paper",
+    "readingNote": "Nothing is saved until you have checked it.",
+    "stagePhoneDone": "Your phone read the text",
+    "checkThis": "Check this paper",
+    "addedOn": "Added {{date}}",
+    "tooManyPages": "This PDF has more than 5 pages."
   },
   "review": {
-    "title": "Review extracted values",
+    "title": "Check this paper",
     "original": "Original",
     "extracted": "Extracted",
     "confirm": "Confirm",
@@ -170,7 +213,7 @@
     "colAgreement": "Readings agree?",
     "agreement": {
       "match": "Both readings match",
-      "mismatch": "Readings differ",
+      "mismatch": "The two readings differ",
       "single_source": "Only one reading"
     },
     "edited": "edited",
@@ -204,7 +247,20 @@
     "dateAmbiguous": "This could mean {{date}} or {{other}}. Please check which is right.",
     "dateUnclear": "Please check this date against the paper.",
     "dateMissing": "No date was found. Add it if the paper has one, or mark it checked to save it undated.",
-    "dateUseOther": "Use {{date}}"
+    "dateUseOther": "Use {{date}}",
+    "valueOf": "Value {{n}} of {{total}}",
+    "next": "Next",
+    "lookRightNext": "Looks right, next",
+    "seeAll": "See all values",
+    "hideAll": "Hide the list",
+    "matchQuestion": "Does this match the paper?",
+    "whichMatches": "Which one matches the paper?",
+    "neither": "Neither is right, type it",
+    "onlyAi": "Only the AI could read this",
+    "onlyPhone": "Only your phone could read this",
+    "keepWritten": "Change it if it's wrong. We keep the words as written and never swap them for another medicine name.",
+    "openPaper": "Open the full paper",
+    "deletePaper": "Delete this paper"
   },
   "checkin": {
     "title": "Daily check-in",
@@ -253,7 +309,30 @@
     "urgentGroupHint": "If you have any of these now, get help right away.",
     "otherSymptoms": "Other symptoms",
     "call999": "Call 999",
-    "saveFailed": "Check-in wasn't saved. Check your connection and try again."
+    "saveFailed": "Check-in wasn't saved. Check your connection and try again.",
+    "stepOf": "Step {{n}} of {{total}}",
+    "urgentQuestion": "Do you have any of these right now?",
+    "urgentHelp": "If yes, tap it. We'll show you how to get help.",
+    "noneOfThese": "None of these",
+    "feelQuestion": "How are you feeling?",
+    "feelHelp": "Choose the one that feels closest.",
+    "symptomNoneLong": "No symptoms",
+    "mildDesc": "I notice it, but I can manage",
+    "moderateDesc": "It affects my day",
+    "severeDesc": "Hard to do normal things",
+    "otherQuestion": "Anything else today?",
+    "symptomTiredness": "Tiredness",
+    "bodyQuestion": "Your body today",
+    "bodyHelp": "Add only what you remember.",
+    "yesterday": "Yesterday {{value}}",
+    "energyQuestion": "How much energy do you have?",
+    "noteQuestion": "Anything to tell your doctor? (optional)",
+    "next": "Next",
+    "finishEmpty": "Finish without saving",
+    "savedTitle": "Saved",
+    "seeTimeline": "See my timeline",
+    "change": "Change today's check-in",
+    "ofFour": "of 4"
   },
   "timeline": {
     "title": "Timeline",
@@ -275,7 +354,13 @@
     "uncertain": "unclear, check the paper",
     "viewDocument": "View the paper",
     "symptoms": "Symptoms",
-    "energy": "Energy"
+    "energy": "Energy",
+    "today": "Today",
+    "yourCheckins": "Your check-ins",
+    "paperSays": "What the paper says",
+    "inSimpleWords": "In simple words",
+    "explainNote": "From AI. It may be wrong. This is not medical advice.",
+    "thePaper": "The paper"
   },
   "summary": {
     "title": "Health summary",
@@ -291,7 +376,11 @@
     "noRecords": "There are no confirmed records to summarize yet. Add a document first.",
     "toastGenerated": "Summary generated",
     "uploadDocument": "Upload document",
-    "urgentQuestion": "On {{dates}} I noted: {{symptoms}}. What should I do about this?"
+    "urgentQuestion": "On {{dates}} I noted: {{symptoms}}. What should I do about this?",
+    "yours": "Your summary",
+    "madeOn": "Made on {{date}} from {{count}} saved records.",
+    "makeNew": "Make a new summary",
+    "sourceGone": "A paper behind this was deleted."
   },
   "ask": {
     "title": "Ask about your records",
@@ -305,13 +394,19 @@
     "answer": "Answer",
     "sources": "From these records",
     "limitations": "Limitations",
-    "intro": "Answers come only from your confirmed records and latest summary. Your question and those records are sent to Meta's AI (Muse Spark). This is not medical advice.",
     "label": "Your question",
     "examples": "For example: Is my hemoglobin normal?",
     "listen": "Speak",
     "listening": "Listening…",
     "speakAnswer": "Read aloud",
-    "voiceNotSupported": "Voice input is not supported in this browser."
+    "voiceNotSupported": "Voice input is not supported in this browser.",
+    "introShort": "Answers come only from your saved papers and latest summary.",
+    "privacy": "Your question and those records are sent to Meta's AI (Muse Spark). This is not medical advice.",
+    "askAnother": "Ask another…",
+    "looking": "Looking in your records…",
+    "example1": "Is my hemoglobin normal?",
+    "example2": "What medicines are written?",
+    "fromRecords": "From your records"
   },
   "recordType": {
     "lab_report": "Lab report",
@@ -363,7 +458,9 @@
     "chooseProfileHint": "3 recovering, 2 staying healthy. Synthetic data only.",
     "profileRecovering": "Recovering",
     "profileStable": "Healthy",
-    "profileStarting": "Setting up sample records…"
+    "profileStarting": "Setting up sample records…",
+    "privacy": "Your phone reads each paper first, then it is sent to Meta's AI (Muse Spark) to read too. Records are not end-to-end encrypted.",
+    "tryFirst": "Try it first"
   },
   "common": {
     "loading": "Loading…",
@@ -372,7 +469,9 @@
     "cancel": "Cancel",
     "save": "Save",
     "back": "Back",
-    "close": "Close"
+    "close": "Close",
+    "loadFailed": "This couldn't load. Your records are safe. Check your connection and try again.",
+    "notFound": "This page doesn't exist."
   },
   "footer": {
     "disclaimer": "MediSathi explains your records in simple language. It is not a diagnostic tool and never replaces a doctor."
@@ -393,7 +492,8 @@
     "low": "Below normal",
     "high": "Above normal",
     "normal": "Within normal range",
-    "normalRange": "Normal:"
+    "normalRange": "Normal:",
+    "was": "Was {{value}} on {{date}}"
   },
   "symptomName": {
     "chest pain": "Chest pain",
@@ -422,6 +522,7 @@
     "step3": "You understand",
     "step3Body": "Ask questions answered from your own records, with sources, then print a page for your doctor.",
     "chooseProfile": "Or start as someone else:",
-    "startingOther": "Setting up sample records…"
+    "startingOther": "Setting up sample records…",
+    "noteShared": "Opens sample records. Made-up data, no sign-up."
   }
 }

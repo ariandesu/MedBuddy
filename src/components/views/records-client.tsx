@@ -3,8 +3,8 @@
 import dynamicLoader from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Split the heavy client chunks (tesseract.js + pdfjs in UploadZone, recharts
-// in TimelineView) out of the server AND initial client bundles. Both views
+// Split the heavy client chunk (recharts in TimelineView) out of the server AND
+// initial client bundles; UploadZone is split the same way in AddPaperSheet. Both views
 // fetch their data client-side and render skeletons first, so skipping SSR
 // changes nothing visually — but cold starts skip megabytes of parse/compile.
 const DocumentsView = dynamicLoader(
@@ -17,5 +17,5 @@ const TimelineView = dynamicLoader(
 );
 
 export function RecordsViews({ tab }: { tab: "timeline" | "documents" }) {
-  return tab === "timeline" ? <TimelineView embedded /> : <DocumentsView embedded />;
+  return tab === "timeline" ? <TimelineView /> : <DocumentsView />;
 }

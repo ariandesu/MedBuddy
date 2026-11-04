@@ -1,24 +1,23 @@
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { PageTabs } from "@/components/page-tabs";
 import { RecordsViews } from "@/components/views/records-client";
+import { PageTitle } from "@/components/page-title";
+import { AddPaperSheet } from "@/components/add-paper-sheet";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecordsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; add?: string }>;
 }) {
   const { dict } = await getLocaleAndDict();
-  const { tab } = await searchParams;
+  const { tab, add } = await searchParams;
   const active = tab === "timeline" ? "timeline" : "documents";
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <header>
-        <h1 className="font-heading text-3xl font-semibold">{dict.records.title}</h1>
-        <p className="mt-1 text-muted-foreground">{dict.records.subtitle}</p>
-      </header>
+      <PageTitle title={dict.records.title} action={<AddPaperSheet key={add ?? ""} defaultOpen={add === "1"} />} />
       <PageTabs
         label={dict.records.title}
         active={active}

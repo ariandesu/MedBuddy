@@ -7,7 +7,6 @@ import {
   Stethoscope,
   FileText,
   Check,
-  MessageCircleQuestion,
   Repeat,
 } from "lucide-react";
 import { DemoSwitchButton } from "@/components/demo-switch-button";
@@ -17,7 +16,13 @@ import { getLocaleAndDict } from "@/lib/i18n/server";
 import { todayISODate } from "@/server/dates";
 import { formatDate, toLocaleDigits } from "@/lib/digits";
 import { RangeBar } from "@/components/range-bar";
-import { cn } from "@/lib/utils";
+import { Tile } from "@/components/tile";
+import { previousObservation } from "@/lib/range";
+import { Badge } from "@/components/ui/badge";
+import { SleepWeek } from "@/components/sleep-week";
+import { weeklyAverages } from "@/server/trends";
+import { DEMO_EMAIL, isDemoAccountEmail } from "@/lib/demo";
+import { PageTitle } from "@/components/page-title";
 
 export const dynamic = "force-dynamic";
 
@@ -36,15 +41,21 @@ export default async function DashboardPage() {
   const repo = getRepo();
 
   const today = todayISODate();
+  const weekDates = Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.parse(`${today}T00:00:00Z`) - (6 - i) * 86_400_000).toISOString().slice(0, 10)
+  );
   // Parallel: each Mongo query costs a full Atlas RTT from serverless.
-  const [docs, todayCheckins, summary, records] = await Promise.all([
+  const [docs, week, summary, records] = await Promise.all([
     user ? repo.listDocuments(user.id) : Promise.resolve([]),
-    user ? repo.listWellnessEntries(user.id, today, today) : Promise.resolve([]),
+    user ? repo.listWellnessEntries(user.id, weekDates[0], today) : Promise.resolve([]),
     user ? repo.getLatestHealthSummary(user.id) : Promise.resolve(null),
     user ? repo.listMedicalRecords(user.id) : Promise.resolve([]),
   ]);
   const needsReview = docs.filter((d) => d.status === "needs_review");
-  const todayCheckin = todayCheckins.length > 0;
+  const todayCheckin = week.some((w) => w.date === today);
+  const sleepByDate = new Map(week.map((w) => [w.date, w.sleepHours ?? null]));
+  const sleepPoints = weekDates.map((date) => ({ date, value: sleepByDate.get(date) ?? null }));
+  const sleepAverage = weeklyAverages(week).sleepHours;
 
   // Latest value for each lab test, newest report first.
   const latestLab = records
@@ -56,10 +67,10 @@ export default async function DashboardPage() {
   // Exactly one "what to do now" card, chosen by priority.
   const next: NextStep =
     docs.length === 0
-      ? { title: t.nextUploadTitle, body: t.nextUploadBody, cta: t.nextUploadCta, href: "/records", Icon: FilePlus2 }
+      ? { title: t.nextUploadTitle, body: t.nextUploadBody, cta: t.nextUploadCta, href: "/records?add=1", Icon: FilePlus2 }
       : needsReview.length > 0
         ? {
-            title: t.nextReviewTitle.replace("{{count}}", n(needsReview.length)),
+            title: needsReview.length === 1 ? t.nextReviewTitleOne : t.nextReviewTitle.replace("{{count}}", n(needsReview.length)),
             body: t.nextReviewBody,
             cta: t.nextReviewCta,
             href: `/documents/${needsReview[0].id}`,
@@ -69,75 +80,46 @@ export default async function DashboardPage() {
           ? { title: t.nextCheckinTitle, body: t.nextCheckinBody, cta: t.nextCheckinCta, href: "/checkin", Icon: ClipboardCheck }
           : { title: t.nextDoneTitle, body: t.nextDoneBody, cta: t.nextDoneCta, href: "/show-doctor", Icon: Stethoscope };
 
-  return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-5">
-      <header>
-        <p className="text-muted-foreground">{formatDate(today, locale)}</p>
-        <h1 className="font-heading text-3xl font-semibold">{t.greeting}</h1>
-      </header>
+  const demoAccount = isDemoAccountEmail(user?.email);
+  const showTour = demoAccount || user?.email === DEMO_EMAIL;
+  const tourSteps = [
+    { href: "/records", title: t.tourStep1, body: t.tourStep1Body },
+    { href: "/records", title: t.tourStep2, body: t.tourStep2Body },
+    { href: "/ask", title: t.tourStep3, body: t.tourStep3Body },
+    { href: "/show-doctor", title: t.tourStep4, body: t.tourStep4Body },
+  ];
+  const rowClass = "flex min-h-[4.25rem] items-center gap-3 py-2 hover:bg-card-lead focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring";
 
-      <section aria-labelledby="next-h" className="rounded-2xl bg-primary p-5 text-primary-foreground">
-        <next.Icon className="size-7 opacity-90" aria-hidden />
-        <h2 id="next-h" className="mt-3 font-heading text-2xl font-semibold">{next.title}</h2>
-        <p className="mt-1 opacity-90">{next.body}</p>
+  return (
+    <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <PageTitle overline={formatDate(today, locale)} title={t.greeting} />
+
+      <section aria-labelledby="next-h" className="flex flex-col gap-4 rounded-2xl border bg-card-lead p-4">
+        <div className="flex items-center gap-3">
+          <Tile variant="lead"><next.Icon className="size-8" /></Tile>
+          <div className="min-w-0">
+            <h2 id="next-h" className="font-heading text-xl font-semibold">{next.title}</h2>
+            <p className="text-muted-foreground">{next.body}</p>
+          </div>
+        </div>
         <Link
           href={next.href}
-          className="mt-4 inline-flex h-12 items-center justify-center rounded-xl bg-card px-5 font-semibold text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-card"
+          className="flex h-14 items-center justify-center rounded-full bg-primary px-5 text-center text-lg font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
         >
           {next.cta}
         </Link>
       </section>
 
-      {user && user.email.startsWith("demo-") && user.email.endsWith("@medisathi.app") && (
-        <section aria-labelledby="switch-h" className="rounded-2xl bg-primary p-5 text-primary-foreground">
-          <Repeat className="size-7 opacity-90" aria-hidden />
-          <h2 id="switch-h" className="mt-3 font-heading text-2xl font-semibold">{t.switchDemo}</h2>
-          <p className="mt-1 opacity-90">{t.switchDemoBody}</p>
-          <DemoSwitchButton label={t.switchDemo} />
-        </section>
-      )}
-
-      <section aria-labelledby="tour-h" className="rounded-2xl border bg-card p-4">
-        <h2 id="tour-h" className="font-heading text-lg font-semibold">{t.tourTitle}</h2>
-        <ol className="mt-2 flex flex-col gap-2 text-sm">
-          <li>
-            <Link href="/records" className="font-medium text-primary underline-offset-4 hover:underline">
-              {t.tourStep1}
-            </Link>
-            <p className="text-muted-foreground">{t.tourStep1Body}</p>
-          </li>
-          <li>
-            <Link href="/records" className="font-medium text-primary underline-offset-4 hover:underline">
-              {t.tourStep2}
-            </Link>
-            <p className="text-muted-foreground">{t.tourStep2Body}</p>
-          </li>
-          <li>
-            <Link href="/ask" className="flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
-              <MessageCircleQuestion className="size-4" aria-hidden />
-              {t.tourStep3}
-            </Link>
-            <p className="text-muted-foreground">{t.tourStep3Body}</p>
-          </li>
-          <li>
-            <Link href="/show-doctor" className="font-medium text-primary underline-offset-4 hover:underline">
-              {t.tourStep4}
-            </Link>
-            <p className="text-muted-foreground">{t.tourStep4Body}</p>
-          </li>
-        </ol>
-      </section>
-
-      {latestLab && latestLab.observations.length > 0 && (
-        <section aria-labelledby="results-h" className="rounded-2xl border bg-card px-4 pt-3 pb-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 id="results-h" className="font-heading text-lg font-semibold">{t.latestResults}</h2>
-            {latestLab.recordDate && (
-              <time className="text-sm text-muted-foreground" dateTime={latestLab.recordDate}>
-                {formatDate(latestLab.recordDate, locale)}
-              </time>
-            )}
-          </div>
+      <section aria-labelledby="results-h" className="rounded-2xl border bg-card px-4 pt-3 pb-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 id="results-h" className="font-heading text-lg font-semibold">{t.latestResults}</h2>
+          {latestLab?.recordDate && (
+            <time className="text-sm text-muted-foreground" dateTime={latestLab.recordDate}>
+              {formatDate(latestLab.recordDate, locale)}
+            </time>
+          )}
+        </div>
+        {latestLab && latestLab.observations.length > 0 ? (
           <div className="divide-y">
             {latestLab.observations.slice(0, 4).map((o) => (
               <RangeBar
@@ -149,51 +131,51 @@ export default async function DashboardPage() {
                 referenceRangeRaw={o.referenceRangeRaw}
                 dict={dict}
                 locale={locale}
+                previous={previousObservation(records, o, latestLab.recordDate)}
               />
             ))}
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="pb-3">
+            <div aria-hidden className="relative mt-3 h-3.5 rounded-full bg-muted">
+              <div className="absolute inset-y-0 left-1/4 right-1/4 bg-chart-1/35" />
+            </div>
+            <p className="mt-2 text-muted-foreground">{t.noResultBody}</p>
+          </div>
+        )}
+      </section>
 
-      <nav aria-label={dict.nav.primary}>
-        <ul className="divide-y rounded-2xl border bg-card">
+      {sleepAverage != null && <SleepWeek points={sleepPoints} average={sleepAverage} dict={dict} locale={locale} />}
+
+      <nav aria-label={t.title}>
+        <ul className="divide-y rounded-2xl border bg-card px-4">
           <li>
-            <Link href="/checkin" className="flex min-h-16 items-center gap-3 px-4 hover:bg-muted/60">
-              <ClipboardCheck className="size-5 text-primary" aria-hidden />
+            <Link href="/checkin" className={rowClass}>
+              <Tile><ClipboardCheck className="size-5" /></Tile>
               <span className="flex-1 font-medium">{t.checkinToday}</span>
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium",
-                  todayCheckin ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
-                )}
-              >
-                {todayCheckin && <Check className="size-4" aria-hidden />}
-                {todayCheckin ? t.checkinDone : t.checkinPending}
-              </span>
-              <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
+              {todayCheckin ? (
+                <Badge><Check aria-hidden />{t.checkinDone}</Badge>
+              ) : (
+                <Badge variant="secondary">{t.checkinPending}</Badge>
+              )}
             </Link>
           </li>
           <li>
-            <Link href="/records" className="flex min-h-16 items-center gap-3 px-4 hover:bg-muted/60">
-              <FileText className="size-5 text-primary" aria-hidden />
-              <span className="flex-1">
+            <Link href="/records" className={rowClass}>
+              <Tile><FileText className="size-5" /></Tile>
+              <span className="min-w-0 flex-1">
                 <span className="block font-medium">{t.allRecords}</span>
                 {docs.length > 0 && (
-                  <span className="block text-sm text-muted-foreground">
-                    {docs
-                      .slice(0, 2)
-                      .map((d) => d.fileName)
-                      .join(", ")}
-                  </span>
+                  <span className="block text-sm text-muted-foreground">{t.papersCount.replace("{{count}}", n(docs.length))}</span>
                 )}
               </span>
-              <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
+              <ChevronRight className="size-5 shrink-0" aria-hidden />
             </Link>
           </li>
           <li>
-            <Link href="/show-doctor" className="flex min-h-16 items-center gap-3 px-4 hover:bg-muted/60">
-              <Stethoscope className="size-5 text-primary" aria-hidden />
-              <span className="flex-1">
+            <Link href="/show-doctor" className={rowClass}>
+              <Tile><Stethoscope className="size-5" /></Tile>
+              <span className="min-w-0 flex-1">
                 <span className="block font-medium">{dict.showDoctor.title}</span>
                 {summary && (
                   <span className="block text-sm text-muted-foreground">
@@ -201,11 +183,42 @@ export default async function DashboardPage() {
                   </span>
                 )}
               </span>
-              <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
+              <ChevronRight className="size-5 shrink-0" aria-hidden />
             </Link>
           </li>
         </ul>
       </nav>
+
+      {showTour && (
+        <details className="group">
+          <summary className="flex min-h-12 cursor-pointer list-none items-center justify-center font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+            {demoAccount ? t.tourLinkDemo : t.tourLink}
+          </summary>
+          <div className="mt-2 flex flex-col gap-4">
+            <section aria-labelledby="tour-h" className="rounded-2xl border bg-card p-4">
+              <h2 id="tour-h" className="font-heading text-lg font-semibold">{t.tourTitle}</h2>
+              <ol className="mt-2 flex flex-col gap-2 text-sm">
+                {tourSteps.map((step) => (
+                  <li key={step.title}>
+                    <Link href={step.href} className="inline-flex min-h-12 items-center font-medium underline underline-offset-4">{step.title}</Link>
+                    <p className="text-muted-foreground">{step.body}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+            {demoAccount && (
+              <section aria-labelledby="switch-h" className="rounded-2xl border bg-card p-4">
+                <h2 id="switch-h" className="flex items-center gap-2 font-heading text-lg font-semibold">
+                  <Repeat className="size-5" aria-hidden />
+                  {t.switchDemo}
+                </h2>
+                <p className="mt-1 text-muted-foreground">{t.switchDemoBody}</p>
+                <DemoSwitchButton label={t.switchDemo} />
+              </section>
+            )}
+          </div>
+        </details>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 # AGENTS.md — MediSathi build spec (for autonomous coding agent)
 
 > Active work order: FIX_PLAN.md. Where it conflicts with this file, FIX_PLAN.md wins.
+> For UI and visual design, DESIGN.md wins over both. Redesign work order: docs/REDESIGN_PLAN.md.
 
 Read this whole file before writing code. Follow milestones in order. Commit and push after every milestone.
 If something here conflicts with a library's current docs, follow the docs and note it in `docs/DECISIONS.md`.
@@ -234,11 +235,11 @@ Static disclaimer in the footer and on summary/report pages.
 - shadcn components to use: button, card, input, label, form, select, slider, radio-group, checkbox, textarea,
   tabs, table, badge, alert, alert-dialog, dialog, sheet, dropdown-menu, progress, skeleton, sonner, chart,
   separator, tooltip, avatar, calendar/popover (date range).
-- Theme: light, sky-blue primary, high contrast, base font 18px, large tap targets (≥44px).
-- Fonts via `next/font/google`: Inter + **Hind Siliguri** (or Noto Sans Bengali) for Bangla.
+- Theme: light "Mist" ground, near-black primary, high contrast, base font 17px, large tap targets (≥48px). Tokens in DESIGN.md.
+- Fonts via `next/font/google`: Anek Latin + Anek Bangla for headings and numbers, Noto Sans Bengali for Bangla body.
 - i18n: simple JSON dictionaries `bn.json`/`en.json`, language switch in the header, stored in a cookie. Default `bn`.
-- Mobile-first; bottom navigation on small screens (Dashboard, Documents, Check-in, Timeline, Ask).
-- Check-in: completable in < 1 minute, every field skippable, sliders for sleep/water/activity, radio for energy/symptoms.
+- Mobile-first; bottom navigation on small screens (Home, Records, Check-in, Ask, Doctor).
+- Check-in: four steps, completable in < 1 minute. Urgent signs first, cleared by one tap; everything else skippable. Steppers for sleep/water/activity, option cards for energy/symptoms.
 - Timeline: merged list of confirmed records and check-ins by date; trend charts for sleep/water/activity with gaps shown.
 - Report page (`/report`): date-range picker → print-optimized layout (`@media print`) with records (raw values + units +
   lab ranges + source doc names), medications **as written**, wellness trends, symptoms, latest summary, questions for doctor.

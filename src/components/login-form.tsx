@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import type { Dictionary } from "@/lib/i18n";
 import { DEFAULT_DEMO_PROFILE, DEMO_PROFILES, type DemoProfileId } from "@/server/demo-profiles";
 
-export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "en" }) {
+/** `profiles` is off without a database, where every visitor shares one sample account. */
+export function LoginForm({ dict, locale, profiles }: { dict: Dictionary; locale: "bn" | "en"; profiles: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
@@ -119,86 +121,69 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">{dict.auth.email}</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            disabled={pending}
-          />
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email" className="text-base">{dict.auth.email}</Label>
+          <Input id="email" name="email" type="email" autoComplete="email" required disabled={pending} className="h-14 rounded-[1.125rem] border-input bg-popover px-4 text-base" />
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="password">{dict.auth.password}</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            disabled={pending}
-          />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password" className="text-base">{dict.auth.password}</Label>
+          <Input id="password" name="password" type="password" autoComplete="current-password" required disabled={pending} className="h-14 rounded-[1.125rem] border-input bg-popover px-4 text-base" />
         </div>
-        <Button type="submit" disabled={pending || !csrfToken}>
+        <Button type="submit" disabled={pending || !csrfToken} className="h-14 w-full text-lg font-semibold">
           {dict.auth.submit}
         </Button>
+        <p className="text-center">
+          {dict.auth.noAccount}{" "}
+          <Link href="/signup" className="inline-flex min-h-12 items-center font-semibold underline underline-offset-4">
+            {dict.auth.signUp}
+          </Link>
+        </p>
       </form>
-      <Button
-        onClick={() => startDemo(DEFAULT_DEMO_PROFILE)}
-        variant="secondary"
-        className="w-full"
-        disabled={pending}
-      >
-        {startingProfile ? dict.auth.profileStarting : dict.auth.tryDemo}
-      </Button>
-      <div id="profiles" className="flex scroll-mt-20 flex-col gap-2 rounded-2xl border bg-card p-3">
-        <p className="font-medium">{dict.auth.chooseProfile}</p>
-        <p className="text-sm text-muted-foreground">{dict.auth.chooseProfileHint}</p>
-        <ul className="flex flex-col gap-2">
-          {DEMO_PROFILES.map((p) => (
-            <li key={p.id}>
-              <button
-                type="button"
-                onClick={() => startDemo(p.id)}
-                disabled={pending}
-                className="w-full rounded-xl border bg-background px-4 py-3 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50"
-              >
-                <span className="flex w-full flex-col gap-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">
-                      {locale === "bn" ? p.nameBn : p.nameEn}
+
+      <section aria-labelledby="try-h" className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
+        <div>
+          <h2 id="try-h" className="font-heading text-xl font-semibold">{dict.auth.tryFirst}</h2>
+          <p className="text-muted-foreground">{dict.auth.demoExplain}</p>
+        </div>
+        <Button onClick={() => startDemo(DEFAULT_DEMO_PROFILE)} className="h-14 w-full text-lg font-semibold" disabled={pending}>
+          {startingProfile ? dict.auth.profileStarting : dict.auth.tryDemo}
+        </Button>
+        {profiles && (
+          <div id="profiles" className="scroll-mt-20">
+            <p className="font-heading text-lg font-semibold">{dict.auth.chooseProfile}</p>
+            <p className="text-sm text-muted-foreground">{dict.auth.chooseProfileHint}</p>
+            <ul className="mt-1 divide-y">
+              {DEMO_PROFILES.map((p) => (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    onClick={() => startDemo(p.id)}
+                    disabled={pending}
+                    className="flex min-h-[4.25rem] w-full items-center gap-3 py-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{locale === "bn" ? p.nameBn : p.nameEn}</span>
+                      <span className="block break-words text-sm text-muted-foreground">
+                        {startingProfile === p.id ? dict.auth.profileStarting : locale === "bn" ? p.storyBn : p.storyEn}
+                      </span>
                     </span>
-                    <Badge variant={p.badge === "recovering" ? "destructive" : "secondary"}>
+                    <Badge variant="secondary">
                       {p.badge === "recovering" ? dict.auth.profileRecovering : dict.auth.profileStable}
                     </Badge>
-                  </span>
-                  <span className="text-sm font-normal break-words text-muted-foreground">
-                    {locale === "bn" ? p.storyBn : p.storyEn}
-                  </span>
-                  {startingProfile === p.id && (
-                    <span className="text-sm text-muted-foreground">{dict.auth.profileStarting}</span>
-                  )}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <p className="text-center text-sm text-muted-foreground">
-        {dict.auth.noAccount}{" "}
-        <a href="/signup" className="underline">
-          {dict.auth.signUp}
-        </a>
-      </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

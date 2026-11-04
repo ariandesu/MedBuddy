@@ -2,15 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Check, ChevronLeft, FileText, ImageOff, Pencil } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocale } from "@/components/locale-provider";
 import { formatDate, normalizeDigits, toLocaleDigits } from "@/lib/digits";
 import { parseNumericDate } from "@/lib/document-date";
 import { cn } from "@/lib/utils";
 import type { Dictionary, Locale } from "@/lib/i18n";
+import { PageTitle } from "@/components/page-title";
+import { StickyActionBar } from "@/components/sticky-action-bar";
+import { OptionCard } from "@/components/option-card";
+import { DeletePaperDialog } from "@/components/delete-paper-dialog";
+import { PaperView } from "@/components/paper-view";
+import { RecordDetail } from "@/components/record-detail";
 
 type Field = {
   key: string;
@@ -39,6 +47,12 @@ type Extraction = {
   ocrText: string;
 };
 
+/** The paper's date is checked like any other value, under this key. */
+const DATE_KEY = "__date";
+
+const INPUT_CLASS =
+  "h-14 w-full min-w-0 rounded-[1.125rem] border border-input bg-popover px-4 text-lg focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:opacity-70";
+
 function parseNumber(raw: string): number | null {
   const m = normalizeDigits(raw)
     .replace(/,/g, "")
@@ -59,57 +73,6 @@ function fieldLabel(f: Field, fields: Field[], dict: Dictionary, locale: Locale)
   return `${dict.review.medicine.replace("{{n}}", toLocaleDigits(String(n), locale))} — ${part}`;
 }
 
-function OriginalDocument({ doc, dict, failed, onFail, box }: {
-  doc: { id: string; mimeType: string };
-  dict: Dictionary;
-  failed: boolean;
-  onFail: () => void;
-  box: Field["box"];
-}) {
-  if (doc.mimeType === "application/pdf") {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
-        <FileText className="size-8" aria-hidden />
-        <a href={`/api/documents/${doc.id}/file`} target="_blank" rel="noopener noreferrer" className="font-medium text-primary underline underline-offset-4">
-          {dict.review.openPdf}
-        </a>
-      </div>
-    );
-  }
-  if (failed) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
-        <ImageOff className="size-8" aria-hidden />
-        <p>{dict.review.noPreview}</p>
-      </div>
-    );
-  }
-  return (
-    // Sized to the image so the highlight's percentages land on the paper itself.
-    <div className="relative mx-auto w-fit">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`/api/documents/${doc.id}/file`}
-        alt={dict.review.originalDocumentAlt}
-        className="block max-h-[34vh] w-auto max-w-full md:max-h-[75vh]"
-        onError={onFail}
-      />
-      {box && (
-        <span
-          aria-hidden
-          className="paper-highlight"
-          style={{
-            left: `${(box.x - 0.008) * 100}%`,
-            top: `${(box.y - 0.004) * 100}%`,
-            width: `${(box.w + 0.016) * 100}%`,
-            height: `${(box.h + 0.008) * 100}%`,
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
 export default function DocumentReviewPage() {
   const { dict, locale } = useLocale();
   const { id } = useParams<{ id: string }>();
@@ -127,8 +90,10 @@ export default function DocumentReviewPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imgFailed, setImgFailed] = useState(false);
-  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const [activeKey, setActiveKey] = useState<string>(DATE_KEY);
+  const [showList, setShowList] = useState(false);
+  const [typingKey, setTypingKey] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,7 +126,7 @@ export default function DocumentReviewPage() {
         setDateNeedsReview(extData?.dateNeedsReview === true);
         // Start on the first value that needs checking, so the paper lights up at once.
         const first = extData?.fields.find((f) => f.needsReview) ?? extData?.fields[0];
-        setActiveKey(first?.key ?? null);
+        setActiveKey(extData?.dateNeedsReview === true ? DATE_KEY : (first?.key ?? DATE_KEY));
       }
       if (!cancelled) setLoading(false);
     }
@@ -186,14 +151,6 @@ export default function DocumentReviewPage() {
                   : parseNumber(value),
             }
           : f
-      )
-    );
-  };
-
-  const handleToggleReview = (key: string) => {
-    setFields((prev) =>
-      prev.map((f) =>
-        f.key === key ? { ...f, needsReview: false } : f
       )
     );
   };
@@ -247,27 +204,38 @@ export default function DocumentReviewPage() {
     }
   };
 
-  const isConfirmed = doc?.status === "confirmed";
-
   if (loading) {
-    return <div className="h-60 animate-pulse rounded-2xl bg-muted" aria-busy="true" />;
+    return (
+      <div className="flex flex-col gap-3" aria-busy="true">
+        <PageTitle title={dict.review.title} back={{ href: "/records", label: `${dict.common.back}: ${dict.nav.records}` }} />
+        <Skeleton className="h-60 w-full rounded-2xl" />
+        <Skeleton className="h-44 w-full rounded-2xl" />
+      </div>
+    );
   }
+  // A saved paper is no longer being checked: it has its own page.
+  if (doc?.status === "confirmed") return <RecordDetail doc={doc} />;
   if (!doc || !extraction) {
     return (
-      <div className="mx-auto max-w-xl rounded-2xl border bg-card p-6 text-center">
-        <p>{dict.review.loadFailed}</p>
-        <Link href="/records" className="mt-4 inline-flex h-11 items-center font-medium text-primary underline underline-offset-4">
-          {dict.nav.records}
-        </Link>
+      <div className="mx-auto flex max-w-xl flex-col gap-3">
+        <PageTitle title={dict.review.title} back={{ href: "/records", label: `${dict.common.back}: ${dict.nav.records}` }} />
+        <p role="alert" className="rounded-2xl border bg-card-lead p-4">{dict.review.loadFailed}</p>
       </div>
     );
   }
 
-  const total = fields.length + 1;
-  const needsReviewCount =
-    fields.filter((f) => f.needsReview).length + (dateNeedsReview ? 1 : 0);
-  const done = total - needsReviewCount;
   const n = (v: number) => toLocaleDigits(String(v), locale);
+  const pendingKeys = [
+    ...(dateNeedsReview ? [DATE_KEY] : []),
+    ...fields.filter((f) => f.needsReview).map((f) => f.key),
+  ];
+  const allKeys = [DATE_KEY, ...fields.map((f) => f.key)];
+  const total = allKeys.length;
+  const done = total - pendingKeys.length;
+  const activeIndex = Math.max(0, allKeys.indexOf(activeKey));
+  const activeField = fields.find((f) => f.key === activeKey) ?? null;
+  const activePending = pendingKeys.includes(activeKey);
+
   const writtenDate = parseNumericDate(extraction.documentDateRaw);
   // Either reading of a date like 03/11/2026, whichever isn't selected right now.
   const otherDate = !writtenDate?.alternate
@@ -275,19 +243,172 @@ export default function DocumentReviewPage() {
     : documentDate === writtenDate.alternate
       ? writtenDate.date
       : writtenDate.alternate;
-  const activeField = fields.find((f) => f.key === activeKey) ?? null;
-  const canHighlight = doc.mimeType !== "application/pdf" && !imgFailed;
+
+  /** The next value still to check after this one, wrapping round. */
+  const nextPending = (without: string) => {
+    const rest = pendingKeys.filter((k) => k !== without);
+    return rest.find((k) => allKeys.indexOf(k) > allKeys.indexOf(without)) ?? rest[0] ?? null;
+  };
+
+  const primaryAction = () => {
+    if (activePending) {
+      if (activeKey === DATE_KEY) setDateNeedsReview(false);
+      else setFields((prev) => prev.map((f) => (f.key === activeKey ? { ...f, needsReview: false } : f)));
+      const following = nextPending(activeKey);
+      if (following) setActiveKey(following);
+    } else if (pendingKeys.length > 0) {
+      setActiveKey(pendingKeys[0]);
+    } else {
+      void handleConfirm();
+    }
+  };
+
+  const primaryLabel = activePending
+    ? pendingKeys.length > 1
+      ? dict.review.lookRightNext
+      : dict.review.markChecked
+    : pendingKeys.length > 0
+      ? dict.review.next
+      : saving
+        ? dict.common.loading
+        : dict.review.confirmCta;
+
+  const readingBadge = (f: Field) => {
+    if (f.agreement === "match") return <Badge variant="secondary">{dict.review.agreement.match}</Badge>;
+    if (f.agreement === "mismatch") return <Badge variant="warning">{dict.review.agreement.mismatch}</Badge>;
+    return <Badge variant="warning">{f.sources.muse ? dict.review.onlyAi : dict.review.onlyPhone}</Badge>;
+  };
+
+  const editor = activeField ? (() => {
+    const f = activeField;
+    const differs =
+      f.agreement === "mismatch" &&
+      normalizeDigits(f.sources.muse ?? "") !== normalizeDigits(f.sources.ocr ?? "");
+    const choices = differs ? (["muse", "ocr"] as const).filter((src) => f.sources[src]) : [];
+    const offChoices = differs && !choices.some((src) => f.sources[src] === f.rawValue);
+    const showInput = !differs || typingKey === f.key || offChoices;
+    return (
+      <>
+        <div className="flex flex-col items-start gap-1">
+          <h2 className="font-heading text-xl font-semibold">{fieldLabel(f, fields, dict, locale)}</h2>
+          {readingBadge(f)}
+        </div>
+        {differs && (
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 font-medium">{dict.review.whichMatches}</legend>
+            {choices.map((src) => (
+              <OptionCard
+                key={src}
+                label={f.sources[src] ?? ""}
+                description={src === "muse" ? dict.review.readingAi : dict.review.readingOcr}
+                active={f.rawValue === f.sources[src]}
+                onToggle={() => {
+                  setTypingKey(null);
+                  handleChange(f.key, f.sources[src] ?? "");
+                }}
+              />
+            ))}
+            {!showInput && (
+              <button
+                type="button"
+                onClick={() => setTypingKey(f.key)}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-full font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <Pencil className="size-4" aria-hidden />
+                {dict.review.neither}
+              </button>
+            )}
+          </fieldset>
+        )}
+        {showInput && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="value-input" className="font-medium">{dict.review.matchQuestion}</label>
+            <div className="flex items-center gap-2">
+              <input
+                id="value-input"
+                value={f.rawValue}
+                placeholder={dict.review.empty}
+                onChange={(e) => handleChange(f.key, e.target.value)}
+                className={INPUT_CLASS}
+              />
+              {f.unit && <span className="shrink-0 text-muted-foreground">{f.unit}</span>}
+              {f.userEdited && <Pencil className="size-4 shrink-0 text-muted-foreground" aria-label={dict.review.edited} />}
+            </div>
+          </div>
+        )}
+        {f.referenceRangeRaw && (
+          <p className="text-sm text-muted-foreground">
+            {dict.review.colRefRange}: {toLocaleDigits(f.referenceRangeRaw, locale)}
+          </p>
+        )}
+        {MED_FIELD.test(f.key) && <p className="text-sm text-muted-foreground">{dict.review.keepWritten}</p>}
+      </>
+    );
+  })() : (
+    <>
+      <h2 className="font-heading text-xl font-semibold">{dict.review.dateLabel}</h2>
+      <input
+        id="value-input"
+        aria-label={dict.review.dateLabel}
+        type="date"
+        value={documentDate}
+        max={new Date().toLocaleDateString("en-CA")}
+        onChange={(e) => {
+          setDocumentDate(e.target.value);
+          setDateNeedsReview(false);
+        }}
+        className={INPUT_CLASS}
+      />
+      {documentDate && <p className="font-medium">{formatDate(documentDate, locale)}</p>}
+      {extraction.documentDateRaw && (
+        <p className="text-sm text-muted-foreground">
+          {dict.review.dateWritten.replace("{{raw}}", toLocaleDigits(extraction.documentDateRaw, locale))}
+        </p>
+      )}
+      {dateNeedsReview && (
+        <p className="text-sm font-medium text-warning-foreground">
+          {!documentDate
+            ? dict.review.dateMissing
+            : otherDate
+              ? dict.review.dateAmbiguous
+                  .replace("{{date}}", formatDate(documentDate, locale))
+                  .replace("{{other}}", formatDate(otherDate, locale))
+              : dict.review.dateUnclear}
+        </p>
+      )}
+      {otherDate && (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 w-full"
+          onClick={() => {
+            setDocumentDate(otherDate);
+            setDateNeedsReview(false);
+          }}
+        >
+          {dict.review.dateUseOther.replace("{{date}}", formatDate(otherDate, locale))}
+        </Button>
+      )}
+    </>
+  );
 
   return (
-    <div className="flex flex-col gap-4 pb-24 md:pb-0">
-      <div>
-        <Link href="/records" className="-ml-2 inline-flex h-11 items-center gap-1 rounded-lg px-2 text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="size-5" aria-hidden />
-          {dict.nav.records}
-        </Link>
-        <h1 className="font-heading text-3xl font-semibold">{dict.review.title}</h1>
-        <p className="mt-1 break-all text-muted-foreground">{doc.fileName}</p>
-      </div>
+    <div className="flex flex-col gap-3 pb-4 md:pb-0">
+      <PageTitle
+        title={dict.review.title}
+        subtitle={doc.fileName}
+        back={{ href: "/records", label: `${dict.common.back}: ${dict.nav.records}` }}
+      />
+
+              <div className="flex flex-col gap-2">
+          <p aria-live="polite" className="font-medium">
+            {dict.review.valueOf.replace("{{n}}", n(activeIndex + 1)).replace("{{total}}", n(total))}
+          </p>
+          <Progress
+            value={(done / total) * 100}
+            aria-label={dict.review.progress.replace("{{done}}", n(done)).replace("{{total}}", n(total))}
+          />
+        </div>
 
       {error && (
         <Alert variant="destructive">
@@ -295,227 +416,95 @@ export default function DocumentReviewPage() {
         </Alert>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        <section aria-label={dict.review.original} className="sticky top-16 z-20 overflow-hidden rounded-2xl border bg-muted md:top-20">
-          <OriginalDocument
-            doc={doc}
-            dict={dict}
-            failed={imgFailed}
-            onFail={() => setImgFailed(true)}
-            box={activeField?.box}
-          />
-          {canHighlight && activeField && (
-            <p aria-live="polite" className="border-t bg-card px-3 py-2 text-sm">
-              <span className="font-medium">{fieldLabel(activeField, fields, dict, locale)}: </span>
-              <span className="text-muted-foreground">
-                {activeField.box ? dict.review.onPaper : dict.review.notOnPaper}
-              </span>
-            </p>
-          )}
-        </section>
+      <div className="grid gap-3 md:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] md:items-start md:gap-6">
+        <PaperView
+          doc={doc}
+          dict={dict}
+          box={activeField?.box}
+          caption={activeField && (activeField.box ? dict.review.onPaper : dict.review.notOnPaper)}
+          className="md:sticky md:top-20"
+        />
 
-        <section aria-labelledby="fields-h" className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h2 id="fields-h" className="font-heading text-lg font-semibold">{dict.review.extracted}</h2>
-            {!isConfirmed && (
-              <p className="text-sm text-muted-foreground" aria-live="polite">
-                {dict.review.progress.replace("{{done}}", n(done)).replace("{{total}}", n(total))}
-              </p>
-            )}
-          </div>
-          {!isConfirmed && (
-            <p className="text-sm text-muted-foreground">{dict.review.subtitle}</p>
-          )}
-          {canHighlight && (
-            <p className="text-sm font-medium text-warning-foreground">{dict.review.tapHint}</p>
-          )}
-
-          <div
-            className={cn(
-              "rounded-2xl border bg-card p-4",
-              dateNeedsReview && !isConfirmed && "border-warning"
-            )}
-          >
-            <label htmlFor="document-date" className="font-medium">{dict.review.dateLabel}</label>
-            <input
-              id="document-date"
-              type="date"
-              value={documentDate}
-              max={new Date().toLocaleDateString("en-CA")}
-              onChange={(e) => {
-                setDocumentDate(e.target.value);
-                setDateNeedsReview(false);
-              }}
-              disabled={isConfirmed}
-              className="mt-2 h-12 w-full rounded-xl border bg-background px-3 text-lg focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:opacity-70"
-            />
-            {documentDate && (
-              <p className="mt-1 font-medium">{formatDate(documentDate, locale)}</p>
-            )}
-            {extraction.documentDateRaw && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                {dict.review.dateWritten.replace("{{raw}}", toLocaleDigits(extraction.documentDateRaw, locale))}
-              </p>
-            )}
-            {!isConfirmed && dateNeedsReview && (
-              <p className="mt-2 text-sm font-medium text-warning-foreground">
-                {!documentDate
-                  ? dict.review.dateMissing
-                  : otherDate
-                    ? dict.review.dateAmbiguous
-                        .replace("{{date}}", formatDate(documentDate, locale))
-                        .replace("{{other}}", formatDate(otherDate, locale))
-                    : dict.review.dateUnclear}
-              </p>
-            )}
-            {!isConfirmed && otherDate && (
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-2 h-11 w-full"
-                onClick={() => {
-                  setDocumentDate(otherDate);
-                  setDateNeedsReview(false);
-                }}
-              >
-                {dict.review.dateUseOther.replace("{{date}}", formatDate(otherDate, locale))}
+        <div className="flex flex-col gap-3">
+          <section className="flex flex-col gap-3 rounded-2xl border bg-card-lead p-4">{editor}</section>
+                      <StickyActionBar>
+              <Button onClick={primaryAction} disabled={saving} className="h-14 w-full text-lg font-semibold">
+                <Check className="size-5!" aria-hidden />
+                {primaryLabel}
               </Button>
-            )}
-            {!isConfirmed && (
-              <div className="mt-3">
-                {dateNeedsReview ? (
-                  <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setDateNeedsReview(false)}>
-                    <Check aria-hidden />
-                    {dict.review.markChecked}
-                  </Button>
-                ) : (
-                  <p className="flex h-11 items-center justify-center gap-1.5 font-medium text-primary">
-                    <Check className="size-5" aria-hidden />
-                    {dict.review.checked}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+              {pendingKeys.length > 0 && (
+                <p className="mt-1 text-center text-sm text-muted-foreground">{dict.review.confirmHint}</p>
+              )}
+            </StickyActionBar>
 
-          <ul className="flex flex-col gap-3">
-            {fields.map((f) => {
-              const label = fieldLabel(f, fields, dict, locale);
-              const inputId = `field-${f.key}`;
-              const differs =
-                f.agreement === "mismatch" &&
-                normalizeDigits(f.sources.muse ?? "") !== normalizeDigits(f.sources.ocr ?? "");
+                      <button
+              type="button"
+              aria-expanded={showList}
+              onClick={() => setShowList((v) => !v)}
+              className="flex min-h-12 items-center justify-center rounded-full font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring md:hidden"
+            >
+              {showList ? dict.review.hideAll : dict.review.seeAll}
+            </button>
+
+          <ul className={cn("flex-col gap-2", showList ? "flex" : "hidden md:flex")}>
+            {allKeys.map((key) => {
+              const f = fields.find((x) => x.key === key);
+              const pending = pendingKeys.includes(key);
+              const value = f
+                ? f.rawValue
+                : documentDate
+                  ? formatDate(documentDate, locale)
+                  : "";
               return (
-                <li
-                  key={f.key}
-                  onClick={() => setActiveKey(f.key)}
-                  onFocus={() => setActiveKey(f.key)}
-                  className={cn(
-                    "cursor-pointer rounded-2xl border bg-card p-4",
-                    f.needsReview && !isConfirmed && (f.agreement === "mismatch" ? "border-warning" : "border-primary/30"),
-                    f.key === activeKey && "ring-2 ring-warning"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <label htmlFor={inputId} className="font-medium">{label}</label>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2 py-0.5 text-sm",
-                        f.agreement === "match" && "bg-primary/10 text-primary",
-                        f.agreement === "mismatch" && "bg-warning/20 text-warning-foreground",
-                        f.agreement === "single_source" && "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {dict.review.agreement[f.agreement] ?? dict.review.agreement.single_source}
-                    </span>
-                  </div>
-
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      id={inputId}
-                      value={f.rawValue}
-                      placeholder={dict.review.empty}
-                      onChange={(e) => handleChange(f.key, e.target.value)}
-                      disabled={isConfirmed}
-                      className="h-12 min-w-0 flex-1 rounded-xl border bg-background px-3 text-lg focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:opacity-70"
-                    />
-                    {f.unit && <span className="text-muted-foreground">{f.unit}</span>}
-                    {f.userEdited && (
-                      <Pencil className="size-4 text-muted-foreground" aria-label={dict.review.edited} />
+                <li key={key}>
+                  <button
+                    type="button"
+                    aria-current={key === activeKey ? "true" : undefined}
+                    onClick={() => setActiveKey(key)}
+                    className={cn(
+                      "flex min-h-14 w-full items-center gap-3 rounded-[1.25rem] border px-4 py-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                      key === activeKey ? "border-primary bg-card-lead" : "bg-card hover:bg-card-lead"
                     )}
-                  </div>
-
-                  {f.referenceRangeRaw && (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {dict.review.colRefRange}: {toLocaleDigits(f.referenceRangeRaw, locale)}
-                    </p>
-                  )}
-
-                  {differs && !isConfirmed && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {(["muse", "ocr"] as const).map((src) => {
-                        const v = f.sources[src];
-                        if (!v) return null;
-                        return (
-                          <button
-                            key={src}
-                            type="button"
-                            onClick={() => handleChange(f.key, v)}
-                            className="flex flex-col items-start rounded-xl border px-3 py-2 text-left hover:bg-muted"
-                          >
-                            <span className="text-sm text-muted-foreground">
-                              {src === "muse" ? dict.review.readingAi : dict.review.readingOcr}
-                            </span>
-                            <span className="font-medium">{v}</span>
-                            <span className="text-sm text-primary">{dict.review.useThis}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {!isConfirmed && (
-                    <div className="mt-3">
-                      {f.needsReview ? (
-                        <Button type="button" variant="outline" className="h-11 w-full" onClick={() => handleToggleReview(f.key)}>
-                          <Check aria-hidden />
-                          {dict.review.markChecked}
-                        </Button>
-                      ) : (
-                        <p className="flex h-11 items-center justify-center gap-1.5 font-medium text-primary">
-                          <Check className="size-5" aria-hidden />
-                          {dict.review.checked}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm text-muted-foreground">
+                        {f ? fieldLabel(f, fields, dict, locale) : dict.review.dateLabel}
+                      </span>
+                      <span className="block break-words font-medium">{value || dict.review.empty}</span>
+                    </span>
+                                          <span
+                        className={cn(
+                          "flex size-7 shrink-0 items-center justify-center rounded-full border-2",
+                          pending ? "border-chart-4" : "border-primary bg-primary text-primary-foreground"
+                        )}
+                      >
+                        {!pending && <Check className="size-4" aria-hidden />}
+                        <span className="sr-only">{pending ? dict.review.needsReview : dict.review.checked}</span>
+                      </span>
+                  </button>
                 </li>
               );
             })}
           </ul>
 
-          {isConfirmed ? (
-            <p className="flex items-center gap-2 rounded-2xl bg-primary/10 p-4 font-medium text-primary">
-              <Check className="size-5" aria-hidden />
-              {dict.review.alreadyConfirmed}
-            </p>
-          ) : (
-            <div className="fixed inset-x-0 bottom-16 z-30 border-t bg-background p-3 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] md:static md:border-0 md:bg-transparent md:p-0">
-              <Button
-                onClick={handleConfirm}
-                disabled={saving || needsReviewCount > 0}
-                className="h-12 w-full text-base"
-              >
-                <Check aria-hidden />
-                {saving ? dict.common.loading : dict.review.confirmCta}
-              </Button>
-              {needsReviewCount > 0 && (
-                <p className="mt-1 text-center text-sm text-muted-foreground">{dict.review.confirmHint}</p>
-              )}
-            </div>
-          )}
-        </section>
+          <button
+            type="button"
+            onClick={() => setDeleting(true)}
+            className="flex min-h-12 items-center justify-center font-medium text-destructive-ink underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            {dict.review.deletePaper}
+          </button>
+        </div>
       </div>
+
+      {deleting && (
+        <DeletePaperDialog
+          doc={doc}
+          dict={dict}
+          onClose={() => setDeleting(false)}
+          onDeleted={() => router.push("/records")}
+        />
+      )}
     </div>
   );
 }

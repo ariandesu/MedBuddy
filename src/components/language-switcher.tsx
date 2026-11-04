@@ -22,7 +22,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale; label?: string })
       type="button"
       onClick={switchLanguage}
       lang={next}
-      className="flex min-h-11 items-center gap-1.5 rounded-full px-3 font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      className="flex min-h-12 items-center gap-1.5 rounded-full bg-secondary px-4 font-medium hover:bg-card-lead focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       <Languages className="size-4" aria-hidden />
       {next === "en" ? "English" : "বাংলা"}

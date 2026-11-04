@@ -1,13 +1,10 @@
 {
-  "plainLanguage": "SAMPLE — Your blood test (CBC) shows hemoglobin within the normal range. Your prescription lists two medicines to take as written. This is not a diagnosis.",
+  "plainLanguage": "SAMPLE — A plain-language explanation of this paper would appear here. Muse isn't connected, so this text is not about your values. Use what the paper says above, and ask your doctor what it means for you.",
   "keyPoints": [
-    "SAMPLE — Hemoglobin 13.5 g/dL is within the reference range 13.0-17.0.",
-    "SAMPLE — Take Napa 500mg twice daily for 7 days as written.",
-    "SAMPLE — Take Omeprazole 20mg once daily before breakfast for 14 days as written."
+    "SAMPLE — Key points from this paper would appear here."
   ],
   "questionsForDoctor": [
-    "SAMPLE — Should I repeat the blood test, and when?",
-    "SAMPLE — How long should I continue these medicines?"
+    "SAMPLE — What do these results mean for me?"
   ],
   "limitations": [
     "SAMPLE — AI output is canned demo data; not a real interpretation."

@@ -2,14 +2,16 @@
 
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Camera, Loader2 } from "lucide-react";
+import { buttonVariants, Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Camera, Check, FileUp, ScanSearch } from "lucide-react";
+import { Orb } from "@/components/orb";
+import { Tile } from "@/components/tile";
 import { toast } from "sonner";
-import { Textarea } from "@/components/ui/textarea";
 import { createWorker, type Worker } from "tesseract.js";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PDFDocumentProxy } from "pdfjs-dist";
+import { cn } from "@/lib/utils";
 import type { Dictionary } from "@/lib/i18n";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -28,18 +30,23 @@ type UploadedFile = {
 
 type Stage = "idle" | "ocr" | "ai";
 
+const PICK_CLASS =
+  "h-16 w-full cursor-pointer gap-2 text-lg font-semibold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring";
+
 const SAMPLES = [
   { url: "/samples/sample-cbc.jpg", fileName: "Sample-blood-test.jpg" },
   { url: "/samples/sample-prescription.jpg", fileName: "Sample-prescription.jpg" },
 ] as const;
 
-export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUploadComplete?: () => void }) {
-  const [file, setFile] = useState<File | null>(null);
-  const [ocrText, setOcrText] = useState("");
-  const [ocrWords, setOcrWords] = useState<OcrWord[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [stage, setStage] = useState<Stage>("idle");
+export function UploadZone({ dict, onBusyChange }: { dict: Dictionary; onBusyChange?: (busy: boolean) => void }) {
+  const [stage, setStageState] = useState<Stage>("idle");
+  const [error, setError] = useState<string | null>(null);
   const workerRef = useRef<Worker | null>(null);
+
+  const setStage = (next: Stage) => {
+    setStageState(next);
+    onBusyChange?.(next !== "idle");
+  };
 
   const compressImage = useCallback(
     async (file: File): Promise<Blob> => {
@@ -77,11 +84,11 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
             URL.revokeObjectURL(img.src);
           }
         };
-        img.onerror = () => reject(new Error("Image load failed"));
+        img.onerror = () => reject(new Error(dict.documents.unsupported));
       });
       return b;
     },
-    []
+    [dict.documents.unsupported]
   );
 
   const runOcr = useCallback(
@@ -155,7 +162,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
         const pdf = await loadingTask.promise;
         const numPages = pdf.numPages;
         if (numPages > 5) {
-          throw new Error("PDF exceeds 5 pages");
+          throw new Error(dict.documents.tooManyPages);
         }
         const parts: string[] = [];
         for (let i = 1; i <= numPages; i++) {
@@ -167,7 +174,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       } else if (mime.startsWith("image/")) {
         const blob = await compressImage(selected);
         if (blob.size > MAX_BYTES) {
-          throw new Error("Image too large after compression");
+          throw new Error(dict.documents.tooLarge);
         }
         ({ text, words } = await runOcr(blob));
         const jpgName = selected.name.replace(/\.[^.]+$/, "") + ".jpg";
@@ -178,35 +185,10 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
 
       return { file: fileToUpload as File, ocrText: text, ocrWords: words };
     },
-    [compressImage, renderPdfPage, runOcr]
+    [compressImage, renderPdfPage, runOcr, dict.documents.tooLarge, dict.documents.tooManyPages, dict.documents.unsupported]
   );
 
   const router = useRouter();
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    setFile(selected);
-    setOcrText("");
-    setOcrWords([]);
-    setUploading(true);
-    setStage("ocr");
-    try {
-      const result = await processFile(selected);
-      setFile(result.file as File);
-      setOcrText(result.ocrText);
-      setOcrWords(result.ocrWords);
-      toast.success(dict.documents.ocrReady);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : dict.common.error
-      );
-      setFile(null);
-    } finally {
-      setUploading(false);
-      setStage("idle");
-    }
-  };
 
   async function send(upload: UploadedFile) {
     setStage("ai");
@@ -221,115 +203,101 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       throw new Error(dict.documents.uploadFailed);
     }
     toast.success(dict.documents.uploaded);
-    if (data.id) {
-      router.push(`/documents/${data.id}`);
-      onUploadComplete?.();
-    }
+    if (data.id) router.push(`/documents/${data.id}`);
   }
 
-  /** Samples run the real pipeline: OCR on this device, then Muse reads the paper. */
-  async function handleSample(sample: (typeof SAMPLES)[number]) {
-    setUploading(true);
+  /** Files and samples run the same pipeline: OCR on this device, then Muse reads the paper. */
+  async function run(getFile: () => Promise<File>) {
+    setError(null);
     setStage("ocr");
     try {
-      const blob = await (await fetch(sample.url)).blob();
-      await send(await processFile(new File([blob], sample.fileName, { type: "image/jpeg" })));
+      await send(await processFile(await getFile()));
+      // Stay on the reading view until the review page takes over.
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : dict.common.error);
-    } finally {
-      setUploading(false);
+      setError(err instanceof Error ? err.message : dict.common.error);
       setStage("idle");
     }
   }
 
-  const handleUpload = async () => {
-    if (!file) return;
-    setUploading(true);
-    try {
-      await send({ file, ocrText, ocrWords });
-      setFile(null);
-      setOcrText("");
-      setOcrWords([]);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : dict.common.error);
-    } finally {
-      setUploading(false);
-      setStage("idle");
-    }
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    e.target.value = "";
+    if (selected) void run(async () => selected);
   };
 
-  const accept = ".jpg,.jpeg,.png,.pdf";
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <input
-          id="file-upload"
-          type="file"
-          accept={accept}
-          onChange={handleFile}
-          disabled={uploading}
-          className="peer sr-only"
-        />
-        <label
-          htmlFor="file-upload"
-          className="flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-4 text-center font-medium text-primary hover:bg-primary/10 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring peer-disabled:opacity-60"
-        >
-          <Camera className="size-7" aria-hidden />
-          {file ? dict.documents.pickChange : dict.documents.pick}
-        </label>
-        {file && (
-          <p className="break-all text-sm text-muted-foreground">
-            {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)
-          </p>
-        )}
-      </div>
-      {ocrText && (
-        <div className="border rounded-lg p-3 bg-muted/50 text-sm">
-          <Label className="text-xs font-semibold mb-1 block">
-            {dict.documents.ocrLabel}
-          </Label>
-          <Textarea
-            value={ocrText}
-            onChange={(e) => setOcrText(e.target.value)}
-            rows={6}
-            className="text-base"
-            disabled={uploading}
-          />
+  const handleSample = (sample: (typeof SAMPLES)[number]) =>
+    void run(async () => {
+      const blob = await (await fetch(sample.url)).blob();
+      return new File([blob], sample.fileName, { type: "image/jpeg" });
+    });
+
+  if (stage !== "idle") {
+    const phoneDone = stage === "ai";
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="text-center">
+          <p className="font-heading text-2xl font-semibold">{dict.documents.readingTitle}</p>
+          <p className="mt-1">{dict.documents.readingNote}</p>
         </div>
+        <div className="orb-halo flex justify-center py-8">
+          <Orb className="size-36" />
+        </div>
+        <ul role="status" className="flex flex-col divide-y rounded-2xl border bg-card px-4">
+          <li className="flex min-h-[4.25rem] items-center gap-3 py-2">
+            <Tile>{phoneDone ? <Check className="size-5" /> : <ScanSearch className="size-5" />}</Tile>
+            <span className="font-medium">{phoneDone ? dict.documents.stagePhoneDone : dict.documents.stageOcr}</span>
+          </li>
+          {phoneDone && (
+            <li className="flex min-h-[4.25rem] items-center gap-3 py-2">
+              <Tile><ScanSearch className="size-5" /></Tile>
+              <span className="font-medium">{dict.documents.stageAi}</span>
+            </li>
+          )}
+        </ul>
+        <Progress value={phoneDone ? 50 : 15} aria-label={dict.documents.readingTitle} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {error && (
+        <p role="alert" className="rounded-2xl bg-warning-wash p-3 font-medium text-warning-foreground">
+          {error}
+        </p>
       )}
-      {file && (
-        <Button
-          onClick={handleUpload}
-          disabled={uploading || !file}
-          className="h-12 w-full text-base"
+      <div>
+        <input id="paper-camera" type="file" accept="image/*" capture="environment" onChange={handleFile} className="peer sr-only" />
+        <label
+          htmlFor="paper-camera"
+          className={cn(buttonVariants(), PICK_CLASS)}
         >
-          {uploading ? dict.common.loading : dict.documents.upload}
-        </Button>
-      )}
-      {stage !== "idle" && (
-        <p role="status" className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 font-medium text-primary">
-          <Loader2 className="size-5 shrink-0 animate-spin" aria-hidden />
-          {stage === "ocr" ? dict.documents.stageOcr : dict.documents.stageAi}
-        </p>
-      )}
-      <div className="border-t pt-4">
-        <p className="mb-2 text-sm font-medium text-muted-foreground">
-          {dict.documents.sampleTitle}
-        </p>
-        <div className="grid grid-cols-2 gap-2">
+          <Camera className="size-5!" aria-hidden />
+          {dict.documents.takePhoto}
+        </label>
+      </div>
+      <div>
+        <input id="paper-file" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFile} className="peer sr-only" />
+        <label
+          htmlFor="paper-file"
+          className={cn(buttonVariants({ variant: "secondary" }), PICK_CLASS)}
+        >
+          <FileUp className="size-5!" aria-hidden />
+          {dict.documents.chooseFile}
+        </label>
+      </div>
+      <p className="text-sm text-muted-foreground">{dict.documents.limits}</p>
+      <div>
+        <p className="mb-2 font-heading text-lg font-semibold">{dict.documents.sampleTitle}</p>
+        <div className="flex flex-wrap gap-2">
           {([dict.documents.sampleCbc, dict.documents.samplePrescription] as const).map((label, i) => (
-            <Button
-              key={label}
-              variant="outline"
-              onClick={() => handleSample(SAMPLES[i])}
-              disabled={uploading}
-              className="h-11"
-            >
+            <Button key={label} variant="outline" onClick={() => handleSample(SAMPLES[i])} className="h-12 px-4 text-base">
               {label}
             </Button>
           ))}
         </div>
       </div>
+      <p className="rounded-2xl border bg-card p-3 text-sm">{dict.documents.privacy}</p>
     </div>
   );
 }

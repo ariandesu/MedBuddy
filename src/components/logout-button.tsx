@@ -11,7 +11,7 @@ export function LogoutButton({ label }: { label: string }) {
       onClick={() => void signOut({ callbackUrl: "/login" })}
       aria-label={label}
       title={label}
-      className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full px-2 font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:px-3"
+      className="flex min-h-12 min-w-12 items-center justify-center gap-1.5 rounded-full bg-secondary font-medium hover:bg-card-lead focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring lg:px-3"
     >
       <LogOut className="size-5" aria-hidden />
       <span className="hidden lg:inline">{label}</span>

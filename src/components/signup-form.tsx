@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,51 +88,28 @@ export function SignupForm({ dict }: { dict: Dictionary }) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">{dict.auth.email}</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            disabled={pending}
-          />
+      <form onSubmit={onSubmit} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email" className="text-base">{dict.auth.email}</Label>
+          <Input id="email" name="email" type="email" autoComplete="email" required disabled={pending} className="h-14 rounded-[1.125rem] border-input bg-popover px-4 text-base" />
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="password">{dict.auth.password}</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            disabled={pending}
-          />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password" className="text-base">{dict.auth.password}</Label>
+          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={8} disabled={pending} className="h-14 rounded-[1.125rem] border-input bg-popover px-4 text-base" />
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="confirmPassword">{dict.auth.confirmPassword}</Label>
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            disabled={pending}
-          />
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="confirmPassword" className="text-base">{dict.auth.confirmPassword}</Label>
+          <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" required minLength={8} disabled={pending} className="h-14 rounded-[1.125rem] border-input bg-popover px-4 text-base" />
         </div>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className="h-14 w-full text-lg font-semibold">
           {dict.auth.signUp}
         </Button>
       </form>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center">
         {dict.auth.alreadyHaveAccount}{" "}
-        <a href="/login" className="underline">
+        <Link href="/login" className="inline-flex min-h-12 items-center font-semibold underline underline-offset-4">
           {dict.auth.logIn}
-        </a>
+        </Link>
       </p>
     </div>
   );

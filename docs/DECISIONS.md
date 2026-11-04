@@ -129,3 +129,66 @@ Log when spec conflicts with current library docs, or when a choice needs justif
   are limited to JPEG, PNG and PDF by magic bytes and served with `nosniff`.
 - CSP is production-only because `next dev` needs eval and a websocket, so E2E on the dev server doesn't exercise it. Test OCR
   against `next start` after changing it.
+
+## UI redesign, Phase 0 (2026-11-04)
+
+Plan: `docs/REDESIGN_PLAN.md`. The user accepted the plan's recommended choices:
+
+- Check-in becomes four steps, urgent signs first, cleared by one tap on "None of these". This departs from "every field
+  skippable" for that one tap, so nobody quits the form before reaching the urgent signs.
+- Review shows one value at a time, with "See all values" kept.
+- Steppers replace sliders for sleep, water and walking, because they are easier to hit. Unset stays unset, never 0.
+- Near-black replaces Shapla teal as the primary. Haldi and Alarm stay.
+- The judge tour and switch-neighbor card move behind one quiet link on Home.
+
+Other choices:
+
+- `DESIGN.md` now wins over `AGENTS.md` and `FIX_PLAN.md` for UI. `AGENTS.md` section 11 is updated to match.
+- Glass, one ground gradient and the orb's glow are deliberate, following the user's reference. Blur is limited to the bottom
+  nav and sticky action bar for low-end Android.
+- No-database demo: `/api/demo/start` returns the one shared seeded account and ignores `profile`, because Vercel instances
+  don't share memory. With MongoDB, profiles work. So the landing page's Rahima promise and neighbor buttons are only wrong
+  without a database. Left unchanged in Phase 0.
+
+## UI redesign, Phase 4 (2026-11-04)
+
+- Upload no longer shows the raw OCR text box before sending. Choosing a file now reads and sends it straight away, as samples
+  already did. People check values against the paper on the next screen, so editing OCR output was a confusing extra step. OCR
+  text still reaches the cross-check unchanged.
+- Delete moved off the list for papers that can be opened: it is on the paper's own page. Papers that never finished reading
+  keep it on the list, because they have no page to open.
+- The sheet can't be dismissed while a paper is being read, because the upload is already under way.
+- Saved papers are titled from the existing `/api/medical-records` response ("Lab report, 1 Nov"). No API changed.
+- The sample tour and switch-neighbor card only show for demo accounts now, behind one link on Home.
+
+## UI redesign, Phase 5 (2026-11-04)
+
+- The urgent dialog now shows both languages, the user's first. This replaces showing only the user's language, because someone
+  else may be helping them read it. `DESIGN.md` and the plan asked for it, so the E2E check that forbade English in the Bangla
+  dialog changed.
+- A saved urgent check-in keeps Call 999 visible on the saved screen, so dismissing the dialog doesn't remove the warning.
+- Check-in steps live in the URL so the phone's back gesture works, but a reload returns to step 1.
+- Opening check-in after today's is saved shows the saved screen. "Change" prefills today's values.
+- MongoRepository `upsertWellnessEntry` now really clears a value sent as null, using `$unset`. It used to keep the old value while
+  MemoryRepository cleared it, and editing today's check-in exposed the difference.
+
+## UI redesign, Phase 6 (2026-11-04)
+
+- Source links now open the saved paper at `/documents/[id]`, named "Lab report, 1 Nov". They used to point at `#rec-…` on Timeline,
+  which loads after the page, so the anchor never scrolled, and Summary labelled them with raw record ids. No API changed: Ask and
+  Summary look up each record's document from the records they can already read.
+- Saved papers get Record explained instead of the disabled Review form. "Explain in simple words" moved there from Timeline, so
+  an explanation always sits beside what the paper says.
+- Timeline's chart covers the same 30 days as its average, so one figure and one chart never use two windows.
+- A summary claim whose paper was later deleted says so, instead of showing a dead link.
+
+## UI redesign, Phase 7 (2026-11-04)
+
+- The printed report now has its own layout, separate from the phone view. It lists source paper names (`AGENTS.md` asks for them, and
+  they were missing) and no longer prints the account email.
+- Without a database, Landing and Log in hide the neighbor choices, because every button would open the same shared account while
+  promising different stories.
+- Failed loads on Records, Timeline and Doctor now say so. They used to look like empty lists.
+- Added `error.tsx` and `not-found.tsx`, so these show in the user's language and not Next's English defaults.
+- Reduced motion: the global rule shortened infinite animations to 0.01ms, which flickers. It now also stops them after one run.
+- The recovering badge on sample neighbors is neutral now. Red is only for urgent signs and delete.

@@ -37,3 +37,26 @@ export function positionOnBar(value: number, range: ParsedRange): number {
   const pct = ((value - barMin) / (barMax - barMin)) * 100;
   return Math.min(98, Math.max(2, pct));
 }
+
+type RangeRecord = {
+  recordType: string;
+  recordDate: string | null;
+  observations: { name: string; rawValue: string; numericValue?: number | null; unit?: string | null }[];
+};
+
+/** The newest earlier value of the same test, in the same unit. Never compares across units. */
+export function previousObservation(
+  records: RangeRecord[],
+  current: { name: string; unit?: string | null },
+  currentDate: string | null
+): { value: number; rawValue: string; date: string } | null {
+  if (!currentDate) return null;
+  let found: { value: number; rawValue: string; date: string } | null = null;
+  for (const r of records) {
+    if (r.recordType !== "lab_report" || !r.recordDate || r.recordDate >= currentDate) continue;
+    if (found && r.recordDate <= found.date) continue;
+    const o = r.observations.find((x) => x.name === current.name && (x.unit ?? null) === (current.unit ?? null));
+    if (o?.numericValue != null) found = { value: o.numericValue, rawValue: o.rawValue, date: r.recordDate };
+  }
+  return found;
+}
