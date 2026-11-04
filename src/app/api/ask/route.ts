@@ -4,7 +4,13 @@ import { getSessionUser } from "@/server/auth";
 import { getAI } from "@/server/ai/index";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { wrapDocument } from "@/server/ai/prompts";
-import { retrieveRecords, buildContext, groundCitations } from "@/server/ai/grounding";
+import {
+  retrieveRecords,
+  buildContext,
+  groundCitations,
+  inferCitations,
+  stripRecordIds,
+} from "@/server/ai/grounding";
 import { rateLimitCheck } from "@/server/rate-limit";
 
 const RECORD_TYPE_LABELS: Record<string, string> = {
@@ -61,8 +67,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       locale
     );
     const allowed = new Set([...hits.map((r) => r.id), ...(latest ? [latest.id] : [])]);
-    answerText = ai.answer;
+    answerText = stripRecordIds(ai.answer);
     citationIds = groundCitations(ai.citations, allowed);
+    if (citationIds.length === 0) citationIds = inferCitations(answerText, hits);
     limitations = ai.limitations;
   } catch {
     answerText = dict.ask.notFound;

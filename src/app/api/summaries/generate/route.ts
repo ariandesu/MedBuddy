@@ -3,7 +3,7 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getAI } from "@/server/ai/index";
 import { getLocale } from "@/lib/i18n/server";
-import { groundSummaryChanges } from "@/server/ai/grounding";
+import { groundSummaryChanges, stripRecordIds } from "@/server/ai/grounding";
 import { isDemoAiMode, getMuseModel } from "@/server/env";
 import { rateLimitCheck } from "@/server/rate-limit";
 import type { HealthSummaryPayload } from "@/lib/schemas";
@@ -58,8 +58,11 @@ export async function POST(
     coveredFrom,
     coveredTo,
     payload: {
-      summary: payload.summary,
-      observedChanges: changes,
+      summary: stripRecordIds(payload.summary),
+      observedChanges: changes.map((c) => ({
+        ...c,
+        description: stripRecordIds(c.description),
+      })),
       missingInformation: payload.missingInformation,
       questionsForDoctor: payload.questionsForDoctor,
       limitations,

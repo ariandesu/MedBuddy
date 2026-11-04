@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { Dictionary } from "@/lib/i18n";
-import { DEMO_PROFILES, type DemoProfileId } from "@/server/demo-profiles";
+import { DEFAULT_DEMO_PROFILE, DEMO_PROFILES, type DemoProfileId } from "@/server/demo-profiles";
 
 export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "en" }) {
   const router = useRouter();
@@ -153,12 +153,12 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
         </Button>
       </form>
       <Button
-        onClick={() => startDemo()}
+        onClick={() => startDemo(DEFAULT_DEMO_PROFILE)}
         variant="secondary"
         className="w-full"
         disabled={pending}
       >
-        {dict.auth.tryDemo}
+        {startingProfile ? dict.auth.profileStarting : dict.auth.tryDemo}
       </Button>
       <div className="flex flex-col gap-2 rounded-2xl border bg-card p-3">
         <p className="font-medium">{dict.auth.chooseProfile}</p>

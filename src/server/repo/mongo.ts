@@ -36,22 +36,14 @@ type FlexDoc = { _id: string; [key: string]: unknown };
 
 /** Idempotent — safe to run on every first connection and from init-indexes script. */
 export async function ensureIndexes(db: Db): Promise<void> {
-  await db.collection<FlexDoc>(COLLECTIONS.users).createIndex({ email: 1 }, { unique: true });
-  await db
-    .collection<FlexDoc>(COLLECTIONS.documents)
-    .createIndex({ userId: 1, createdAt: -1 });
-  await db
-    .collection<FlexDoc>(COLLECTIONS.extractions)
-    .createIndex({ userId: 1, documentId: 1 });
-  await db
-    .collection<FlexDoc>(COLLECTIONS.medicalRecords)
-    .createIndex({ userId: 1, recordDate: 1 });
-  await db
-    .collection<FlexDoc>(COLLECTIONS.wellness)
-    .createIndex({ userId: 1, date: 1 }, { unique: true });
-  await db
-    .collection<FlexDoc>(COLLECTIONS.healthSummaries)
-    .createIndex({ userId: 1, generatedAt: -1 });
+  await Promise.all([
+    db.collection<FlexDoc>(COLLECTIONS.users).createIndex({ email: 1 }, { unique: true }),
+    db.collection<FlexDoc>(COLLECTIONS.documents).createIndex({ userId: 1, createdAt: -1 }),
+    db.collection<FlexDoc>(COLLECTIONS.extractions).createIndex({ userId: 1, documentId: 1 }),
+    db.collection<FlexDoc>(COLLECTIONS.medicalRecords).createIndex({ userId: 1, recordDate: 1 }),
+    db.collection<FlexDoc>(COLLECTIONS.wellness).createIndex({ userId: 1, date: 1 }, { unique: true }),
+    db.collection<FlexDoc>(COLLECTIONS.healthSummaries).createIndex({ userId: 1, generatedAt: -1 }),
+  ]);
 }
 
 function newId(): string {

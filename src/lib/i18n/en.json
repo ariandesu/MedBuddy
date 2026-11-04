@@ -102,13 +102,15 @@
     "checkinPending": "Not yet",
     "summaryFrom": "Summary from {{date}}",
     "addDocument": "Add a document",
-    "tourTitle": "Judge tour — 3 taps",
-    "tourStep1": "1. Check a value",
-    "tourStep1Body": "Open Records, pick Needs review, tap Looks right.",
-    "tourStep2": "2. Ask a question",
-    "tourStep2Body": "Ask lite asks only your records, with sources.",
-    "tourStep3": "3. Show the doctor",
-    "tourStep3Body": "Print-ready page with raw values + ranges."
+    "tourTitle": "Judge tour — 4 steps",
+    "tourStep1": "1. See a value on the paper",
+    "tourStep1Body": "Open Records, pick Needs review, and tap a value. It lights up on the paper.",
+    "tourStep2": "2. Watch Muse read a paper live",
+    "tourStep2Body": "In Records, tap Sample blood test. It is read on this device, then by Muse.",
+    "tourStep3": "3. Ask a question",
+    "tourStep3Body": "Answers come only from your records and show their sources.",
+    "tourStep4": "4. Show the doctor",
+    "tourStep4Body": "A print-ready page with values as written and the lab's own ranges."
   },
   "documents": {
     "title": "Documents",
@@ -144,7 +146,9 @@
     "sampleCbc": "Sample blood test",
     "samplePrescription": "Sample prescription",
     "uploadFailed": "Upload didn't finish. Check your connection and try again.",
-    "unsupported": "Use a JPG or PNG photo, or a PDF."
+    "unsupported": "Use a JPG or PNG photo, or a PDF.",
+    "stageOcr": "Reading the paper on this device…",
+    "stageAi": "Muse is reading the paper. This takes about 30 seconds…"
   },
   "review": {
     "title": "Review extracted values",
@@ -189,7 +193,10 @@
       "dose": "dose",
       "frequency": "how often",
       "duration": "how long"
-    }
+    },
+    "tapHint": "Tap any value to see it on the paper.",
+    "onPaper": "highlighted on the paper",
+    "notOnPaper": "couldn't find this on the paper. Please look for it yourself."
   },
   "checkin": {
     "title": "Daily check-in",
@@ -347,7 +354,7 @@
     "chooseProfileHint": "3 recovering, 2 staying healthy. Synthetic data only.",
     "profileRecovering": "Recovering",
     "profileStable": "Healthy",
-    "profileStarting": "Starting…"
+    "profileStarting": "Setting up sample records…"
   },
   "common": {
     "loading": "Loading…",
@@ -390,5 +397,20 @@
     "fever": "Fever",
     "cough": "Cough",
     "tiredness": "Tiredness"
+  },
+  "landing": {
+    "headline": "Your doctor's paper, in words you can read.",
+    "sub": "MediSathi reads prescriptions and lab reports, checks every number against the paper with you, and explains them in simple Bangla or English. It never diagnoses or prescribes.",
+    "note": "Opens Rahima's sample records. Made-up data, no sign-up.",
+    "starting": "Setting up Rahima's records…",
+    "error": "The demo didn't start. Please try again.",
+    "calloutValue": "Hemoglobin 11.2 g/dL",
+    "calloutBody": "Below the range printed on this paper. Worth asking your doctor about.",
+    "step1": "It reads",
+    "step1Body": "Your phone reads the paper on the device, and Muse Spark reads it too. The code compares the two.",
+    "step2": "You check",
+    "step2Body": "Tap a value and it lights up on the paper. Nothing is saved until you've looked.",
+    "step3": "You understand",
+    "step3Body": "Ask questions answered from your own records, with sources, then print a page for your doctor."
   }
 }

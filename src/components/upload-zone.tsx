@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Camera } from "lucide-react";
+import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { createWorker, type Worker } from "tesseract.js";
@@ -18,15 +18,27 @@ const MAX_SIDE = 2000;
 const MAX_BYTES = 4 * 1024 * 1024;
 const TARGET_BYTES = 2 * 1024 * 1024;
 
+type OcrWord = { t: string; x: number; y: number; w: number; h: number; l: number };
+
 type UploadedFile = {
   file: File;
   ocrText: string;
+  ocrWords: OcrWord[];
 };
+
+type Stage = "idle" | "ocr" | "ai";
+
+const SAMPLES = [
+  { url: "/samples/sample-cbc.jpg", fileName: "Sample-blood-test.jpg" },
+  { url: "/samples/sample-prescription.jpg", fileName: "Sample-prescription.jpg" },
+] as const;
 
 export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUploadComplete?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [ocrText, setOcrText] = useState("");
+  const [ocrWords, setOcrWords] = useState<OcrWord[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [stage, setStage] = useState<Stage>("idle");
   const workerRef = useRef<Worker | null>(null);
 
   const compressImage = useCallback(
@@ -73,13 +85,37 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
   );
 
   const runOcr = useCallback(
-    async (blob: Blob): Promise<string> => {
+    async (blob: Blob): Promise<{ text: string; words: OcrWord[] }> => {
       if (workerRef.current === null) {
         workerRef.current = await createWorker("eng+ben");
       }
       const worker = workerRef.current;
-      const { data } = await worker.recognize(blob);
-      return data.text.trim();
+      const [{ data }, bitmap] = await Promise.all([
+        worker.recognize(blob, {}, { text: true, blocks: true }),
+        createImageBitmap(blob),
+      ]);
+      // Word positions as shares of the image, so the review page can highlight them.
+      const words: OcrWord[] = [];
+      let lineNumber = 0;
+      for (const block of data.blocks ?? []) {
+        for (const paragraph of block.paragraphs) {
+          for (const line of paragraph.lines) {
+            for (const { text, bbox } of line.words) {
+              words.push({
+                t: text,
+                x: bbox.x0 / bitmap.width,
+                y: bbox.y0 / bitmap.height,
+                w: (bbox.x1 - bbox.x0) / bitmap.width,
+                h: (bbox.y1 - bbox.y0) / bitmap.height,
+                l: lineNumber,
+              });
+            }
+            lineNumber++;
+          }
+        }
+      }
+      bitmap.close();
+      return { text: data.text.trim(), words };
     },
     []
   );
@@ -98,7 +134,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
         canvas.toBlob(res, "image/png")
       );
       if (!blob) return "";
-      return runOcr(blob);
+      return (await runOcr(blob)).text;
     },
     [runOcr]
   );
@@ -108,6 +144,7 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       const mime = selected.type;
       let fileToUpload: File | Blob = selected;
       let text = "";
+      let words: OcrWord[] = [];
 
       if (mime === "application/pdf") {
         if (selected.size > MAX_BYTES) {
@@ -132,14 +169,14 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
         if (blob.size > MAX_BYTES) {
           throw new Error("Image too large after compression");
         }
-        text = await runOcr(blob);
+        ({ text, words } = await runOcr(blob));
         const jpgName = selected.name.replace(/\.[^.]+$/, "") + ".jpg";
         fileToUpload = new File([blob], jpgName, { type: "image/jpeg" });
       } else {
         throw new Error(dict.documents.unsupported);
       }
 
-      return { file: fileToUpload as File, ocrText: text };
+      return { file: fileToUpload as File, ocrText: text, ocrWords: words };
     },
     [compressImage, renderPdfPage, runOcr]
   );
@@ -151,11 +188,14 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
     if (!selected) return;
     setFile(selected);
     setOcrText("");
+    setOcrWords([]);
     setUploading(true);
+    setStage("ocr");
     try {
       const result = await processFile(selected);
       setFile(result.file as File);
       setOcrText(result.ocrText);
+      setOcrWords(result.ocrWords);
       toast.success(dict.documents.ocrReady);
     } catch (err) {
       toast.error(
@@ -164,31 +204,41 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
       setFile(null);
     } finally {
       setUploading(false);
+      setStage("idle");
     }
   };
 
-  async function handleSample(fileName: string) {
+  async function send(upload: UploadedFile) {
+    setStage("ai");
+    const formData = new FormData();
+    formData.append("file", upload.file);
+    formData.append("ocrText", upload.ocrText);
+    formData.append("ocrWords", JSON.stringify(upload.ocrWords));
+    const res = await fetch("/api/documents", { method: "POST", body: formData });
+    const data = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
+    // Already uploaded: its earlier reading is what the user wants to see.
+    if (!res.ok && !(res.status === 409 && data.id)) {
+      throw new Error(dict.documents.uploadFailed);
+    }
+    toast.success(dict.documents.uploaded);
+    if (data.id) {
+      router.push(`/documents/${data.id}`);
+      onUploadComplete?.();
+    }
+  }
+
+  /** Samples run the real pipeline: OCR on this device, then Muse reads the paper. */
+  async function handleSample(sample: (typeof SAMPLES)[number]) {
     setUploading(true);
+    setStage("ocr");
     try {
-      const index = ["Sample CBC Report.jpg", "Sample Prescription.jpg"].indexOf(
-        fileName
-      );
-      const res = await fetch("/api/documents/sample", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(dict.documents.uploadFailed);
-      }
-      const data = (await res.json()) as { id: string; status: string; fileName: string };
-      toast.success(dict.documents.upload);
-      if (data.id) router.push(`/documents/${data.id}`);
+      const blob = await (await fetch(sample.url)).blob();
+      await send(await processFile(new File([blob], sample.fileName, { type: "image/jpeg" })));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : dict.common.error);
     } finally {
       setUploading(false);
+      setStage("idle");
     }
   }
 
@@ -196,26 +246,15 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
     if (!file) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("ocrText", ocrText);
-      const res = await fetch("/api/documents", { method: "POST", body: formData });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(dict.documents.uploadFailed);
-      }
-      const data = (await res.json()) as { id: string; status: string; fileName: string };
-      toast.success(dict.documents.uploaded);
-      if (data.id) {
-        router.push(`/documents/${data.id}`);
-        onUploadComplete?.();
-      }
+      await send({ file, ocrText, ocrWords });
       setFile(null);
       setOcrText("");
+      setOcrWords([]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : dict.common.error);
     } finally {
       setUploading(false);
+      setStage("idle");
     }
   };
 
@@ -267,19 +306,22 @@ export function UploadZone({ dict, onUploadComplete }: { dict: Dictionary; onUpl
           {uploading ? dict.common.loading : dict.documents.upload}
         </Button>
       )}
+      {stage !== "idle" && (
+        <p role="status" className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 font-medium text-primary">
+          <Loader2 className="size-5 shrink-0 animate-spin" aria-hidden />
+          {stage === "ocr" ? dict.documents.stageOcr : dict.documents.stageAi}
+        </p>
+      )}
       <div className="border-t pt-4">
         <p className="mb-2 text-sm font-medium text-muted-foreground">
           {dict.documents.sampleTitle}
         </p>
         <div className="grid grid-cols-2 gap-2">
-          {([
-            ["Sample CBC Report.jpg", dict.documents.sampleCbc],
-            ["Sample Prescription.jpg", dict.documents.samplePrescription],
-          ] as const).map(([name, label]) => (
+          {([dict.documents.sampleCbc, dict.documents.samplePrescription] as const).map((label, i) => (
             <Button
-              key={name}
+              key={label}
               variant="outline"
-              onClick={() => handleSample(name)}
+              onClick={() => handleSample(SAMPLES[i])}
               disabled={uploading}
               className="h-11"
             >

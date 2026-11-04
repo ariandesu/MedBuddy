@@ -3,6 +3,7 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getLocale } from "@/lib/i18n/server";
 import { processDocumentExtraction } from "@/server/extract-document";
+import { parseOcrWords } from "@/server/ai/locate";
 import { rateLimitCheck } from "@/server/rate-limit";
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const file = formData.get("file") as File | null;
   const clientOcrText = (formData.get("ocrText") as string) ?? "";
+  const ocrWords = parseOcrWords(formData.get("ocrWords"));
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
@@ -124,6 +126,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       buf,
       mime,
       clientOcrText,
+      ocrWords,
       locale,
     });
 

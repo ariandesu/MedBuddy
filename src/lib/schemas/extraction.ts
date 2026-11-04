@@ -3,6 +3,15 @@ import { z } from "zod";
 export const agreementSchema = z.enum(["match", "mismatch", "single_source"]);
 export type Agreement = z.infer<typeof agreementSchema>;
 
+/** Where a value sits on the paper, each number a 0–1 share of the image. */
+export const fieldBoxSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  w: z.number(),
+  h: z.number(),
+});
+export type FieldBox = z.infer<typeof fieldBoxSchema>;
+
 export const extractedFieldSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
@@ -19,6 +28,7 @@ export const extractedFieldSchema = z.object({
   confidence: z.number().min(0).max(1).nullable(),
   needsReview: z.boolean(),
   userEdited: z.boolean(),
+  box: fieldBoxSchema.nullable().optional(),
 });
 export type ExtractedField = z.infer<typeof extractedFieldSchema>;
 

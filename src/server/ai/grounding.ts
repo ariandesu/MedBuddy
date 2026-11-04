@@ -103,3 +103,32 @@ export function groundSummaryChanges(
 export function groundCitations(citations: string[], allowed: Set<string>): string[] {
   return citations.filter((id) => allowed.has(id));
 }
+
+// A Mongo ObjectId or UUID, with any "[record …]" wrapping around it.
+const RECORD_ID =
+  /\s*\[?\b(?:(?:record|summary|source)\s+(?:id\s*[:=]?\s*)?)?(?:[0-9a-f]{24}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b\]?/gi;
+
+/** Internal ids mean nothing to a patient or doctor; keep them out of shown text. */
+export function stripRecordIds(text: string): string {
+  return text.replace(RECORD_ID, "");
+}
+
+/**
+ * Backstop for when the model answers from a record but returns no citations:
+ * cite the records the answer's text visibly quotes (their date or a reading).
+ */
+export function inferCitations(answer: string, records: MedicalRecord[]): string[] {
+  const text = normalizeDigits(answer).toLowerCase();
+  const numbers = new Set(text.match(/\d+(?:\.\d+)?/g) ?? []);
+  return records
+    .filter((r) => {
+      if (r.recordDate && text.includes(r.recordDate)) return true;
+      if (r.medications.some((m) => m.nameAsWritten && text.includes(m.nameAsWritten.toLowerCase()))) return true;
+      return r.observations.some((o) =>
+        (normalizeDigits(o.rawValue).match(/\d+(?:\.\d+)?/g) ?? []).some(
+          (n) => n.replace(".", "").length >= 2 && numbers.has(n)
+        )
+      );
+    })
+    .map((r) => r.id);
+}

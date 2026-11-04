@@ -1,6 +1,7 @@
 import { getRepo } from "@/server/repo/index";
 import { getAI } from "@/server/ai/index";
 import { crossCheckField } from "@/server/ai/crosscheck";
+import { locateField, type OcrWord } from "@/server/ai/locate";
 import { toExtractedField } from "@/lib/schemas/ai";
 import type { Document } from "@/lib/schemas";
 
@@ -10,6 +11,7 @@ export async function processDocumentExtraction({
   buf,
   mime,
   clientOcrText,
+  ocrWords = [],
   locale,
 }: {
   userId: string;
@@ -17,6 +19,7 @@ export async function processDocumentExtraction({
   buf: Buffer;
   mime: string;
   clientOcrText: string;
+  ocrWords?: OcrWord[];
   locale: "bn" | "en";
 }): Promise<{ status: "needs_review" | "failed"; error?: string }> {
   const repo = getRepo();
@@ -33,8 +36,8 @@ export async function processDocumentExtraction({
   }
 
   const fields = aiResult.fields.map((f) => {
-    const { agreement, needsReview } = crossCheckField(f, ocrText);
-    return toExtractedField(f, agreement, needsReview);
+    const { agreement, needsReview, ocrValue } = crossCheckField(f, ocrText);
+    return toExtractedField(f, agreement, needsReview, ocrValue, locateField(f, ocrWords));
   });
 
   await repo.createExtraction({

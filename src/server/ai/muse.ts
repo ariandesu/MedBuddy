@@ -58,7 +58,7 @@ function extractJson(raw: string): unknown {
     if (start >= 0 && end > start) {
       return JSON.parse(cleaned.slice(start, end + 1));
     }
-    throw new Error(`Model did not return JSON: ${cleaned.slice(0, 120)}`);
+    throw new Error("Model did not return JSON");
   }
 }
 
@@ -157,7 +157,7 @@ export class MuseAI implements AIProvider {
       documentId,
       `MIME: ${mimeType}\nOCR text:\n${ocrText}\n`
     );
-    const textContent = `Extract all fields from this health document. Return values exactly as written, including Bangla digits. Return ONLY a JSON object with keys documentType ("lab_report"|"prescription"|"other"), documentDateRaw (string|null), documentDate (string|null), fields (array of {key,label,rawValue,numericValue,unit,referenceRangeRaw,page,sources:{muse,ocr},confidence}), ocrText (string). If the image is blank or unreadable, return documentType "other", empty fields, null dates. ${content}`;
+    const textContent = `Extract all fields from this health document. Return values exactly as written, including Bangla digits. Return ONLY a JSON object with keys documentType ("lab_report"|"prescription"|"other"), documentDateRaw (string|null), documentDate (string|null), fields (array of {key,label,rawValue,numericValue,unit,referenceRangeRaw,page,sources:{muse,ocr},confidence}), ocrText (always ""). rawValue is only the value itself ("11.2"), never the whole row; unit and referenceRangeRaw go in their own keys. label is the test name exactly as printed. Set sources.muse to rawValue and sources.ocr to null: the app does its own comparison. Lab fields use short snake_case keys. Prescriptions use one field each per medicine with keys med_0_name, med_0_dose, med_0_frequency, med_0_duration, med_1_name, and so on, as written and never mapped to a generic drug. If the image is blank or unreadable, return documentType "other", empty fields, null dates. ${content}`;
 
     // For images, send multimodal content (image + text). If the endpoint
     // rejects image input (400) or image parse fails, fall back to text-only once.
@@ -172,9 +172,7 @@ export class MuseAI implements AIProvider {
       try {
         return await this.chatWithParts(aiExtractionResultSchema, parts, systemPrompt(locale), "extraction_result");
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        // eslint-disable-next-line no-console
-        console.warn(`muse: image extraction failed, text-only fallback (${msg.slice(0, 80)})`);
+        console.warn("muse: image extraction failed, text-only fallback");
         return this.chat(
           aiExtractionResultSchema,
           [
@@ -228,7 +226,7 @@ export class MuseAI implements AIProvider {
         { role: "system", content: systemPrompt(locale) },
         {
           role: "user",
-          content: `Generate a source-linked health summary covering ${coveredFrom} to ${coveredTo} from these confirmed records. ${wrapDocument("summary", JSON.stringify({ records, coveredFrom, coveredTo }))}`,
+          content: `Generate a source-linked health summary covering ${coveredFrom} to ${coveredTo} from these confirmed records. For every test that appears on more than one date, add an observedChanges entry stating the values and dates, with sourceRecordIds set to the id of each record it came from. Never write record ids inside summary or description text: refer to records by date and type. ${wrapDocument("summary", JSON.stringify({ records: records.map(({ userId: _userId, ...r }) => r), coveredFrom, coveredTo }))}`,
         },
       ],
       REASONING_EFFORT_SUMMARY,
@@ -247,7 +245,7 @@ export class MuseAI implements AIProvider {
         { role: "system", content: systemPrompt(locale) },
         {
           role: "user",
-          content: `Answer the question using only the supplied context. If the answer is not in the context, say so. Question: ${question}\n\nContext: ${wrapDocument("context", context)}`,
+          content: `Answer the question using only the supplied context. If the answer is not in the context, say so. Put the id of every RECORD or SUMMARY you used in citations, copied exactly from its id= value. Never write those ids in the answer text: refer to records by date and type. Question: ${question}\n\nContext: ${wrapDocument("context", context)}`,
         },
       ],
       "medium",

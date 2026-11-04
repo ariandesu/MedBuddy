@@ -27,8 +27,10 @@ their own records, and print a doctor-ready report. It is explicitly **not** a d
 Click **"Try the demo"** on the login page — you get your own private per-visitor seeded demo account with synthetic records.
 Or pick 1 of 5 sample neighbors: 3 recovering (low hemoglobin 9.1 → 10.7, high fasting sugar 152 → 121, high cholesterol 245 → 201) and 2 healthy (steady labs, steady habits).
 
-1. **Home** — judge tour (check a value → ask → show the doctor), one "next step" card and your latest lab results as range bars.
-2. **Records → Documents** — 3 sample files per profile (2 confirmed labs showing a trend, 1 as-written note needing review). Open one that needs checking, compare each value with the paper, fix anything wrong, tap **Looks right** on each, then **Save record**. The server refuses to save until every value is checked.
+The public home page opens the demo in English or Bangla with one tap, on Rahima's records.
+
+1. **Home** — judge tour, one "next step" card and your latest lab results as range bars.
+2. **Records → Documents** — 3 sample files per profile (2 confirmed labs showing a trend, 1 as-written note needing review), each with a synthetic paper. Open one that needs checking and tap a value: it lights up on the paper. Fix anything wrong, tap **Looks right**, then **Save record**. The server refuses to save until every value is checked. **Sample blood test** and **Sample prescription** send a sample paper through the real pipeline: OCR on the device, then Muse, about 30 seconds.
 3. **Check-in** — tap **Add** to log sleep, water or activity with − / + buttons. Tapping an urgent sign (e.g. chest pain) opens an urgent-care alert with a **Call 999** button.
 4. **Records → Timeline** — latest lab results, 30-day wellness trends (missing days are gaps, never zero), every entry, and **Explain in simple words** per record.
 5. **Ask** — grounded Q&A with citations that link to timeline records. Mic button for voice input, speaker button to read the answer aloud.

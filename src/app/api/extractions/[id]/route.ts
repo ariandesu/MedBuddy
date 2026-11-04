@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { z } from "zod";
-import type { ExtractedField } from "@/lib/schemas/extraction";
+import { fieldBoxSchema, type ExtractedField } from "@/lib/schemas/extraction";
 
 const fieldSchema = z.object({
   key: z.string(),
@@ -17,6 +17,7 @@ const fieldSchema = z.object({
   confidence: z.number().nullable(),
   needsReview: z.boolean(),
   userEdited: z.boolean(),
+  box: fieldBoxSchema.nullable().optional(),
 });
 
 export const dynamic = "force-dynamic";

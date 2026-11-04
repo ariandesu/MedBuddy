@@ -24,6 +24,7 @@ type Field = {
   confidence: number | null;
   needsReview: boolean;
   userEdited: boolean;
+  box?: { x: number; y: number; w: number; h: number } | null;
 };
 
 type Extraction = {
@@ -46,18 +47,22 @@ function parseNumber(raw: string): number | null {
 const MED_FIELD = /^med_(\d+)_(name|dose|frequency|duration)$/;
 
 /** "med_0_dose" → "Medicine 1 — dose" in the user's language; lab labels pass through. */
-function fieldLabel(f: Field, dict: Dictionary, locale: Locale): string {
+function fieldLabel(f: Field, fields: Field[], dict: Dictionary, locale: Locale): string {
   const m = f.key.match(MED_FIELD);
   if (!m) return f.label;
   const part = dict.review.medPart[m[2] as keyof typeof dict.review.medPart];
-  return `${dict.review.medicine.replace("{{n}}", toLocaleDigits(String(Number(m[1]) + 1), locale))} — ${part}`;
+  // Number by position: keys may start at 0 or 1.
+  const ids = [...new Set(fields.map((x) => x.key.match(MED_FIELD)?.[1]).filter(Boolean))];
+  const n = ids.indexOf(m[1]) + 1;
+  return `${dict.review.medicine.replace("{{n}}", toLocaleDigits(String(n), locale))} — ${part}`;
 }
 
-function OriginalDocument({ doc, dict, failed, onFail }: {
+function OriginalDocument({ doc, dict, failed, onFail, box }: {
   doc: { id: string; mimeType: string };
   dict: Dictionary;
   failed: boolean;
   onFail: () => void;
+  box: Field["box"];
 }) {
   if (doc.mimeType === "application/pdf") {
     return (
@@ -78,13 +83,28 @@ function OriginalDocument({ doc, dict, failed, onFail }: {
     );
   }
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`/api/documents/${doc.id}/file`}
-      alt={dict.review.originalDocumentAlt}
-      className="mx-auto block max-h-[45vh] w-full object-contain md:max-h-[75vh]"
-      onError={onFail}
-    />
+    // Sized to the image so the highlight's percentages land on the paper itself.
+    <div className="relative mx-auto w-fit">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`/api/documents/${doc.id}/file`}
+        alt={dict.review.originalDocumentAlt}
+        className="block max-h-[34vh] w-auto max-w-full md:max-h-[75vh]"
+        onError={onFail}
+      />
+      {box && (
+        <span
+          aria-hidden
+          className="paper-highlight"
+          style={{
+            left: `${(box.x - 0.008) * 100}%`,
+            top: `${(box.y - 0.004) * 100}%`,
+            width: `${(box.w + 0.016) * 100}%`,
+            height: `${(box.h + 0.008) * 100}%`,
+          }}
+        />
+      )}
+    </div>
   );
 }
 
@@ -104,6 +124,7 @@ export default function DocumentReviewPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imgFailed, setImgFailed] = useState(false);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -132,6 +153,9 @@ export default function DocumentReviewPage() {
         setDoc(docData);
         setExtraction(extData);
         setFields(extData?.fields ?? []);
+        // Start on the first value that needs checking, so the paper lights up at once.
+        const first = extData?.fields.find((f) => f.needsReview) ?? extData?.fields[0];
+        setActiveKey(first?.key ?? null);
       }
       if (!cancelled) setLoading(false);
     }
@@ -232,6 +256,8 @@ export default function DocumentReviewPage() {
   const needsReviewCount = fields.filter((f) => f.needsReview).length;
   const done = total - needsReviewCount;
   const n = (v: number) => toLocaleDigits(String(v), locale);
+  const activeField = fields.find((f) => f.key === activeKey) ?? null;
+  const canHighlight = doc.mimeType !== "application/pdf" && !imgFailed;
 
   return (
     <div className="flex flex-col gap-4 pb-24 md:pb-0">
@@ -251,8 +277,22 @@ export default function DocumentReviewPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 md:items-start">
-        <section aria-label={dict.review.original} className="overflow-hidden rounded-2xl border bg-muted/40 md:sticky md:top-20">
-          <OriginalDocument doc={doc} dict={dict} failed={imgFailed} onFail={() => setImgFailed(true)} />
+        <section aria-label={dict.review.original} className="sticky top-16 z-20 overflow-hidden rounded-2xl border bg-muted md:top-20">
+          <OriginalDocument
+            doc={doc}
+            dict={dict}
+            failed={imgFailed}
+            onFail={() => setImgFailed(true)}
+            box={activeField?.box}
+          />
+          {canHighlight && activeField && (
+            <p aria-live="polite" className="border-t bg-card px-3 py-2 text-sm">
+              <span className="font-medium">{fieldLabel(activeField, fields, dict, locale)}: </span>
+              <span className="text-muted-foreground">
+                {activeField.box ? dict.review.onPaper : dict.review.notOnPaper}
+              </span>
+            </p>
+          )}
         </section>
 
         <section aria-labelledby="fields-h" className="flex flex-col gap-3">
@@ -267,18 +307,26 @@ export default function DocumentReviewPage() {
           {!isConfirmed && (
             <p className="text-sm text-muted-foreground">{dict.review.subtitle}</p>
           )}
+          {canHighlight && (
+            <p className="text-sm font-medium text-warning-foreground">{dict.review.tapHint}</p>
+          )}
 
           <ul className="flex flex-col gap-3">
             {fields.map((f) => {
-              const label = fieldLabel(f, dict, locale);
+              const label = fieldLabel(f, fields, dict, locale);
               const inputId = `field-${f.key}`;
-              const differs = f.agreement === "mismatch" && f.sources.muse !== f.sources.ocr;
+              const differs =
+                f.agreement === "mismatch" &&
+                normalizeDigits(f.sources.muse ?? "") !== normalizeDigits(f.sources.ocr ?? "");
               return (
                 <li
                   key={f.key}
+                  onClick={() => setActiveKey(f.key)}
+                  onFocus={() => setActiveKey(f.key)}
                   className={cn(
-                    "rounded-2xl border bg-card p-4",
-                    f.needsReview && !isConfirmed && (f.agreement === "mismatch" ? "border-warning" : "border-primary/30")
+                    "cursor-pointer rounded-2xl border bg-card p-4",
+                    f.needsReview && !isConfirmed && (f.agreement === "mismatch" ? "border-warning" : "border-primary/30"),
+                    f.key === activeKey && "ring-2 ring-warning"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">

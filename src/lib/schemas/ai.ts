@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   extractedFieldSchema,
   type ExtractedField,
+  type FieldBox,
 } from "@/lib/schemas/extraction";
 
 /** What the model returns — agreement/needsReview are computed deterministically after. */
@@ -9,6 +10,7 @@ export const aiExtractedFieldSchema = extractedFieldSchema.omit({
   agreement: true,
   needsReview: true,
   userEdited: true,
+  box: true,
 });
 export type AIExtractedField = z.infer<typeof aiExtractedFieldSchema>;
 
@@ -54,12 +56,17 @@ export type AIAnswerQuestion = z.infer<typeof aiAnswerQuestionSchema>;
 export function toExtractedField(
   f: AIExtractedField,
   agreement: "match" | "mismatch" | "single_source",
-  needsReview: boolean
+  needsReview: boolean,
+  ocrValue: string | null = null,
+  box: FieldBox | null = null
 ): ExtractedField {
   return {
     ...f,
+    // Both readings are set here, never taken from the model's own account of them.
+    sources: { muse: f.rawValue, ocr: ocrValue },
     agreement,
     needsReview,
     userEdited: false,
+    box,
   };
 }

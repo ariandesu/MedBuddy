@@ -97,3 +97,14 @@ Log when spec conflicts with current library docs, or when a choice needs justif
   cookie check is now case-insensitive (lowercase-only broke all authed routes on HTTPS).
 - Verified on prod: 307 /login redirect, demo login → session, dashboard/timeline/report 200,
   4 seeded docs, data banner shown, AI banner hidden (Muse connected).
+
+## Demo papers + cross-check rework (2026-11-04)
+
+- Seeded documents point at shared synthetic images in `public/samples` (`scripts/make-fixture-images.ts`, committed output)
+  rather than a per-account file. `GET /api/documents/[id]/file` redirects to them after the ownership check.
+  Value positions come from the rendered DOM and live in `fixtures/sample-papers.json`.
+- `crossCheckField` now compares Muse's value with the OCR text in code and sets `sources.ocr` itself. Previously it
+  trusted the model's self-reported `sources`, which flagged every correct value when the model returned whole rows.
+- Value highlights on uploads come from Tesseract word boxes matched in `server/ai/locate.ts`; unclear spots return null.
+- Q&A citations: model-supplied ids are grounded first; if none, `inferCitations` cites records the answer visibly quotes.
+- Removed `POST /api/documents/sample`: its values were hardcoded yet labelled as Muse's. Sample buttons use the real pipeline.

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
+import { samplePaperUrl } from "@/server/sample-papers";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   const user = await getSessionUser();
@@ -14,6 +15,10 @@ export async function GET(
   const repo = getRepo();
   const doc = await repo.getDocument(user.id, id);
   if (!doc) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  // Seeded demo documents point at a shared synthetic image.
+  const sampleUrl = samplePaperUrl(doc.fileRef);
+  if (sampleUrl) return NextResponse.redirect(new URL(sampleUrl, req.url));
 
   const stored = await repo.getFile(user.id, doc.fileRef);
   if (!stored) return NextResponse.json({ error: "File not found" }, { status: 404 });

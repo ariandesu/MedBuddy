@@ -92,17 +92,23 @@ export default async function DashboardPage() {
             <p className="text-muted-foreground">{t.tourStep1Body}</p>
           </li>
           <li>
-            <Link href="/ask" className="flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
-              <MessageCircleQuestion className="size-4" aria-hidden />
+            <Link href="/records" className="font-medium text-primary underline-offset-4 hover:underline">
               {t.tourStep2}
             </Link>
             <p className="text-muted-foreground">{t.tourStep2Body}</p>
           </li>
           <li>
-            <Link href="/show-doctor" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link href="/ask" className="flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
+              <MessageCircleQuestion className="size-4" aria-hidden />
               {t.tourStep3}
             </Link>
             <p className="text-muted-foreground">{t.tourStep3Body}</p>
+          </li>
+          <li>
+            <Link href="/show-doctor" className="font-medium text-primary underline-offset-4 hover:underline">
+              {t.tourStep4}
+            </Link>
+            <p className="text-muted-foreground">{t.tourStep4Body}</p>
           </li>
         </ol>
       </section>

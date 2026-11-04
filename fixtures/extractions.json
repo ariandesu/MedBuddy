@@ -206,7 +206,7 @@
         "unit": "mg/dL",
         "referenceRangeRaw": ">40",
         "page": 1,
-        "sources": { "muse": "৪৫", "ocr": "45" },
+        "sources": { "muse": "৪৫", "ocr": "43" },
         "agreement": "mismatch",
         "confidence": 0.75,
         "needsReview": true,

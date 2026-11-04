@@ -44,7 +44,7 @@ export const DEMO_PROFILES: DemoProfileMeta[] = [
     badge: "recovering",
     nameEn: "Sharmin — cholesterol, improving",
     nameBn: "শারমিন — কোলেস্টেরল, ভালোর দিকে",
-    storyEn: "Cholesterol 245 → ২০১. LDL 162 → ১৩০.",
+    storyEn: "Cholesterol 245 → 201. LDL 162 → 130.",
     storyBn: "কোলেস্টেরল ২৪৫ → ২০১। LDL ১৬২ → ১৩০।",
   },
   {
@@ -64,6 +64,9 @@ export const DEMO_PROFILES: DemoProfileMeta[] = [
     storyBn: "পানি ভালো খায়, একদিন হালকা মাথাব্যথা, বাকি দিন ভালো।",
   },
 ];
+
+/** The fullest story (two labs showing a trend), so "Try the demo" opens on it. */
+export const DEFAULT_DEMO_PROFILE: DemoProfileId = "anemia-recovery";
 
 export function isDemoProfileId(v: unknown): v is DemoProfileId {
   return (

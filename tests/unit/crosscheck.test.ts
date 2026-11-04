@@ -16,87 +16,86 @@ describe("cross-check (M5)", () => {
     expect(normalizeDigits("১২.৫")).toBe("12.5");
   });
 
-  it("matching values with both sources => match, no review", () => {
+  it("value on the labelled line => match, no review", () => {
     const r = crossCheckField(
-      {
-        rawValue: "13.5",
-        numericValue: 13.5,
-        confidence: 0.98,
-        sources: { muse: "13.5", ocr: "13.5" },
-      },
-      "Hemoglobin 13.5 g/dL"
+      { label: "Hemoglobin", rawValue: "13.5", numericValue: 13.5, confidence: 0.98 },
+      "Hemoglobin 13.5 g/dL 13.0-17.0"
     );
-    expect(r.agreement).toBe("match");
-    expect(r.needsReview).toBe(false);
+    expect(r).toEqual({ agreement: "match", needsReview: false, ocrValue: "13.5" });
   });
 
   it("Bangla raw vs ASCII OCR token => match", () => {
     const r = crossCheckField(
-      {
-        rawValue: BN_201,
-        numericValue: 201,
-        confidence: 0.9,
-        sources: { muse: BN_201, ocr: "201" },
-      },
+      { label: "Total Cholesterol", rawValue: BN_201, numericValue: 201, confidence: 0.9 },
       "Total Cholesterol 201 mg/dL"
     );
     expect(r.agreement).toBe("match");
     expect(r.needsReview).toBe(false);
   });
 
-  it("muse vs OCR differ => mismatch + review", () => {
+  it("a different reading on the labelled line => mismatch, showing what OCR read", () => {
+    const r = crossCheckField(
+      { label: "Platelets", rawValue: "250", numericValue: 250, confidence: 0.82 },
+      "WBC 7.2 x10^9/L\nPlatelets 25O x10^9/L 150-450"
+    );
+    expect(r).toEqual({ agreement: "mismatch", needsReview: true, ocrValue: "25o" });
+  });
+
+  it("the model's own account of the row can't cause a false mismatch", () => {
+    // Regression: rows like "Hemoglobin 11.2 g/dL 13.0-17.0" in sources flagged every correct value.
     const r = crossCheckField(
       {
-        rawValue: "250",
-        numericValue: 250,
-        confidence: 0.82,
-        sources: { muse: "250", ocr: "25O" },
-      },
-      "Platelets 25O x10^9/L"
+        label: "Hemoglobin",
+        rawValue: "11.2",
+        numericValue: 11.2,
+        confidence: 0.99,
+        sources: { muse: "Hemoglobin 11.2 g/dL 13.0-17.0", ocr: "Hemoglobin 11.2 g/dL 13.0-17.0" },
+      } as Parameters<typeof crossCheckField>[0],
+      "Hemoglobin 11.2 g/dL 13.0-17.0"
+    );
+    expect(r.agreement).toBe("match");
+  });
+
+  it("a range or unit never counts as the reading", () => {
+    const r = crossCheckField(
+      { label: "Platelets", rawValue: "450", numericValue: 450, confidence: 0.9 },
+      "Platelets 4S0 x10^9/L 150-450"
     );
     expect(r.agreement).toBe("mismatch");
-    expect(r.needsReview).toBe(true);
   });
 
-  it("low confidence => review", () => {
+  it("low confidence => review even when readings match", () => {
     const r = crossCheckField(
-      {
-        rawValue: BN_130H,
-        numericValue: 130,
-        confidence: 0.65,
-        sources: { muse: BN_130H, ocr: null },
-      },
+      { label: "LDL", rawValue: BN_130H, numericValue: 130, confidence: 0.65 },
       "LDL 130 H"
     );
-    expect(r.agreement).toBe("single_source");
+    expect(r.agreement).toBe("match");
     expect(r.needsReview).toBe(true);
   });
 
-  it("multi-word value present in OCR => no review needed", () => {
-    const r = crossCheckField(
-      {
-        rawValue: "12.5 mg/dL",
-        numericValue: 12.5,
-        confidence: 0.9,
-        sources: { muse: "12.5 mg/dL", ocr: "12.5 mg/dL" },
-      },
-      "Take 12.5 mg/dL twice daily"
+  it("not confirmed by OCR => single source, needs review", () => {
+    const missing = crossCheckField(
+      { label: "Medicine 1 name", rawValue: "Napa 500mg", numericValue: null, confidence: 0.9 },
+      "unreadable scrawl"
     );
-    expect(r.agreement).toBe("match");
-    expect(r.needsReview).toBe(false);
+    expect(missing).toEqual({ agreement: "single_source", needsReview: true, ocrValue: null });
+    const noOcr = crossCheckField({ label: "WBC", rawValue: "7.2", numericValue: 7.2, confidence: 0.9 }, "");
+    expect(noOcr.agreement).toBe("single_source");
+    expect(noOcr.needsReview).toBe(true);
   });
 
-  it("Bangla-digit value vs ASCII OCR => match", () => {
-    const r = crossCheckField(
-      {
-        rawValue: "১২.৫",
-        numericValue: 12.5,
-        confidence: 0.9,
-        sources: { muse: "১২.৫", ocr: "12.5" },
-      },
-      "Value 12.5 mg/dL"
+  it("words found anywhere on the paper => match; a lone digit proves nothing", () => {
+    const words = crossCheckField(
+      { label: "Medicine 1 frequency", rawValue: "twice daily", numericValue: null, confidence: 0.9 },
+      "Napa 500mg\nTake twice daily"
     );
-    expect(r.agreement).toBe("match");
-    expect(r.needsReview).toBe(false);
+    expect(words.agreement).toBe("match");
+    const digit = crossCheckField({ label: "Grade", rawValue: "5", numericValue: 5, confidence: 0.9 }, "Page 5 of 9");
+    expect(digit.agreement).toBe("single_source");
+  });
+
+  it("numeric-looking value with no parsed number => review", () => {
+    const r = crossCheckField({ label: "WBC", rawValue: "7.2", numericValue: null, confidence: 0.9 }, "WBC 7.2");
+    expect(r.needsReview).toBe(true);
   });
 });

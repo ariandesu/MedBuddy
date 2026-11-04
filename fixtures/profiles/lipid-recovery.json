@@ -20,7 +20,7 @@
       "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Lipid. Total Cholesterol ২০১ mg/dL. LDL ১৩০ mg/dL.",
       "fields": [
         { "key": "total_cholesterol", "label": "Total Cholesterol", "rawValue": "২০১", "numericValue": 201, "unit": "mg/dL", "referenceRangeRaw": "<200", "page": 1, "sources": { "muse": "২০১", "ocr": "২০১" }, "agreement": "match", "confidence": 0.9, "needsReview": false, "userEdited": false },
-        { "key": "ldl", "label": "LDL", "rawValue": "১৩০", "numericValue": 130, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "১৩০", "ocr": "130" }, "agreement": "mismatch", "confidence": 0.8, "needsReview": false, "userEdited": true }
+        { "key": "ldl", "label": "LDL", "rawValue": "১৩০", "numericValue": 130, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "১৩০", "ocr": "13O" }, "agreement": "mismatch", "confidence": 0.8, "needsReview": false, "userEdited": true }
       ]
     },
     {

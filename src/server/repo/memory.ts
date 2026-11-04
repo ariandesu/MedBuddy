@@ -21,6 +21,7 @@ import type {
   CreateHealthSummaryInput,
 } from "./types";
 import { daysAgoDate, daysAgoISODate } from "@/server/dates";
+import { samplePaperSize, withSampleBoxes } from "@/server/sample-papers";
 import documentsFixture from "../../../fixtures/documents.json";
 import extractionsFixture from "../../../fixtures/extractions.json";
 import recordsFixture from "../../../fixtures/records.json";
@@ -69,7 +70,7 @@ export class MemoryRepository implements Repository {
         userId: this.demoUserId,
         fileName: d.fileName,
         mimeType: d.mimeType,
-        sizeBytes: d.sizeBytes,
+        sizeBytes: samplePaperSize(d.fileRef) ?? d.sizeBytes,
         checksum: d.checksum,
         status: d.status as DocumentStatus,
         createdAt: daysAgoDate(d.daysAgo),
@@ -98,7 +99,10 @@ export class MemoryRepository implements Repository {
           e.documentDateDaysAgo === null
             ? null
             : daysAgoISODate(e.documentDateDaysAgo),
-        fields: e.fields as ExtractedField[],
+        fields: withSampleBoxes(
+          documentsFixture.find((d) => d.id === e.documentId)?.fileRef ?? "",
+          e.fields as ExtractedField[]
+        ),
         ocrText: e.ocrText,
         createdAt: daysAgoDate(e.createdDaysAgo),
       };
