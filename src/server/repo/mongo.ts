@@ -18,6 +18,7 @@ import type {
   CreateMedicalRecordInput,
   WellnessUpsertInput,
   CreateHealthSummaryInput,
+  DemoBundle,
 } from "./types";
 
 export const COLLECTIONS = {
@@ -93,8 +94,11 @@ export class MongoRepository implements Repository {
     }
     const db = this.client.db(this.dbName);
     if (!this.indexesReady) {
-      await ensureIndexes(db);
+      // Don't block the first request on index creation: indexes already exist
+      // in production (init-indexes script); createIndex is an idempotent no-op.
+      // Fire-and-forget so cold starts skip ~6 index round-trips.
       this.indexesReady = true;
+      ensureIndexes(db).catch(() => {});
     }
     return db;
   }
@@ -483,5 +487,89 @@ export class MongoRepository implements Repository {
       .sort({ generatedAt: -1, _id: -1 })
       .toArray();
     return raws.map((r) => fromDoc<HealthSummary>(r as Record<string, unknown>));
+  }
+
+  /**
+   * Demo seeding fast path: 5 insertMany round-trips instead of ~25
+   * sequential writes (each Mongo op costs a full Atlas RTT from serverless).
+   * Only called for brand-new demo accounts, so no merge/upsert logic needed.
+   */
+  async insertDemoBundle(userId: string, bundle: DemoBundle): Promise<void> {
+    const db = await this.db();
+    const docs = bundle.documents.map(
+      (d): Document => ({
+        id: d.id,
+        userId,
+        fileName: d.fileName,
+        mimeType: d.mimeType,
+        sizeBytes: d.sizeBytes,
+        checksum: d.checksum,
+        status: d.status,
+        createdAt: d.createdAt,
+        fileRef: d.fileRef,
+      })
+    );
+    const extractions = bundle.extractions.map(
+      (e): Extraction => ({
+        id: e.id,
+        userId,
+        documentId: e.documentId,
+        documentType: e.documentType,
+        documentDateRaw: e.documentDateRaw,
+        documentDate: e.documentDate,
+        dateNeedsReview: e.dateNeedsReview ?? false,
+        fields: e.fields,
+        ocrText: e.ocrText,
+        createdAt: e.createdAt,
+      })
+    );
+    const records = bundle.records.map(
+      (r): MedicalRecord => ({
+        id: r.id,
+        userId,
+        documentId: r.documentId,
+        recordType: r.recordType,
+        recordDate: r.recordDate,
+        observations: r.observations,
+        medications: r.medications,
+        confirmedAt: r.confirmedAt,
+      })
+    );
+    const wellness = bundle.wellness.map((w): WellnessEntry => {
+      const entry: WellnessEntry = {
+        id: w.id,
+        userId,
+        date: w.date,
+        sleepHours: w.entry.sleepHours ?? undefined,
+        waterGlasses: w.entry.waterGlasses ?? undefined,
+        activityMinutes: w.entry.activityMinutes ?? undefined,
+        energy: w.entry.energy ?? undefined,
+        symptomLevel: w.entry.symptomLevel ?? undefined,
+        symptoms: w.entry.symptoms,
+        note: w.entry.note ?? undefined,
+      };
+      return entry;
+    });
+    const summary: HealthSummary = {
+      id: bundle.summary.id,
+      userId,
+      version: bundle.summary.version,
+      generatedAt: bundle.summary.generatedAt,
+      coveredFrom: bundle.summary.coveredFrom,
+      coveredTo: bundle.summary.coveredTo,
+      payload: bundle.summary.payload,
+      sourceRecordIds: bundle.summary.sourceRecordIds,
+      model: bundle.summary.model,
+      isSample: bundle.summary.isSample,
+    };
+    await Promise.all([
+      db.collection(COLLECTIONS.documents).insertMany(docs.map((d) => toDoc(d) as never)),
+      db.collection(COLLECTIONS.extractions).insertMany(extractions.map((e) => toDoc(e) as never)),
+      db.collection(COLLECTIONS.medicalRecords).insertMany(records.map((r) => toDoc(r) as never)),
+      db
+        .collection(COLLECTIONS.wellness)
+        .insertMany(wellness.map((w) => stripUndefined(toDoc(w)) as never)),
+      db.collection(COLLECTIONS.healthSummaries).insertMany([toDoc(summary) as never]),
+    ]);
   }
 }

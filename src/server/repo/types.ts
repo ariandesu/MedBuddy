@@ -75,6 +75,48 @@ export interface CreateHealthSummaryInput {
 }
 
 /**
+ * Prepared demo bundle: every id is pre-generated and every cross-reference
+ * already remapped, so a repo can insert it with one round-trip per collection.
+ * Only used for brand-new demo accounts (never merges into existing data).
+ */
+export interface DemoBundleDocument extends CreateDocumentInput {
+  id: string;
+  status: DocumentStatus;
+  createdAt: Date;
+}
+
+export interface DemoBundleExtraction extends CreateExtractionInput {
+  id: string;
+  createdAt: Date;
+}
+
+export interface DemoBundleRecord extends CreateMedicalRecordInput {
+  id: string;
+  confirmedAt: Date;
+}
+
+export interface DemoBundleWellness {
+  id: string;
+  userId: string;
+  date: string;
+  entry: WellnessUpsertInput;
+}
+
+export interface DemoBundleSummary extends CreateHealthSummaryInput {
+  id: string;
+  version: number;
+  generatedAt: Date;
+}
+
+export interface DemoBundle {
+  documents: DemoBundleDocument[];
+  extractions: DemoBundleExtraction[];
+  records: DemoBundleRecord[];
+  wellness: DemoBundleWellness[];
+  summary: DemoBundleSummary;
+}
+
+/**
  * Single data-access interface. MemoryRepository (demo) and MongoRepository
  * (production) both implement this. All user-data methods scope by userId.
  */
@@ -144,4 +186,11 @@ export interface Repository {
   getHealthSummary(userId: string, id: string): Promise<HealthSummary | null>;
   getLatestHealthSummary(userId: string): Promise<HealthSummary | null>;
   listHealthSummaries(userId: string): Promise<HealthSummary[]>;
+
+  /**
+   * Bulk-insert a prepared demo bundle (one round-trip per collection).
+   * Optional: repos may omit it and demo-seed falls back to per-item writes.
+   * Only ever called for brand-new demo accounts.
+   */
+  insertDemoBundle?(userId: string, bundle: DemoBundle): Promise<void>;
 }

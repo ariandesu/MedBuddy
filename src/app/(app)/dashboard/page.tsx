@@ -35,12 +35,16 @@ export default async function DashboardPage() {
   const user = await getSessionUser();
   const repo = getRepo();
 
-  const docs = user ? await repo.listDocuments(user.id) : [];
-  const needsReview = docs.filter((d) => d.status === "needs_review");
   const today = todayISODate();
-  const todayCheckin = user ? (await repo.listWellnessEntries(user.id, today, today)).length > 0 : false;
-  const summary = user ? await repo.getLatestHealthSummary(user.id) : null;
-  const records = user ? await repo.listMedicalRecords(user.id) : [];
+  // Parallel: each Mongo query costs a full Atlas RTT from serverless.
+  const [docs, todayCheckins, summary, records] = await Promise.all([
+    user ? repo.listDocuments(user.id) : Promise.resolve([]),
+    user ? repo.listWellnessEntries(user.id, today, today) : Promise.resolve([]),
+    user ? repo.getLatestHealthSummary(user.id) : Promise.resolve(null),
+    user ? repo.listMedicalRecords(user.id) : Promise.resolve([]),
+  ]);
+  const needsReview = docs.filter((d) => d.status === "needs_review");
+  const todayCheckin = todayCheckins.length > 0;
 
   // Latest value for each lab test, newest report first.
   const latestLab = records
