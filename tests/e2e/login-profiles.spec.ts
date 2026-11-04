@@ -39,4 +39,20 @@ test.describe("Login: language toggle + demo profiles", () => {
     await expect(page.locator("main button").first()).toHaveText("Try it in English");
     expect(errors).toEqual([]);
   });
+
+  test("the site's address stays on the landing page when signed in", async ({ page, context }) => {
+    await context.addCookies([{ name: "medisathi-locale", value: "en", domain: "localhost", path: "/" }]);
+    await page.goto("/login");
+    await page.getByRole("button", { name: "Try the demo" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+
+    await page.goto("/");
+    await expect(page).toHaveURL(/localhost:3131\/$/);
+    await expect(page.getByRole("heading", { name: "Your doctor's paper, in words you can read." })).toBeVisible();
+
+    // Signed in, it offers their own notebook, not a sample account in its place.
+    await expect(page.locator("main button")).toHaveCount(0);
+    await page.getByRole("link", { name: "Open my health notebook" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
+  });
 });

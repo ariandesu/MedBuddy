@@ -576,6 +576,7 @@
     "step3Body": "Ask questions answered from your own records, with sources, then print a page for your doctor.",
     "chooseProfile": "Or start as someone else:",
     "startingOther": "Setting up sample records…",
-    "noteShared": "Opens sample records. Made-up data, no sign-up."
+    "noteShared": "Opens sample records. Made-up data, no sign-up.",
+    "openNotebook": "Open my health notebook"
   }
 }
