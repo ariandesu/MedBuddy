@@ -15,7 +15,7 @@ export function DemoBanners({ dict }: { dict: Dictionary }) {
   return (
     <p
       role="status"
-      className="no-print flex items-center justify-center gap-2 border-b bg-secondary/60 px-4 py-1.5 text-center text-sm text-secondary-foreground"
+      className="no-print mx-4 mt-2 flex items-center gap-2 rounded-xl bg-muted px-3 py-1.5 text-sm md:mx-auto md:w-[calc(100%-2rem)] md:max-w-5xl"
     >
       <FlaskConical className="size-4 shrink-0" aria-hidden />
       {text}

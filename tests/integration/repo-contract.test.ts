@@ -303,6 +303,16 @@ function runContractSuite(
       expect(filtered[0].recordType).toBe("prescription");
     });
 
+    it("wellness: null clears a value, a missing key keeps it", async () => {
+      await repo.upsertWellnessEntry(userA, "2026-11-01", { sleepHours: 7, energy: 3 });
+      const updated = await repo.upsertWellnessEntry(userA, "2026-11-01", { sleepHours: null });
+      expect(updated.sleepHours).toBeUndefined();
+      expect(updated.energy).toBe(3);
+      const [listed] = await repo.listWellnessEntries(userA, "2026-11-01", "2026-11-01");
+      expect(listed.sleepHours).toBeUndefined();
+      expect(listed.energy).toBe(3);
+    });
+
     it("wellness: upsert + range + ownership", async () => {
       const w1: WellnessUpsertInput = { sleepHours: 7, energy: 3 };
       const created = await repo.upsertWellnessEntry(userA, "2026-10-01", w1);

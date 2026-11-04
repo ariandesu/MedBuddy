@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { Dictionary } from "@/lib/i18n";
 
-export function GenerateSummaryButton({ dict }: { dict: Dictionary }) {
+export function GenerateSummaryButton({ dict, label, primary = false }: {
+  dict: Dictionary;
+  label: string;
+  primary?: boolean;
+}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [noRecords, setNoRecords] = useState(false);
@@ -32,33 +36,24 @@ export function GenerateSummaryButton({ dict }: { dict: Dictionary }) {
     }
   }
 
-  if (noRecords) {
-    return (
-      <div className="flex flex-col gap-2">
-        <Button
-          onClick={handleGenerate}
-          disabled={saving}
-          className="w-full min-h-[44px]"
-        >
-          {saving ? dict.common.loading : dict.summary.generate}
-        </Button>
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        onClick={handleGenerate}
+        disabled={saving}
+        variant={primary ? "default" : "secondary"}
+        className="h-14 w-full text-lg font-semibold"
+      >
+        {saving ? dict.common.loading : label}
+      </Button>
+      {noRecords && (
         <p className="text-sm text-muted-foreground">
           {dict.summary.noRecords}{" "}
-          <Link href="/records" className="underline underline-offset-4 hover:underline">
+          <Link href="/records" className="underline underline-offset-4">
             {dict.summary.uploadDocument}
           </Link>
         </p>
-      </div>
-    );
-  }
-
-  return (
-    <Button
-      onClick={handleGenerate}
-      disabled={saving}
-      className="w-full min-h-[44px]"
-    >
-      {saving ? dict.common.loading : dict.summary.generate}
-    </Button>
+      )}
+    </div>
   );
 }

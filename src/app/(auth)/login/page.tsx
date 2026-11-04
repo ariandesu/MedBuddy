@@ -1,15 +1,9 @@
 import { redirect } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { LoginForm } from "@/components/login-form";
+import { PageTitle } from "@/components/page-title";
 import { getLocaleAndDict } from "@/lib/i18n/server";
 import { getSessionUser } from "@/server/auth";
-import { HeartPulse } from "lucide-react";
+import { isDemoDataMode } from "@/server/env";
 
 export const dynamic = "force-dynamic";
 
@@ -18,23 +12,9 @@ export default async function LoginPage() {
   if (session) redirect("/dashboard");
   const { dict, locale } = await getLocaleAndDict();
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 pt-10">
-      <div className="flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          <HeartPulse className="size-8 text-primary" aria-hidden />
-        </div>
-        <h1 className="text-2xl font-bold">{dict.appName}</h1>
-        <p className="text-sm text-muted-foreground">{dict.tagline}</p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>{dict.auth.loginTitle}</CardTitle>
-          <CardDescription>{dict.auth.demoExplain}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LoginForm dict={dict} locale={locale} />
-        </CardContent>
-      </Card>
+    <div className="mx-auto flex w-full max-w-md flex-col gap-5 md:pt-6">
+      <PageTitle title={dict.auth.loginTitle} />
+      <LoginForm dict={dict} locale={locale} profiles={!isDemoDataMode()} />
     </div>
   );
 }

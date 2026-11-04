@@ -1,57 +1,77 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ChevronRight, FileText, Mic, Send } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useDictionary } from "@/lib/use-dictionary";
-import {
-  MessageCircleQuestion,
-  CheckCircle2,
-  Link as LinkIcon,
-  AlertTriangle,
-  Search,
-  Mic,
-  Volume2,
-} from "lucide-react";
+import { useLocale } from "@/components/locale-provider";
+import { recordTitle } from "@/lib/record-title";
+import { PageTitle } from "@/components/page-title";
+import { Orb } from "@/components/orb";
+import { Tile } from "@/components/tile";
+import { ReadAloud } from "@/components/read-aloud";
+import { cn } from "@/lib/utils";
+
+type SpeechRecognitionLike = {
+  lang: string;
+  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+};
+
+type SpeechWindow = {
+  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  SpeechRecognition?: new () => SpeechRecognitionLike;
+};
+
+type SavedRecord = { id: string; documentId: string; recordType: string; recordDate: string | null };
+
+type Answer = {
+  question: string;
+  text: string;
+  citations: { id: string; label: string }[];
+  limitations: string[];
+};
 
 export function AskPage() {
-  const dict = useDictionary();
+  const { dict, locale } = useLocale();
+  const t = dict.ask;
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState<string | null>(null);
-  const [citations, setCitations] = useState<{ id: string; label: string }[]>([]);
-  const [limitations, setLimitations] = useState<string[]>([]);
+  const [answer, setAnswer] = useState<Answer | null>(null);
+  const [records, setRecords] = useState<SavedRecord[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
 
-  async function handleAsk(e: React.FormEvent) {
-    e.preventDefault();
+  async function ask(text: string) {
+    if (!text.trim()) return;
     setError(null);
     setAnswer(null);
-    setCitations([]);
-    setLimitations([]);
     setSaving(true);
     try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
+      const [res, recRes] = await Promise.all([
+        fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: text }),
+        }),
+        // Sources open their paper, so citations need each record's document.
+        fetch("/api/medical-records").catch(() => null),
+      ]);
       if (!res.ok) throw new Error(dict.common.error);
       const data = await res.json();
-      setAnswer(data.answer ?? dict.ask.notFound);
-      setCitations(Array.isArray(data.citations) ? data.citations : []);
-      setLimitations(
-        Array.isArray(data.limitations) ? data.limitations : []
-      );
+      const recData = recRes?.ok ? await recRes.json() : {};
+      setRecords(recData.records ?? []);
+      setAnswer({
+        question: text,
+        text: data.answer ?? t.notFound,
+        citations: Array.isArray(data.citations) ? data.citations : [],
+        limitations: Array.isArray(data.limitations) ? data.limitations : [],
+      });
+      setQuestion("");
     } catch (err) {
       setError(err instanceof Error ? err.message : dict.common.error);
     } finally {
@@ -59,12 +79,34 @@ export function AskPage() {
     }
   }
 
+  function listen() {
+    const w = window as unknown as SpeechWindow;
+    const SR = w.webkitSpeechRecognition ?? w.SpeechRecognition;
+    if (!SR) {
+      setError(t.voiceNotSupported);
+      return;
+    }
+    try {
+      const rec = new SR();
+      rec.lang = (document.documentElement.lang || "bn").startsWith("bn") ? "bn-BD" : "en-US";
+      setListening(true);
+      rec.onresult = (e) => {
+        const text = e.results?.[0]?.[0]?.transcript ?? "";
+        if (text) setQuestion(text);
+      };
+      rec.onerror = () => {};
+      rec.onend = () => setListening(false);
+      rec.start();
+    } catch {
+      setListening(false);
+    }
+  }
+
+  const waiting = !answer && !saving;
+
   return (
-    <div className="flex flex-col gap-5 max-w-xl mx-auto">
-      <header>
-        <h1 className="font-heading text-3xl font-semibold">{dict.ask.title}</h1>
-        <p className="mt-1 text-muted-foreground">{dict.ask.intro}</p>
-      </header>
+    <div className="mx-auto flex max-w-xl flex-col gap-4">
+      <PageTitle title={t.title} subtitle={t.introShort} className={cn(waiting && "text-center")} />
 
       {error && (
         <Alert variant="destructive">
@@ -72,127 +114,105 @@ export function AskPage() {
         </Alert>
       )}
 
-      <form onSubmit={handleAsk} className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2">
-          <label className="font-medium" htmlFor="ask-input">
-            {dict.ask.label}
-          </label>
-          <div className="flex gap-2">
-            <Input
-              id="ask-input"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder={dict.ask.examples}
-              disabled={saving}
-              className="h-12 text-base"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              className="h-12 shrink-0"
-              disabled={saving || listening}
-              onClick={() => {
-                const SR =
-                  (window as unknown as { webkitSpeechRecognition?: new () => { lang: string; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void }; SpeechRecognition?: new () => { lang: string; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void } }).webkitSpeechRecognition ??
-                  (window as unknown as { SpeechRecognition?: new () => { lang: string; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void } }).SpeechRecognition;
-                if (!SR) {
-                  setError(dict.ask.voiceNotSupported);
-                  return;
-                }
-                try {
-                  const rec = new SR();
-                  const htmlLang = document.documentElement.lang || "bn";
-                  rec.lang = htmlLang.startsWith("bn") ? "bn-BD" : "en-US";
-                  setListening(true);
-                  rec.onresult = (e) => {
-                    const text = e.results?.[0]?.[0]?.transcript ?? "";
-                    if (text) setQuestion(text);
-                  };
-                  rec.onerror = () => {};
-                  rec.onend = () => setListening(false);
-                  rec.start();
-                } catch {
-                  setListening(false);
-                }
-              }}
-              aria-label={dict.ask.listen}
-            >
-              <Mic aria-hidden />
-              {listening ? dict.ask.listening : dict.ask.listen}
-            </Button>
-          </div>
+      {(waiting || saving) && (
+        <div className="orb-halo flex flex-col items-center gap-3 py-3 md:py-8">
+          <Orb className="size-24 md:size-36" />
+          {saving && <p role="status" className="font-medium">{t.looking}</p>}
         </div>
-        <Button
-          type="submit"
-          disabled={saving || !question.trim()}
-          className="h-12 w-full text-base flex items-center justify-center gap-2"
-        >
-          <Search className="size-4" aria-hidden />
-          {saving ? dict.common.loading : dict.ask.send}
-        </Button>
-      </form>
+      )}
 
       {answer && (
-        <Card>
-          <CardHeader className="flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-primary" aria-hidden />
-            <CardTitle>{dict.ask.answer}</CardTitle>
-            <Button
-              type="button"
-              variant="ghost"
-              className="ml-auto h-10"
-              onClick={() => {
-                try {
-                  speechSynthesis.cancel();
-                  const u = new SpeechSynthesisUtterance(answer);
-                  const htmlLang = document.documentElement.lang || "bn";
-                  u.lang = htmlLang.startsWith("bn") ? "bn-BD" : "en-US";
-                  speechSynthesis.speak(u);
-                } catch {}
-              }}
-            >
-              <Volume2 aria-hidden />
-              {dict.ask.speakAnswer}
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p>{answer}</p>
-            {citations.length > 0 && (
-              <div className="flex flex-col gap-1 border-t pt-3 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1 mb-2">
-                  <LinkIcon className="size-3" aria-hidden />
-                  <span className="font-semibold">{dict.ask.sources}:</span>
-                </div>
-                {citations.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/records?tab=timeline#rec-${c.id}`}
-                    className="underline underline-offset-4 hover:underline"
-                  >
-                    {c.label}
-                  </Link>
-                ))}
-              </div>
+        <>
+          <p className="max-w-[85%] self-end rounded-[1.375rem] rounded-br-md bg-primary px-4 py-3 text-primary-foreground">
+            {answer.question}
+          </p>
+          <section aria-labelledby="answer-h" className="flex flex-col gap-3 rounded-2xl border bg-card-lead p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 id="answer-h" className="font-heading text-lg font-semibold">{t.fromRecords}</h2>
+              <ReadAloud text={answer.text} label={t.speakAnswer} />
+            </div>
+            <p>{answer.text}</p>
+            {answer.text === t.notFound && (
+              <Link href="/records?add=1" className={cn(buttonVariants({ variant: "secondary" }), "h-12 w-full text-base font-semibold")}>
+                {dict.documents.addPaper}
+              </Link>
             )}
-            {limitations.length > 0 && (
-              <div className="rounded-xl bg-warning/15 p-3 text-sm text-warning-foreground">
-                <div className="flex items-center gap-1 mb-2">
-                  <AlertTriangle className="size-3" aria-hidden />
-                  <p className="font-semibold mb-0">{dict.ask.limitations}</p>
-                </div>
-                <ul className="space-y-1">
-                  {limitations.map((l) => (
-                    <li key={l} className="flex items-center gap-1">
-                      <AlertTriangle className="size-3" aria-hidden />
-                      {l}
+          </section>
+
+          {answer.citations.length > 0 && (
+            <section aria-labelledby="sources-h">
+              <h2 id="sources-h" className="mb-2 font-heading text-lg font-semibold">{t.sources}</h2>
+              <ul className="divide-y rounded-2xl border bg-card px-4">
+                {answer.citations.map((c) => {
+                  const rec = records.find((r) => r.id === c.id);
+                  return (
+                    <li key={c.id}>
+                      <Link
+                        href={rec ? `/documents/${rec.documentId}` : "/show-doctor?tab=summary"}
+                        className="flex min-h-[4.25rem] items-center gap-3 py-2"
+                      >
+                        <Tile><FileText className="size-5" /></Tile>
+                        <span className="min-w-0 flex-1 font-medium">
+                          {rec ? recordTitle(rec, dict, locale) : c.label}
+                        </span>
+                        <ChevronRight className="size-5 shrink-0" aria-hidden />
+                      </Link>
                     </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
+          {answer.limitations.length > 0 && (
+            <ul aria-label={t.limitations} className="flex flex-col gap-1 text-sm text-muted-foreground">
+              {answer.limitations.map((l) => (
+                <li key={l}>{l}</li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
+
+      {waiting && (
+        <div className="flex flex-wrap gap-2">
+          {[t.example1, t.example2].map((q) => (
+            <Button key={q} variant="outline" className="h-auto min-h-12 whitespace-normal px-4 py-2 text-base" onClick={() => ask(q)}>
+              {q}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void ask(question);
+        }}
+        className="flex flex-col gap-2 rounded-2xl border bg-card-lead p-3"
+      >
+        <label className="px-1 font-medium" htmlFor="ask-input">{t.label}</label>
+        <Input
+          id="ask-input"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder={answer ? t.askAnother : t.placeholder}
+          disabled={saving}
+          className="h-14 rounded-[1.125rem] border-input bg-popover px-4 text-base"
+        />
+        <div className="flex items-center justify-between gap-2">
+          <Button type="button" variant="outline" className="h-12 px-4" disabled={saving || listening} onClick={listen}>
+            <Mic className="size-5!" aria-hidden />
+            {listening ? t.listening : t.listen}
+          </Button>
+          <Button type="submit" className="h-12 px-5 font-semibold" disabled={saving || !question.trim()}>
+            <Send className="size-5!" aria-hidden />
+            {t.send}
+          </Button>
+        </div>
+      </form>
+
+      <p className="text-center text-sm text-muted-foreground">{t.privacy}</p>
     </div>
   );
 }

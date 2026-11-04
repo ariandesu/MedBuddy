@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { parseRange, positionOnBar, rangeStatus } from "@/lib/range";
-import { toLocaleDigits } from "@/lib/digits";
+import { formatDate, toLocaleDigits } from "@/lib/digits";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
 /**
@@ -16,6 +16,7 @@ export function RangeBar({
   referenceRangeRaw,
   dict,
   locale,
+  previous,
   className,
 }: {
   name: string;
@@ -25,6 +26,8 @@ export function RangeBar({
   referenceRangeRaw?: string | null;
   dict: Dictionary;
   locale: Locale;
+  /** An earlier value of this test: a hollow mark on the bar, and said in words. */
+  previous?: { value: number; rawValue: string; date: string } | null;
   className?: string;
 }) {
   const range = parseRange(referenceRangeRaw);
@@ -32,6 +35,11 @@ export function RangeBar({
   const statusText =
     status === "low" ? dict.range.low : status === "high" ? dict.range.high : status === "normal" ? dict.range.normal : null;
   const shown = toLocaleDigits(rawValue || String(value ?? ""), locale);
+  const wasText = previous
+    ? dict.range.was
+        .replace("{{value}}", toLocaleDigits(previous.rawValue, locale))
+        .replace("{{date}}", formatDate(previous.date, locale))
+    : null;
 
   return (
     <div className={cn("py-3", className)}>
@@ -45,15 +53,21 @@ export function RangeBar({
       {range && value != null ? (
         <>
           <div
-            className="relative mt-2 h-3 rounded-full bg-muted"
+            className="relative mt-2.5 h-3.5 rounded-full bg-muted"
             role="img"
-            aria-label={`${name}: ${shown}${unit ? ` ${unit}` : ""}. ${statusText}. ${dict.range.normalRange} ${toLocaleDigits(referenceRangeRaw ?? "", locale)}`}
+            aria-label={`${name}: ${shown}${unit ? ` ${unit}` : ""}. ${statusText}. ${dict.range.normalRange} ${toLocaleDigits(referenceRangeRaw ?? "", locale)}${wasText ? `. ${wasText}` : ""}`}
           >
-            <div className="absolute inset-y-0 left-1/4 right-1/4 rounded-full bg-primary/25" />
+            <div className="absolute inset-y-0 left-1/4 right-1/4 bg-chart-1/35" />
+            {previous && (
+              <div
+                className="absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-chart-4"
+                style={{ left: `${positionOnBar(previous.value, range)}%` }}
+              />
+            )}
             <div
               className={cn(
-                "absolute top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-card shadow",
-                status === "normal" ? "bg-primary" : "bg-warning"
+                "absolute top-1/2 size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px]",
+                status === "normal" ? "border-popover bg-primary" : "border-primary bg-warning"
               )}
               style={{ left: `${positionOnBar(value, range)}%` }}
             />
@@ -66,6 +80,7 @@ export function RangeBar({
               {dict.range.normalRange} {toLocaleDigits(referenceRangeRaw ?? "", locale)}
             </span>
           </div>
+          {wasText && <p className="mt-0.5 text-sm text-muted-foreground">{wasText}</p>}
         </>
       ) : referenceRangeRaw ? (
         <p className="mt-1 text-sm text-muted-foreground">

@@ -4,27 +4,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* MediSathi theme: "স্বাস্থ্য খাতা" design system
- * Colors:
- *   Shapla teal #0E6B5E — primary
- *   Haldi #E3A72F — secondary/warm accent
- *   Alarm #C2402F — destructive/urgent
- *   Paper #F6F8F6 — background
- *   Ink #18282A — foreground
- *
- * Fonts:
- *   Anek Bangla — headings/numbers
- *   Noto Sans Bengali — body
- *   17px mobile base, 1.65 line height for Bangla
+/* MediSathi theme: "Mist". DESIGN.md is the source of truth.
+ * OKLCH values are checked conversions of the hex values listed there.
+ * Frost surfaces are translucent: anything sticky, or overlapping other content,
+ * must use bg-popover instead of bg-card, or what's behind it shows through.
  */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-noto), "Noto Sans Bengali", system-ui, sans-serif;
-  --font-heading: var(--font-anek), "Anek Bangla", var(--font-noto), system-ui, sans-serif;
+  /* Latin glyphs come from Anek Latin; Bangla glyphs fall through to the next family. */
+  --font-sans: var(--font-anek-latin), var(--font-noto), "Noto Sans Bengali", system-ui, sans-serif;
+  --font-heading: var(--font-anek-latin), var(--font-anek), var(--font-noto), system-ui, sans-serif;
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-wash: var(--warning-wash);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-ink: var(--destructive-ink);
+  --color-destructive-wash: var(--destructive-wash);
+  --color-card-lead: var(--card-lead);
+  --color-bar: var(--bar);
+  --color-dock: var(--dock);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -58,56 +58,98 @@
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-2xl: calc(var(--radius) * 1.4); /* existing cards use rounded-2xl: keep them at 24px */
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-  /* Values below are the DESIGN.md hex colors converted to OKLCH (checked, not guessed). */
-  --background: oklch(0.9771 0.0034 145.6); /* Paper #F6F8F6 */
-  --foreground: oklch(0.2635 0.0217 205.8); /* Ink #18282A */
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2635 0.0217 205.8);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2635 0.0217 205.8);
-  --primary: oklch(0.4748 0.0823 180.2); /* Shapla teal #0E6B5E — 6.4:1 on white */
+  --mist-high: oklch(0.8923 0.0096 222.07); /* #D5DDE0 */
+  --mist: oklch(0.8309 0.0226 226.19); /* #B9CBD3 */
+  --mist-low: oklch(0.7887 0.0271 228.01); /* #A9BEC8 */
+
+  --background: var(--mist-high); /* Solid bars and docks. The page ground is on body. */
+  --foreground: oklch(0.1686 0.0089 224.11); /* Ink #0B1012 */
+  --card: oklch(1 0 0 / 46%); /* Frost */
+  --card-lead: oklch(1 0 0 / 78%); /* Frost on: the screen's lead card */
+  --card-foreground: var(--foreground);
+  --bar: oklch(0.9477 0.0085 225.08 / 86%); /* #E8EFF2: header and bottom nav */
+  --dock: oklch(0.8441 0.0216 227.58 / 88%); /* #BECFD7: sticky action bar */
+  --popover: oklch(1 0 0); /* Solid: dialogs, menus, and anything over other content */
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9472 0.0109 167.8); /* #E7F0EC teal tint */
-  --secondary-foreground: oklch(0.2635 0.0217 205.8);
-  --muted: oklch(0.9498 0.0075 164.9); /* #EAF0ED */
-  --muted-foreground: oklch(0.5194 0.0214 179.6); /* Mist text #5C6D69 — 5.1:1 on paper */
-  --accent: oklch(0.9472 0.0109 167.8);
-  --accent-foreground: oklch(0.2635 0.0217 205.8);
-  --destructive: oklch(0.5548 0.169 30.55); /* Alarm #C2402F — urgent only */
+  --secondary: oklch(1 0 0 / 62%);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.1686 0.0089 224.11 / 8%);
+  --muted-foreground: oklch(0.3222 0.0254 230.14); /* Ink 2 #26363E: 6.5:1 on the darkest ground */
+  --accent: oklch(1 0 0 / 62%);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.4884 0.1638 30.25); /* Alarm #A92C1E: urgent signs and delete only */
   --destructive-foreground: oklch(1 0 0);
-  /* Haldi #E3A72F: fills/dots only (too light for text). Text uses the dark amber. */
+  --destructive-ink: oklch(0.3562 0.1214 30.47); /* #6E180E: red text on bare Mist, where Alarm fails */
+  --destructive-wash: oklch(0.9175 0.0297 30.64); /* #F7DDD8 */
+  /* Haldi #E3A72F: fills/dots only (too light for text). Text uses Haldi ink. */
   --warning: oklch(0.7659 0.1449 79.78);
-  --warning-foreground: oklch(0.4707 0.0987 76.33); /* #7A5200 — 6.2:1 on Haldi tint */
-  --border: oklch(0.9116 0.0101 164.9); /* Mist #DCE4E0 */
-  --input: oklch(0.9116 0.0101 164.9);
-  --ring: oklch(0.4748 0.0823 180.2);
-  --chart-1: oklch(0.4748 0.0823 180.2);
-  --chart-2: oklch(0.7659 0.1449 79.78);
-  --chart-3: oklch(0.5194 0.0214 179.6);
-  --chart-4: oklch(0.6 0.06 180);
-  --chart-5: oklch(0.5548 0.169 30.55);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.9771 0.0034 145.6);
-  --sidebar-foreground: oklch(0.2635 0.0217 205.8);
-  --sidebar-primary: oklch(0.4748 0.0823 180.2);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.9472 0.0109 167.8);
-  --sidebar-accent-foreground: oklch(0.2635 0.0217 205.8);
-  --sidebar-border: oklch(0.9116 0.0101 164.9);
-  --sidebar-ring: oklch(0.4748 0.0823 180.2);
+  --warning-foreground: oklch(0.3726 0.0779 77.31); /* #573A00 */
+  --warning-wash: oklch(0.9178 0.0636 87.27); /* #F6E2B4 */
+  --border: oklch(1 0 0 / 62%); /* Frost edge */
+  --rule: oklch(0.1686 0.0089 224.11 / 10%); /* Dividers inside cards */
+  --input: oklch(0.1686 0.0089 224.11 / 28%);
+  --ring: var(--foreground);
+  --chart-1: oklch(0.4545 0.0856 228.51); /* Lagoon #0B5F7C: data only */
+  --chart-2: var(--warning);
+  --chart-3: var(--muted-foreground);
+  --chart-4: oklch(0.4048 0.0272 229.87); /* Ink 3 #3A4C55 */
+  --chart-5: var(--destructive);
+  --radius: 1rem;
+  --sidebar: var(--mist-high);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
-/* Light theme only — no dark mode toggle. */
+/* Light theme only: no dark mode toggle. */
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --card: oklch(0.9094 0.0121 223.53); /* Frost flattened over Mist, #D9E3E7 */
+    --card-lead: oklch(0.9644 0.0045 214.33); /* #F0F4F5 */
+    --secondary: oklch(0.9356 0.0085 225.09); /* #E4EBEE */
+    --accent: var(--secondary);
+    --bar: oklch(0.9477 0.0085 225.08);
+    --dock: oklch(0.8441 0.0216 227.58);
+    --border: oklch(0.9644 0.0045 214.33);
+  }
+}
+
+@media print {
+  :root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0 0 0);
+    --muted-foreground: oklch(0 0 0);
+    --card: oklch(1 0 0);
+    --card-lead: oklch(1 0 0);
+    --secondary: oklch(1 0 0);
+    --muted: oklch(1 0 0);
+    --border: oklch(0.8 0 0);
+    --rule: oklch(0.8 0 0);
+  }
+}
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  /* The frost edge is white, which vanishes inside a frost card. */
+  .divide-y > *,
+  tr,
+  li.border-b {
+    border-color: var(--rule);
   }
   html {
     /* 17px mobile base text */
@@ -115,7 +157,9 @@
     @apply font-sans;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    /* html is viewport height, so past the first screen the ground stays Mist low. */
+    background: var(--mist-low) linear-gradient(180deg, var(--mist-high) 0, var(--mist) 340px, var(--mist-low) 100%) no-repeat;
   }
   /* Large tap targets for low-literacy / mobile users (≥48px) */
   button:not([role="checkbox"]):not([role="radio"]):not([role="switch"]):not([role="tab"]),
@@ -134,6 +178,7 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
@@ -148,11 +193,49 @@
     display: none !important;
   }
   body {
+    background: oklch(1 0 0);
     font-size: 12pt;
   }
   main {
     padding: 0 !important;
+    max-width: none !important;
   }
+  .print-h2 {
+    margin: 12pt 0 4pt;
+    padding-bottom: 2pt;
+    border-bottom: 1pt solid black;
+    font-size: 13pt;
+    font-weight: 600;
+    break-after: avoid;
+  }
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10pt;
+  }
+  .print-table th {
+    padding: 2pt 6pt 2pt 0;
+    border-bottom: 0.75pt solid black;
+    font-weight: 600;
+    text-align: left;
+    vertical-align: bottom;
+  }
+  .print-table th.text-right {
+    text-align: right;
+  }
+  .print-table td {
+    padding: 2pt 6pt 2pt 0;
+    border-bottom: 0.5pt solid oklch(0.8 0 0);
+    vertical-align: top;
+  }
+  .print-table tr {
+    break-inside: avoid;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm;
 }
 
 /* Haldi highlighter over a value on the paper (review page + landing). */
@@ -164,6 +247,52 @@
   mix-blend-mode: multiply;
   pointer-events: none;
   transition: left 0.25s ease, top 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+/* The orb: see components/orb.tsx. The only glow, and one of two decorative gradients. */
+.orb {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, #e9fcff 0, #8ce8f6 12%, #22b4d9 36%, #0b6c93 66%, #062f4c 100%);
+  box-shadow: 0 0 44px 10px rgb(25 181 216 / 55%), inset 0 0 26px rgb(255 255 255 / 40%);
+}
+
+.orb-halo {
+  background: radial-gradient(circle at 50% 50%, rgb(25 181 216 / 50%) 0, rgb(25 181 216 / 16%) 34%, transparent 62%);
+}
+
+.orb-sheet {
+  position: absolute;
+  inset: 23% 29%;
+  display: flex;
+  flex-direction: column;
+  gap: 8%;
+  padding: 9% 6%;
+  border-radius: 5px;
+  background: oklch(1 0 0 / 93%);
+  transform: rotate(-8deg);
+}
+
+.orb-sheet i {
+  display: block;
+  height: 6%;
+  min-height: 2px;
+  border-radius: 2px;
+  background: oklch(0.1686 0.0089 224.11 / 34%);
+}
+
+.orb-sheet i.orb-lit {
+  height: 12%;
+  min-height: 4px;
+  background: var(--warning);
+  animation: orb-reading 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes orb-reading {
+  from { opacity: 0.45; }
 }
 
 .landing-rise {
@@ -186,5 +315,6 @@
 @media (prefers-reduced-motion: reduce) {
   .paper-highlight { transition: none; }
   .landing-rise,
-  .landing-swipe { animation: none; }
+  .landing-swipe,
+  .orb-sheet i.orb-lit { animation: none; }
 }

@@ -23,6 +23,11 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/show-doctor", key: "showDoctor", Icon: Stethoscope },
 ];
 
+/** Focused flows: one job, no app nav on phones. The saved check-in is back in the app. */
+export function isFocusedFlow(pathname: string): boolean {
+  return pathname.startsWith("/documents/") || pathname === "/checkin";
+}
+
 export function isNavActive(item: NavItem, pathname: string): boolean {
   return [item.href, ...(item.match ?? [])].some(
     (p) => pathname === p || pathname.startsWith(`${p}/`)

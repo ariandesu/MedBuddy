@@ -2,37 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { ChevronRight, FileText, RefreshCw, Trash2 } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UploadZone } from "@/components/upload-zone";
-import { useDictionary } from "@/lib/use-dictionary";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  FileText,
-  Image,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Trash2,
-  RefreshCw,
-  Upload,
-} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tile } from "@/components/tile";
+import { LoadError } from "@/components/load-error";
+import { DeletePaperDialog } from "@/components/delete-paper-dialog";
+import { useLocale } from "@/components/locale-provider";
+import { formatDate, toLocaleDigits } from "@/lib/digits";
+import { recordTitle } from "@/lib/record-title";
+import { cn } from "@/lib/utils";
 
 type Doc = {
   id: string;
@@ -43,221 +24,172 @@ type Doc = {
   createdAt: string;
 };
 
-const ICON_BY_TYPE: Record<string, React.ElementType> = {
-  "image/jpeg": Image,
-  "image/png": Image,
-  "application/pdf": FileText,
-};
+type SavedRecord = { documentId: string; recordType: string; recordDate: string | null };
 
-const STATUS_CONFIG: Record<
-  string,
-  { labelKey: string; badge: "default" | "secondary" | "destructive"; Icon: React.ElementType }
-> = {
-  uploaded: { labelKey: "uploaded", badge: "default", Icon: Clock },
-  processing: { labelKey: "processing", badge: "default", Icon: Clock },
-  needs_review: { labelKey: "needs_review", badge: "secondary", Icon: AlertCircle },
-  confirmed: { labelKey: "confirmed", badge: "default", Icon: CheckCircle2 },
-  failed: { labelKey: "failed", badge: "destructive", Icon: AlertCircle },
-};
+async function fetchPapers(): Promise<{ docs: Doc[]; records: SavedRecord[]; failed: boolean }> {
+  try {
+    const [docRes, recRes] = await Promise.all([fetch("/api/documents"), fetch("/api/medical-records")]);
+    if (!docRes.ok || !recRes.ok) throw new Error();
+    const [docData, recData] = await Promise.all([docRes.json(), recRes.json()]);
+    return { docs: docData.documents ?? [], records: recData.records ?? [], failed: false };
+  } catch {
+    return { docs: [], records: [], failed: true };
+  }
+}
 
-export function DocumentsView({ embedded = false }: { embedded?: boolean }) {
-  const dict = useDictionary();
+export function DocumentsView() {
+  const { dict, locale } = useLocale();
+  const router = useRouter();
+  const t = dict.documents;
   const [docs, setDocs] = useState<Doc[]>([]);
+  const [records, setRecords] = useState<SavedRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteDialog, setDeleteDialog] = useState<{ id: string; name: string } | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [deleting, setDeleting] = useState<Doc | null>(null);
 
   const load = useCallback(async () => {
-    const serverDocs: Doc[] = [];
-    try {
-      const res = await fetch("/api/documents");
-      if (res.ok) {
-        const data = await res.json();
-        serverDocs.push(...(data.documents ?? []));
-      }
-    } catch {
-      // Server unreachable — show empty state.
-    }
-    setDocs(serverDocs);
+    const data = await fetchPapers();
+    setDocs(data.docs);
+    setRecords(data.records);
+    setFailed(data.failed);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/documents")
-      .then(res => (res.ok ? res.json() : { documents: [] }))
-      .then(data => {
-        if (!cancelled) {
-          setDocs(data.documents ?? []);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setDocs([]);
-          setLoading(false);
-        }
-      });
+    void fetchPapers().then((data) => {
+      if (cancelled) return;
+      setDocs(data.docs);
+      setRecords(data.records);
+      setFailed(data.failed);
+      setLoading(false);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-3" aria-busy="true">
+        <Skeleton className="h-44 w-full rounded-2xl" />
+        <Skeleton className="h-36 w-full rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (failed) return <LoadError />;
+
+  const toCheck = docs.filter((d) => d.status === "needs_review");
+  const saved = docs.filter((d) => d.status === "confirmed");
+  const unfinished = docs.filter((d) => d.status !== "needs_review" && d.status !== "confirmed");
+
+  // A saved paper is named by what it is and when; the file name comes second.
+  const savedTitle = (d: Doc) => {
+    const rec = records.find((r) => r.documentId === d.id);
+    return rec ? recordTitle(rec, dict, locale) : d.fileName;
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-6">
-        {!embedded && (
-          <div className="flex items-center gap-2">
-            <FileText className="size-5 text-primary" aria-hidden />
-            <h1 className="text-2xl font-bold">{dict.documents.title}</h1>
-          </div>
+      <div className="flex flex-col gap-4">
+        {docs.length === 0 && (
+          <section className="flex flex-col gap-3 rounded-2xl border bg-card-lead p-4">
+            <p className="font-heading text-xl font-semibold">{t.empty}</p>
+            <Link href="/records?add=1" className={cn(buttonVariants(), "h-14 w-full text-lg font-semibold")}>
+              {t.addPaper}
+            </Link>
+          </section>
         )}
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Upload className="size-4 text-primary" aria-hidden />
-              <CardTitle>{dict.documents.upload}</CardTitle>
+        {toCheck.length > 0 && (
+          <section aria-labelledby="to-check-h" className="flex flex-col gap-3 rounded-2xl border bg-card-lead p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 id="to-check-h" className="font-heading text-lg font-semibold">{t.toCheck}</h2>
+              <Badge variant="warning">{toLocaleDigits(String(toCheck.length), locale)}</Badge>
             </div>
-            <CardDescription>{dict.documents.help}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <UploadZone dict={dict} onUploadComplete={() => load()} />
-          </CardContent>
-        </Card>
+            {toCheck.map((d) => (
+              <div key={d.id} className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <Tile><FileText className="size-5" /></Tile>
+                  <div className="min-w-0">
+                    <p className="break-words font-medium">{d.fileName}</p>
+                    <p className="text-sm text-muted-foreground">{t.addedOn.replace("{{date}}", formatDate(d.createdAt, locale))}</p>
+                  </div>
+                </div>
+                <Link href={`/documents/${d.id}`} className={cn(buttonVariants(), "h-14 w-full text-lg font-semibold")}>
+                  {t.checkThis}
+                </Link>
+              </div>
+            ))}
+          </section>
+        )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{dict.documents.title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="h-40 flex items-center justify-center">
-                {dict.common.loading}
-              </div>
-            ) : docs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-12">
-                <FileText className="size-12 text-muted-foreground mb-3" aria-hidden />
-                <p className="text-sm text-muted-foreground">
-                  {dict.documents.empty}
-                </p>
-              </div>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {docs.map((d) => {
-                  const DocIcon = ICON_BY_TYPE[d.mimeType] ?? FileText;
-                  const status = STATUS_CONFIG[d.status] ?? STATUS_CONFIG.uploaded;
-                  return (
-                    <Card key={d.id} className="flex flex-col h-full group">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <DocIcon className="size-4 text-muted-foreground" aria-hidden />
-                          <Badge variant={status.badge} className="text-sm">
-                            {dict.documents.status[status.labelKey as keyof typeof dict.documents.status] ?? d.status}
-                          </Badge>
-                        </div>
-                        <Link href={`/documents/${d.id}`} className="line-clamp-1 font-medium hover:underline-offset-4">
-                          {d.fileName}
-                        </Link>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <span>{d.mimeType.replace("image/", "").toUpperCase()}</span>
-                          <span>{((d.sizeBytes || 0) / 1024).toFixed(0)} KB</span>
-                        </div>
-                      </CardContent>
-                      <CardContent className="pt-2">
-                        <div className="grid gap-2 grid-cols-2">
-                          {d.status === "failed" ? (
-                            <Button
-                              onClick={() => {
-                                void fetch(`/api/documents/${d.id}/retry`, {
-                                  method: "POST",
-                                }).then(() => load());
-                              }}
-                              variant="outline"
-                              size="sm"
-                              className="w-full min-h-[40px]"
-                            >
-                              <RefreshCw className="size-3 mr-1" aria-hidden />
-                              {dict.documents.retry}
-                            </Button>
-                          ) : d.status === "needs_review" ? (
-                            <Link
-                              href={`/documents/${d.id}`}
-                              className={buttonVariants({
-                                variant: "secondary",
-                                size: "sm",
-                                className: "w-full min-h-[40px] flex items-center justify-center",
-                              })}
-                            >
-                              <AlertCircle className="size-3 mr-1" aria-hidden />
-                              {dict.documents.review}
-                            </Link>
-                          ) : (
-                            <Link
-                              href={`/documents/${d.id}`}
-                              className={buttonVariants({
-                                variant: "outline",
-                                size: "sm",
-                                className: "w-full min-h-[40px] flex items-center justify-center",
-                              })}
-                            >
-                              <FileText className="size-3 mr-1" aria-hidden />
-                              {dict.documents.view}
-                            </Link>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => setDeleteDialog({ id: d.id, name: d.fileName })}
-                            className="w-full min-h-[40px] flex items-center justify-center"
-                          >
-                            <Trash2 className="size-3 mr-1" aria-hidden />
-                            {dict.documents.delete}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {unfinished.length > 0 && (
+          <ul className="flex flex-col gap-3">
+            {unfinished.map((d) => (
+              <li key={d.id} className="flex flex-col gap-3 rounded-2xl border bg-card p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 break-words font-medium">{d.fileName}</p>
+                  <Badge variant={d.status === "failed" ? "warning" : "secondary"}>
+                    {t.status[d.status as keyof typeof t.status] ?? d.status}
+                  </Badge>
+                </div>
+                {d.status === "failed" && <p className="text-sm text-muted-foreground">{t.aiFailed}</p>}
+                <div className="flex gap-2">
+                  {d.status === "failed" && (
+                    <Button
+                      className="h-12 flex-1"
+                      onClick={() => {
+                        void fetch(`/api/documents/${d.id}/retry`, { method: "POST" }).then(() => load());
+                      }}
+                    >
+                      <RefreshCw aria-hidden />
+                      {t.retry}
+                    </Button>
+                  )}
+                  <Button variant="destructive-soft" className="h-12 flex-1" onClick={() => setDeleting(d)}>
+                    <Trash2 aria-hidden />
+                    {t.delete}
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {saved.length > 0 && (
+          <section aria-labelledby="saved-h">
+            <h2 id="saved-h" className="mb-2 font-heading text-lg font-semibold">{t.saved}</h2>
+            <ul className="divide-y rounded-2xl border bg-card px-4">
+              {saved.map((d) => (
+                <li key={d.id}>
+                  <Link href={`/documents/${d.id}`} className="flex min-h-[4.25rem] items-center gap-3 py-2">
+                    <Tile><FileText className="size-5" /></Tile>
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium">{savedTitle(d)}</span>
+                      <span className="block truncate text-sm text-muted-foreground">{d.fileName}</span>
+                    </span>
+                    <ChevronRight className="size-5 shrink-0" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
-      {deleteDialog && (
-        <AlertDialog open={true} onOpenChange={(open) => {
-          if (!open) setDeleteDialog(null);
-        }}>
-          <AlertDialogContent>
-            <AlertDialogHeader>{dict.documents.deleteConfirm}</AlertDialogHeader>
-            <AlertDialogDescription>
-              {dict.documents.deleteConfirmDesc}{" "}
-              <strong>{deleteDialog.name}</strong>?
-            </AlertDialogDescription>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteDialog(null)}>
-                {dict.common.cancel}
-              </AlertDialogCancel>
-              <Button
-                variant="destructive"
-                onClick={async () => {
-                  const res = await fetch(`/api/documents/${deleteDialog.id}`, {
-                    method: "DELETE",
-                  });
-                  if (res.ok) {
-                    setDeleteDialog(null);
-                    load();
-                  }
-                }}
-              >
-                <Trash2 className="size-3 mr-1" aria-hidden />
-                {dict.documents.delete}
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+      {deleting && (
+        <DeletePaperDialog
+          doc={deleting}
+          dict={dict}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setDeleting(null);
+            void load();
+            router.refresh();
+          }}
+        />
       )}
     </>
   );

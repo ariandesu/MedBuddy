@@ -3,12 +3,12 @@ import { test, expect } from "@playwright/test";
 test.use({ baseURL: "http://localhost:3131" });
 
 test.describe("Login: language toggle + demo profiles", () => {
-  test("header toggle switches to English; 5 profiles listed", async ({ page }) => {
+  test("header toggle switches to English; no profile choices without a database", async ({ page }) => {
     await page.goto("/login");
 
-    // 5 sample-neighbor profile buttons, each starting a different story.
-    const profiles = page.locator('#profiles button');
-    await expect(profiles).toHaveCount(5);
+    // These tests run with no database: everyone shares one sample account, so
+    // nothing offers a choice of neighbors that would all open the same data.
+    await expect(page.locator('#profiles button')).toHaveCount(0);
 
     // Header language toggle flips the page to English and persists via cookie.
     await page.getByRole("button", { name: "English" }).click();
@@ -22,13 +22,21 @@ test.describe("Login: language toggle + demo profiles", () => {
     await expect(page.getByText("মেডিসাথীতে লগ ইন করুন")).toBeVisible();
   });
 
-  test("landing shows profile choices (Bangla default, English with cookie)", async ({ page, context }) => {
+  test("landing follows the page language, with no hydration errors", async ({ page, context }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+
     await page.goto("/");
-    await expect(page.getByText("অথবা অন্য কারো রেকর্ড দেখুন:")).toBeVisible();
+    await expect(page.getByRole("button").filter({ hasText: "বাংলায় দেখুন" })).toBeVisible();
+    await expect(page.getByText("নমুনা রেকর্ড খুলবে")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "অথবা অন্য কারো রেকর্ড দেখুন:" })).toHaveCount(0);
 
     await context.addCookies([{ name: "medisathi-locale", value: "en", domain: "localhost", path: "/" }]);
     await page.goto("/");
-    await expect(page.getByText("Or start as someone else:", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Your doctor's paper, in words you can read." })).toBeVisible();
+    await expect(page.getByText("Opens sample records")).toBeVisible();
+    // The first button is in the page's own language.
+    await expect(page.locator("main button").first()).toHaveText("Try it in English");
+    expect(errors).toEqual([]);
   });
 });

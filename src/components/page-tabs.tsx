@@ -10,7 +10,7 @@ export type PageTab = { value: string; label: string; href: string };
 export function PageTabs({ tabs, active, label }: { tabs: PageTab[]; active: string; label: string }) {
   return (
     <nav aria-label={label} className="no-print">
-      <ul className="grid grid-flow-col auto-cols-fr gap-1 rounded-xl bg-muted p-1">
+      <ul className="grid grid-flow-col auto-cols-fr gap-1 rounded-full bg-card p-1">
         {tabs.map((t) => {
           const isActive = t.value === active;
           return (
@@ -19,9 +19,9 @@ export function PageTabs({ tabs, active, label }: { tabs: PageTab[]; active: str
                 href={t.href}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center justify-center rounded-lg px-3 text-center font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  "flex min-h-12 items-center justify-center rounded-full px-3 text-center font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   isActive
-                    ? "bg-card text-foreground shadow-sm"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
