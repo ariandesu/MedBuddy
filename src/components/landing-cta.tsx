@@ -72,11 +72,11 @@ export function LandingCta() {
         <ul className="flex flex-col gap-2">
           {DEMO_PROFILES.filter((p) => p.id !== DEFAULT_DEMO_PROFILE).map((p) => (
             <li key={p.id}>
-              <Button
+              <button
+                type="button"
                 onClick={() => start(pageLocale, p.id)}
                 disabled={busy}
-                variant="outline"
-                className="h-auto w-full justify-start py-3 text-left [white-space:normal]"
+                className="w-full rounded-xl border bg-background px-4 py-3 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50"
               >
                 <span className="flex w-full flex-col gap-1">
                   <span className="flex flex-wrap items-center gap-2">
@@ -91,7 +91,7 @@ export function LandingCta() {
                     {pageLocale === "bn" ? p.storyBn : p.storyEn}
                   </span>
                 </span>
-              </Button>
+              </button>
             </li>
           ))}
         </ul>

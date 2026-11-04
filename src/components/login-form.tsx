@@ -166,14 +166,14 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
         <ul className="flex flex-col gap-2">
           {DEMO_PROFILES.map((p) => (
             <li key={p.id}>
-              <Button
+              <button
+                type="button"
                 onClick={() => startDemo(p.id)}
-                variant="outline"
-                className="h-auto w-full justify-start py-3 text-left [white-space:normal]"
                 disabled={pending}
+                className="w-full rounded-xl border bg-background px-4 py-3 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50"
               >
                 <span className="flex w-full flex-col gap-1">
-                  <span className="flex items-center gap-2">
+                  <span className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">
                       {locale === "bn" ? p.nameBn : p.nameEn}
                     </span>
@@ -188,7 +188,7 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
                     <span className="text-sm text-muted-foreground">{dict.auth.profileStarting}</span>
                   )}
                 </span>
-              </Button>
+              </button>
             </li>
           ))}
         </ul>
