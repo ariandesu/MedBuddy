@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LandingCta } from "@/components/landing-cta";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, type Locale } from "@/lib/i18n";
+import { getLocaleAndDict } from "@/lib/i18n/server";
 import { getSessionUser } from "@/server/auth";
 import papers from "../../fixtures/sample-papers.json";
 
@@ -11,19 +12,22 @@ const STEPS = ["1", "2", "3"] as const;
 export default async function Home() {
   if (await getSessionUser()) redirect("/dashboard");
 
-  // Everything shows in both languages: visitors haven't been able to choose yet.
-  const en = getDictionary("en").landing;
-  const bn = getDictionary("bn").landing;
+  // Primary language follows the header toggle; the other stays visible smaller,
+  // so visitors who can't read the current language can still find their way.
+  const { locale } = await getLocaleAndDict();
+  const other: Locale = locale === "bn" ? "en" : "bn";
+  const primary = getDictionary(locale).landing;
+  const secondary = getDictionary(other).landing;
   const box = papers["sample-cbc"].boxes.hemoglobin;
 
   return (
     <div className="grid items-center gap-x-12 gap-y-10 md:grid-cols-[1.05fr_1fr] md:pt-6">
       <section className="landing-rise flex flex-col gap-5">
-        <h1 lang="bn" className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
-          {bn.headline}
+        <h1 lang={locale} className="font-heading text-4xl font-bold leading-tight sm:text-5xl">
+          {primary.headline}
         </h1>
-        <p className="font-heading text-2xl font-medium leading-snug text-primary">{en.headline}</p>
-        <p className="text-muted-foreground">{en.sub}</p>
+        <p lang={other} className="font-heading text-2xl font-medium leading-snug text-primary">{secondary.headline}</p>
+        <p className="text-muted-foreground">{primary.sub}</p>
         <LandingCta />
       </section>
 
@@ -48,9 +52,9 @@ export default async function Home() {
           />
         </div>
         <figcaption className="absolute bottom-0 right-0 max-w-xs rounded-2xl border-2 border-warning bg-card p-4 shadow-lg">
-          <p className="font-heading font-semibold">{en.calloutValue}</p>
-          <p className="text-sm text-muted-foreground">{en.calloutBody}</p>
-          <p lang="bn" className="mt-1 text-sm text-muted-foreground">{bn.calloutBody}</p>
+          <p className="font-heading font-semibold">{primary.calloutValue}</p>
+          <p className="text-sm text-muted-foreground">{primary.calloutBody}</p>
+          <p lang={other} className="mt-1 text-sm text-muted-foreground">{secondary.calloutBody}</p>
         </figcaption>
       </figure>
 
@@ -58,10 +62,10 @@ export default async function Home() {
         {STEPS.map((n) => (
           <li key={n} className="flex flex-col gap-1">
             <p className="font-heading text-xl font-semibold">
-              <span className="text-primary">{en[`step${n}`]}</span>
-              <span lang="bn" className="ml-2 text-base font-medium text-muted-foreground">{bn[`step${n}`]}</span>
+              <span className="text-primary">{primary[`step${n}`]}</span>
+              <span lang={other} className="ml-2 text-base font-medium text-muted-foreground">{secondary[`step${n}`]}</span>
             </p>
-            <p className="text-muted-foreground">{en[`step${n}Body`]}</p>
+            <p className="text-muted-foreground">{primary[`step${n}Body`]}</p>
           </li>
         ))}
       </ol>

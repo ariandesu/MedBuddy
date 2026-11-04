@@ -8,7 +8,9 @@ import {
   FileText,
   Check,
   MessageCircleQuestion,
+  Repeat,
 } from "lucide-react";
+import { DemoSwitchButton } from "@/components/demo-switch-button";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getLocaleAndDict } from "@/lib/i18n/server";
@@ -81,6 +83,15 @@ export default async function DashboardPage() {
           {next.cta}
         </Link>
       </section>
+
+      {user && user.email.startsWith("demo-") && user.email.endsWith("@medisathi.app") && (
+        <section aria-labelledby="switch-h" className="rounded-2xl bg-primary p-5 text-primary-foreground">
+          <Repeat className="size-7 opacity-90" aria-hidden />
+          <h2 id="switch-h" className="mt-3 font-heading text-2xl font-semibold">{t.switchDemo}</h2>
+          <p className="mt-1 opacity-90">{t.switchDemoBody}</p>
+          <DemoSwitchButton label={t.switchDemo} />
+        </section>
+      )}
 
       <section aria-labelledby="tour-h" className="rounded-2xl border bg-card p-4">
         <h2 id="tour-h" className="font-heading text-lg font-semibold">{t.tourTitle}</h2>

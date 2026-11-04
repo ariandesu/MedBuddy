@@ -160,7 +160,7 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
       >
         {startingProfile ? dict.auth.profileStarting : dict.auth.tryDemo}
       </Button>
-      <div className="flex flex-col gap-2 rounded-2xl border bg-card p-3">
+      <div id="profiles" className="flex scroll-mt-20 flex-col gap-2 rounded-2xl border bg-card p-3">
         <p className="font-medium">{dict.auth.chooseProfile}</p>
         <p className="text-sm text-muted-foreground">{dict.auth.chooseProfileHint}</p>
         <ul className="flex flex-col gap-2">
@@ -169,7 +169,7 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
               <Button
                 onClick={() => startDemo(p.id)}
                 variant="outline"
-                className="h-auto w-full justify-start py-3 text-left"
+                className="h-auto w-full justify-start py-3 text-left [white-space:normal]"
                 disabled={pending}
               >
                 <span className="flex w-full flex-col gap-1">
@@ -181,7 +181,7 @@ export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "
                       {p.badge === "recovering" ? dict.auth.profileRecovering : dict.auth.profileStable}
                     </Badge>
                   </span>
-                  <span className="text-sm font-normal text-muted-foreground">
+                  <span className="text-sm font-normal break-words text-muted-foreground">
                     {locale === "bn" ? p.storyBn : p.storyEn}
                   </span>
                   {startingProfile === p.id && (

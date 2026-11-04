@@ -110,7 +110,9 @@
     "tourStep3": "3. Ask a question",
     "tourStep3Body": "Answers come only from your records and show their sources.",
     "tourStep4": "4. Show the doctor",
-    "tourStep4Body": "A print-ready page with values as written and the lab's own ranges."
+    "tourStep4Body": "A print-ready page with values as written and the lab's own ranges.",
+    "switchDemo": "Try another sample neighbor",
+    "switchDemoBody": "You're using sample data. Switch to a different recovering or healthy story."
   },
   "documents": {
     "title": "Documents",
@@ -411,6 +413,8 @@
     "step2": "You check",
     "step2Body": "Tap a value and it lights up on the paper. Nothing is saved until you've looked.",
     "step3": "You understand",
-    "step3Body": "Ask questions answered from your own records, with sources, then print a page for your doctor."
+    "step3Body": "Ask questions answered from your own records, with sources, then print a page for your doctor.",
+    "chooseProfile": "Or start as someone else:",
+    "startingOther": "Setting up sample records…"
   }
 }
