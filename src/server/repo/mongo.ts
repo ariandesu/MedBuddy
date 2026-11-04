@@ -44,6 +44,9 @@ export async function ensureIndexes(db: Db): Promise<void> {
     db.collection<FlexDoc>(COLLECTIONS.medicalRecords).createIndex({ userId: 1, recordDate: 1 }),
     db.collection<FlexDoc>(COLLECTIONS.wellness).createIndex({ userId: 1, date: 1 }, { unique: true }),
     db.collection<FlexDoc>(COLLECTIONS.healthSummaries).createIndex({ userId: 1, generatedAt: -1 }),
+    // Rate limiter: TTL auto-expires old keys (no per-request cleanup).
+    db.collection<FlexDoc>("rate_limits").createIndex({ key: 1 }, { unique: true }),
+    db.collection<FlexDoc>("rate_limits").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
   ]);
 }
 

@@ -42,58 +42,41 @@ export async function rateLimitCheck(
 
   if (uri) {
     // Mongo mode - use the repo's db.
+    // Single atomic round-trip (findOneAndUpdate + upsert). The TTL index
+    // auto-expires old keys, so no per-call cleanup is needed. Index creation
+    // lives in ensureIndexes (once per instance, in the background).
     const { getRepo } = await import("@/server/repo/index");
     const repo = getRepo();
     const db = await (repo as unknown as { db: () => Promise<unknown> }).db();
     const dbo = db as unknown as {
       collection: (name: string) => {
-        deleteMany: (filter: unknown) => Promise<unknown>;
-        createIndex: (keys: unknown, options?: unknown) => Promise<unknown>;
-        findOne: (filter: unknown) => Promise<{ count?: number } | null>;
-        updateOne: (
+        findOneAndUpdate: (
           filter: unknown,
           update: unknown,
           options?: unknown
-        ) => Promise<unknown>;
+        ) => Promise<{ count?: number } | null>;
       };
     };
     const nowMs = now();
     const key = keyFor(userId, route);
 
-    // Remove expired.
-    await dbo
-      .collection("rate_limits")
-      .deleteMany({ expiresAt: { $lt: new Date(nowMs) } });
+    const updated = await dbo.collection("rate_limits").findOneAndUpdate(
+      { key },
+      {
+        $inc: { count: 1 },
+        $setOnInsert: {
+          expiresAt: new Date(nowMs + WINDOW_MS),
+        },
+      },
+      { upsert: true, returnDocument: "after" }
+    );
 
-    // Ensure TTL index.
-    await dbo
-      .collection("rate_limits")
-      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-    const existing = await dbo
-      .collection("rate_limits")
-      .findOne({ key });
-
-    const count = existing ? (existing.count ?? 0) : 0;
-
-    if (count >= LIMIT_FOR_CALL) {
+    const count = updated?.count ?? 1;
+    if (count > LIMIT_FOR_CALL) {
       return { allowed: false, remaining: 0 };
     }
 
-    await dbo
-      .collection("rate_limits")
-      .updateOne(
-        { key },
-        {
-          $inc: { count: 1 },
-          $setOnInsert: {
-            expiresAt: new Date(nowMs + WINDOW_MS),
-          },
-        },
-        { upsert: true }
-      );
-
-    return { allowed: true, remaining: LIMIT_FOR_CALL - count - 1 };
+    return { allowed: true, remaining: LIMIT_FOR_CALL - count };
   }
 
   // Memory mode.

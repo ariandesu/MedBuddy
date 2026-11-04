@@ -45,17 +45,19 @@ export async function POST(req: Request) {
     profile = undefined;
   }
   const repo = getRepo();
-  const rateLimit = await rateLimitCheck(`ip:${clientIp(req)}`, "demo-start", DEMO_LIMIT);
+  const email = `demo-${randomUUID().slice(0, 8)}@medisathi.app`;
+  const password = randomUUID();
+  // Overlap CPU (bcrypt) with I/O (rate-limit check) — saves ~200ms.
+  const [passwordHash, rateLimit] = await Promise.all([
+    bcrypt.hash(password, 10),
+    rateLimitCheck(`ip:${clientIp(req)}`, "demo-start", DEMO_LIMIT),
+  ]);
   if (!rateLimit.allowed) {
     return Response.json(
       { error: "Rate limit exceeded. Try again later." },
       { status: 429 }
     );
   }
-
-  const email = `demo-${randomUUID().slice(0, 8)}@medisathi.app`;
-  const password = randomUUID();
-  const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await repo.createUser({
     email,
