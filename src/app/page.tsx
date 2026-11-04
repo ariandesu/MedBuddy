@@ -1,8 +1,6 @@
-import Link from "next/link";
 import { LandingStart } from "@/components/landing-cta";
 import { getDictionary, type Locale } from "@/lib/i18n";
 import { getLocaleAndDict } from "@/lib/i18n/server";
-import { getSessionUser } from "@/server/auth";
 import { isDemoDataMode } from "@/server/env";
 import { Tile } from "@/components/tile";
 import { ClipboardCheck, MessageCircleQuestion, ScanSearch } from "lucide-react";
@@ -17,8 +15,6 @@ const STEPS = [
 ] as const;
 
 export default async function Home() {
-  const user = await getSessionUser();
-
   // Primary language follows the header toggle; the other stays visible smaller,
   // so visitors who can't read the current language can still find their way.
   const { locale } = await getLocaleAndDict();
@@ -43,17 +39,7 @@ export default async function Home() {
           <Callout value={primary.calloutValue} body={primary.calloutBody} />
         </figure>
 
-        {user ? (
-          // No demo buttons here: starting one would swap this person's account for a sample one.
-          <Link
-            href="/dashboard"
-            className="flex h-14 items-center justify-center rounded-full bg-primary px-5 text-center text-lg font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-          >
-            {primary.openNotebook}
-          </Link>
-        ) : (
-          <LandingStart locale={locale} profiles={!isDemoDataMode()} />
-        )}
+        <LandingStart locale={locale} profiles={!isDemoDataMode()} />
       </div>
 
       <figure className="landing-rise relative hidden pb-24 [animation-delay:150ms] md:block md:pr-8">

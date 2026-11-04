@@ -64,7 +64,7 @@ export default async function RootLayout({
               {children}
             </LocaleProvider>
           </main>
-          <footer className={`no-print border-t ${user ? "pb-28 md:pb-0" : ""}`}>
+          <footer className="no-print border-t">
             <p className="mx-auto max-w-5xl px-4 py-4 text-center text-sm text-muted-foreground">
               {dict.footer.disclaimer}
             </p>

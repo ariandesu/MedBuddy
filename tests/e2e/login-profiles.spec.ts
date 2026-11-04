@@ -50,9 +50,11 @@ test.describe("Login: language toggle + demo profiles", () => {
     await expect(page).toHaveURL(/localhost:3131\/$/);
     await expect(page.getByRole("heading", { name: "Your doctor's paper, in words you can read." })).toBeVisible();
 
-    // Signed in, it offers their own notebook, not a sample account in its place.
-    await expect(page.locator("main button")).toHaveCount(0);
-    await page.getByRole("link", { name: "Open my health notebook" }).click();
+    // Exactly what a signed-out visitor sees.
+    await expect(page.getByRole("button", { name: "Try it in English", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Log in" })).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Main menu" })).toHaveCount(0);
+    await page.getByRole("link", { name: "Log in" }).click();
     await expect(page).toHaveURL(/\/dashboard/);
   });
 });

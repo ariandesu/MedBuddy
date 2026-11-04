@@ -13,13 +13,15 @@ import type { SessionUser } from "@/server/auth";
 export function Header({
   locale,
   dict,
-  user,
+  user: sessionUser,
 }: {
   locale: Locale;
   dict: Dictionary;
   user: SessionUser | null;
 }) {
   const pathname = usePathname();
+  // The landing page looks the same to everyone. "Log in" takes a signed-in person to their notebook.
+  const user = pathname === "/" ? null : sessionUser;
   return (
     <header
       className={cn(
