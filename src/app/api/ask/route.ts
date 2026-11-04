@@ -12,6 +12,7 @@ import {
   stripRecordIds,
 } from "@/server/ai/grounding";
 import { aiRateLimitCheck } from "@/server/rate-limit";
+import { lookupMedicine, mightAskAboutMedicine, namedMedicine } from "@/server/medicine/lookup";
 
 const RECORD_TYPE_LABELS: Record<string, string> = {
   lab_report: "Lab report",
@@ -43,6 +44,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const question = (body.question ?? "").trim();
   if (!question) {
     return NextResponse.json({ error: dict.ask.questionRequired }, { status: 400 });
+  }
+
+  // A question about a medicine by name is answered from its official label, not from guesswork.
+  if (mightAskAboutMedicine(question)) {
+    const medicine =
+      namedMedicine(question) ??
+      (await getAI()
+        .identifyMedicine(question)
+        .then((r) => r.medicine?.trim() || null)
+        .catch(() => null));
+    if (medicine) {
+      const found = await lookupMedicine(medicine);
+      if (found.status === "not_found") {
+        return NextResponse.json({ answer: dict.ask.medicineNotFound.replace("{{name}}", medicine), citations: [], limitations: [], aboutMedicine: true });
+      }
+      if (found.status === "unavailable") {
+        return NextResponse.json({ answer: dict.ask.medicineUnavailable, citations: [], limitations: [], aboutMedicine: true });
+      }
+      try {
+        const ai = await getAI().answerMedicineQuestion(question, found.label, locale);
+        return NextResponse.json({
+          answer: ai.answer,
+          citations: [],
+          limitations: ai.limitations,
+          medicineSource: { title: found.label.sourceTitle, url: found.label.sourceUrl },
+        });
+      } catch {
+        return NextResponse.json({ answer: dict.ask.modelUnavailable, citations: [], limitations: [], aboutMedicine: true });
+      }
+    }
   }
 
   const records = await repo.listMedicalRecords(user.id);

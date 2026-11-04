@@ -3,9 +3,12 @@ import type {
   AIExplainRecord,
   AIGenerateSummary,
   AIAnswerQuestion,
+  AIIdentifyMedicine,
+  AIMedicineAnswer,
 } from "@/lib/schemas/ai";
 import type { MedicalRecord } from "@/lib/schemas/record";
 import type { WellnessDigest } from "@/server/trends";
+import type { MedicineLabel } from "@/server/medicine/lookup";
 
 export interface AIProvider {
   extractDocument(
@@ -31,4 +34,10 @@ export interface AIProvider {
     context: string,
     locale: "bn" | "en"
   ): Promise<AIAnswerQuestion>;
+  identifyMedicine(question: string): Promise<AIIdentifyMedicine>;
+  answerMedicineQuestion(
+    question: string,
+    label: MedicineLabel,
+    locale: "bn" | "en"
+  ): Promise<AIMedicineAnswer>;
 }

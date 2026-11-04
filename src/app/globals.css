@@ -265,6 +265,8 @@
 }
 
 .orb-sheet {
+  container-type: size;
+  overflow: hidden;
   position: absolute;
   inset: 23% 29%;
   display: flex;
@@ -288,7 +290,37 @@
   height: 12%;
   min-height: 4px;
   background: var(--warning);
+}
+
+/* While AI works: a line sweeps down the paper and the orb breathes. */
+.orb-scan {
+  display: none;
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--chart-1);
+  box-shadow: 0 0 6px 1px rgb(25 181 216 / 80%);
+}
+
+.orb[data-working] .orb-scan {
+  display: block;
+  animation: orb-scan 1.6s ease-in-out infinite alternate;
+}
+
+.orb[data-working] {
+  animation: orb-breathe 2.4s ease-in-out infinite alternate;
+}
+
+.orb[data-working] .orb-lit {
   animation: orb-reading 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes orb-scan {
+  to { transform: translateY(100cqh); }
+}
+
+@keyframes orb-breathe {
+  to { transform: scale(1.04); }
 }
 
 @keyframes orb-reading {
@@ -316,5 +348,7 @@
   .paper-highlight { transition: none; }
   .landing-rise,
   .landing-swipe,
-  .orb-sheet i.orb-lit { animation: none; }
+  .orb[data-working],
+  .orb[data-working] .orb-scan,
+  .orb[data-working] .orb-lit { animation: none; }
 }

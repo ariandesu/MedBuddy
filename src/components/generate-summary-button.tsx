@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AiLoader } from "@/components/ai-loader";
 import { toast } from "sonner";
 import type { Dictionary } from "@/lib/i18n";
 
@@ -38,14 +39,17 @@ export function GenerateSummaryButton({ dict, label, primary = false }: {
 
   return (
     <div className="flex flex-col gap-2">
-      <Button
-        onClick={handleGenerate}
-        disabled={saving}
-        variant={primary ? "default" : "secondary"}
-        className="h-14 w-full text-lg font-semibold"
-      >
-        {saving ? dict.common.loading : label}
-      </Button>
+      {saving ? (
+        <AiLoader label={dict.summary.writing} />
+      ) : (
+        <Button
+          onClick={handleGenerate}
+          variant={primary ? "default" : "secondary"}
+          className="h-14 w-full text-lg font-semibold"
+        >
+          {label}
+        </Button>
+      )}
       {noRecords && (
         <p className="text-sm text-muted-foreground">
           {dict.summary.noRecords}{" "}

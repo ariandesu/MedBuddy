@@ -53,6 +53,17 @@ export const aiAnswerQuestionSchema = z.object({
 });
 export type AIAnswerQuestion = z.infer<typeof aiAnswerQuestionSchema>;
 
+export const aiIdentifyMedicineSchema = z.object({
+  medicine: z.string().nullable(),
+});
+export type AIIdentifyMedicine = z.infer<typeof aiIdentifyMedicineSchema>;
+
+export const aiMedicineAnswerSchema = z.object({
+  answer: z.string(),
+  limitations: z.array(z.string()),
+});
+export type AIMedicineAnswer = z.infer<typeof aiMedicineAnswerSchema>;
+
 export function toExtractedField(
   f: AIExtractedField,
   agreement: "match" | "mismatch" | "single_source",

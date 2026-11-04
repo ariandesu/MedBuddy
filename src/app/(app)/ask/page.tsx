@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, FileText, Mic, Send } from "lucide-react";
+import { ChevronRight, ExternalLink, FileText, Mic, Send } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,6 +10,7 @@ import { useLocale } from "@/components/locale-provider";
 import { recordTitle } from "@/lib/record-title";
 import { PageTitle } from "@/components/page-title";
 import { Orb } from "@/components/orb";
+import { AiLoader } from "@/components/ai-loader";
 import { Tile } from "@/components/tile";
 import { ReadAloud } from "@/components/read-aloud";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,8 @@ type Answer = {
   text: string;
   citations: { id: string; label: string }[];
   limitations: string[];
+  medicineSource: { title: string; url: string } | null;
+  aboutMedicine: boolean;
 };
 
 export function AskPage() {
@@ -70,6 +73,8 @@ export function AskPage() {
         text: data.answer ?? t.notFound,
         citations: Array.isArray(data.citations) ? data.citations : [],
         limitations: Array.isArray(data.limitations) ? data.limitations : [],
+        medicineSource: data.medicineSource ?? null,
+        aboutMedicine: data.aboutMedicine === true,
       });
       setQuestion("");
     } catch (err) {
@@ -114,12 +119,12 @@ export function AskPage() {
         </Alert>
       )}
 
-      {(waiting || saving) && (
-        <div className="orb-halo flex flex-col items-center gap-3 py-3 md:py-8">
+      {waiting && (
+        <div className="orb-halo flex justify-center py-3 md:py-8">
           <Orb className="size-24 md:size-36" />
-          {saving && <p role="status" className="font-medium">{t.looking}</p>}
         </div>
       )}
+      {saving && <AiLoader label={t.looking} />}
 
       {answer && (
         <>
@@ -128,7 +133,7 @@ export function AskPage() {
           </p>
           <section aria-labelledby="answer-h" className="flex flex-col gap-3 rounded-2xl border bg-card-lead p-4">
             <div className="flex items-center justify-between gap-2">
-              <h2 id="answer-h" className="font-heading text-lg font-semibold">{t.fromRecords}</h2>
+              <h2 id="answer-h" className="font-heading text-lg font-semibold">{answer.medicineSource ? t.fromLabel : answer.aboutMedicine ? t.answer : t.fromRecords}</h2>
               <ReadAloud text={answer.text} label={t.speakAnswer} />
             </div>
             <p>{answer.text}</p>
@@ -138,6 +143,23 @@ export function AskPage() {
               </Link>
             )}
           </section>
+
+          {answer.medicineSource && (
+            <section aria-labelledby="medicine-source-h" className="flex flex-col gap-2">
+              <h2 id="medicine-source-h" className="font-heading text-lg font-semibold">{t.officialSource}</h2>
+              <a
+                href={answer.medicineSource.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[4.25rem] items-center gap-3 rounded-2xl border bg-card px-4 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <Tile><FileText className="size-5" /></Tile>
+                <span className="min-w-0 flex-1 font-medium">{answer.medicineSource.title}</span>
+                <ExternalLink className="size-5 shrink-0" aria-hidden />
+              </a>
+              <p className="text-sm text-muted-foreground">{t.medicineNote}</p>
+            </section>
+          )}
 
           {answer.citations.length > 0 && (
             <section aria-labelledby="sources-h">
@@ -176,7 +198,7 @@ export function AskPage() {
 
       {waiting && (
         <div className="flex flex-wrap gap-2">
-          {[t.example1, t.example2].map((q) => (
+          {[t.example1, t.example2, t.example3].map((q) => (
             <Button key={q} variant="outline" className="h-auto min-h-12 whitespace-normal px-4 py-2 text-base" onClick={() => ask(q)}>
               {q}
             </Button>

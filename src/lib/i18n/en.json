@@ -380,7 +380,8 @@
     "yours": "Your summary",
     "madeOn": "Made on {{date}} from {{count}} saved records.",
     "makeNew": "Make a new summary",
-    "sourceGone": "A paper behind this was deleted."
+    "sourceGone": "A paper behind this was deleted.",
+    "writing": "Writing your summary…"
   },
   "ask": {
     "title": "Ask about your records",
@@ -400,13 +401,19 @@
     "listening": "Listening…",
     "speakAnswer": "Read aloud",
     "voiceNotSupported": "Voice input is not supported in this browser.",
-    "introShort": "Answers come only from your saved papers and latest summary.",
+    "introShort": "Answers come from your saved papers. Questions about a medicine use its official label.",
     "privacy": "Your question and those records are sent to Meta's AI (Muse Spark). This is not medical advice.",
     "askAnother": "Ask another…",
     "looking": "Looking in your records…",
     "example1": "Is my hemoglobin normal?",
     "example2": "What medicines are written?",
-    "fromRecords": "From your records"
+    "fromRecords": "From your records",
+    "example3": "What is omeprazole used for?",
+    "officialSource": "Official source",
+    "medicineNote": "General information from a U.S. label, not advice about you. Medicines sold in Bangladesh may differ. Ask your doctor or pharmacist before you start, stop or change a medicine.",
+    "medicineNotFound": "I couldn't find an official label for {{name}}. Local brand names often aren't listed. Your doctor or pharmacist can tell you what it is.",
+    "medicineUnavailable": "I couldn't reach the official medicine source just now. Please try again in a moment.",
+    "fromLabel": "From the official label"
   },
   "recordType": {
     "lab_report": "Lab report",
@@ -471,7 +478,8 @@
     "back": "Back",
     "close": "Close",
     "loadFailed": "This couldn't load. Your records are safe. Check your connection and try again.",
-    "notFound": "This page doesn't exist."
+    "notFound": "This page doesn't exist.",
+    "stillWorking": "Still working. This can take about 30 seconds."
   },
   "footer": {
     "disclaimer": "MediSathi explains your records in simple language. It is not a diagnostic tool and never replaces a doctor."

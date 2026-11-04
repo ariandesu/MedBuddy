@@ -6,8 +6,11 @@ import type {
   AIExplainRecord,
   AIGenerateSummary,
   AIAnswerQuestion,
+  AIIdentifyMedicine,
+  AIMedicineAnswer,
 } from "@/lib/schemas/ai";
 import type { MedicalRecord } from "@/lib/schemas/record";
+import type { MedicineLabel } from "@/server/medicine/lookup";
 
 const FIXTURE_DIR = join(process.cwd(), "fixtures", "ai");
 
@@ -81,5 +84,18 @@ export class FixtureAI implements AIProvider {
       citations: [],
       limitations: ["Fixture output — not a real answer."],
     });
+  }
+
+  async identifyMedicine(_question: string): Promise<AIIdentifyMedicine> {
+    // The sample AI can't read a question, so it never starts a medicine lookup.
+    return { medicine: null };
+  }
+
+  async answerMedicineQuestion(
+    _question: string,
+    label: MedicineLabel,
+    _locale: "bn" | "en"
+  ): Promise<AIMedicineAnswer> {
+    return { answer: `SAMPLE — From the official label: ${label.uses}`, limitations: ["SAMPLE — Muse isn't connected, so this text isn't simplified."] };
   }
 }

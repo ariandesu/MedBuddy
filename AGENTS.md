@@ -208,6 +208,7 @@ Errors return generic messages; never echo document content.
   > Distinguish what the record says from your interpretation. Flag uncertainty and missing information.
   > When something may need attention, suggest discussing it with a doctor. Reply in {{locale}}.
 - Wrap all record/document content in `<document id="...">…</document>` tags.
+- **Medicine questions:** Ask may also use an official label fetched in code (see `docs/DECISIONS.md`). Muse never browses, and never gives a dose.
 - **Grounding check (code):** every `observedChanges[].sourceRecordIds` and every Q&A `citations[]` must reference IDs
   that were actually sent and belong to the user; drop any claim that fails and add a limitation note.
 - **Trends are computed in code** (`server/trends.ts`): weekly averages, deltas, missing days (never treat missing as 0).

@@ -17,9 +17,14 @@ import {
   aiGenerateSummarySchema,
   AIAnswerQuestion,
   aiAnswerQuestionSchema,
+  AIIdentifyMedicine,
+  aiIdentifyMedicineSchema,
+  AIMedicineAnswer,
+  aiMedicineAnswerSchema,
 } from "@/lib/schemas/ai";
 import type { MedicalRecord } from "@/lib/schemas/record";
 import type { WellnessDigest } from "@/server/trends";
+import type { MedicineLabel } from "@/server/medicine/lookup";
 
 const REASONING_EFFORT_EXTRACTION = "low";
 const REASONING_EFFORT_SUMMARY = "medium";
@@ -255,6 +260,40 @@ export class MuseAI implements AIProvider {
       ],
       "medium",
       "answer_question"
+    );
+  }
+
+  async identifyMedicine(question: string): Promise<AIIdentifyMedicine> {
+    return this.chat(
+      aiIdentifyMedicineSchema,
+      [
+        { role: "system", content: systemPrompt("en") },
+        {
+          role: "user",
+          content: `If this question asks about one specific medicine by name, return that name in Latin letters in "medicine". Keep the name the person used: if it is written in Bangla, give the standard international spelling of that same name (ওমিপ্রাজল is omeprazole, মেটফরমিন is metformin, নাপা is Napa). Never replace a brand with a generic or any other name. If it names no specific medicine, for example "what is hemoglobin", return null. Return ONLY JSON. Question: ${wrapDocument("question", question)}`,
+        },
+      ],
+      "low",
+      "identify_medicine"
+    );
+  }
+
+  async answerMedicineQuestion(
+    question: string,
+    label: MedicineLabel,
+    locale: "bn" | "en"
+  ): Promise<AIMedicineAnswer> {
+    return this.chat(
+      aiMedicineAnswerSchema,
+      [
+        { role: "system", content: systemPrompt(locale) },
+        {
+          role: "user",
+          content: `Answer this question about a medicine in simple words, using ONLY the official label below. Say what kind of medicine it is and what it is generally used for, and mention an important warning if the label has one. This is general information, not about this person: never say whether they should take it, stop it, or what dose to use, and never give a dose. If they ask why it was prescribed for them, say only their doctor can tell them, then give the label's general uses. Put anything the label doesn't cover in limitations. Return ONLY JSON with keys answer and limitations. Question: ${wrapDocument("question", question)}\n\nLabel: ${wrapDocument("label", JSON.stringify({ name: label.name, medicineClass: label.medicineClass, uses: label.uses, warnings: label.warnings }))}`,
+        },
+      ],
+      "medium",
+      "medicine_answer"
     );
   }
 }
