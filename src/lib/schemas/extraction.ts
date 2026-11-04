@@ -46,6 +46,8 @@ export const extractionSchema = z.object({
   documentType: documentTypeSchema,
   documentDateRaw: z.string().nullable(),
   documentDate: z.string().nullable(),
+  /** The person must check the date before saving. Absent on older extractions. */
+  dateNeedsReview: z.boolean().optional(),
   fields: z.array(extractedFieldSchema),
   ocrText: z.string(),
   createdAt: z.coerce.date(),

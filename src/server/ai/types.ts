@@ -5,6 +5,7 @@ import type {
   AIAnswerQuestion,
 } from "@/lib/schemas/ai";
 import type { MedicalRecord } from "@/lib/schemas/record";
+import type { WellnessDigest } from "@/server/trends";
 
 export interface AIProvider {
   extractDocument(
@@ -22,7 +23,8 @@ export interface AIProvider {
     records: MedicalRecord[],
     coveredFrom: string,
     coveredTo: string,
-    locale: "bn" | "en"
+    locale: "bn" | "en",
+    wellness?: WellnessDigest | null
   ): Promise<AIGenerateSummary>;
   answerQuestion(
     question: string,

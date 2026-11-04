@@ -20,7 +20,7 @@ test.describe("Demo flow: review → confirm → check-in → doctor page", () =
     await expect(save).toBeDisabled();
 
     // Edit one value, then mark every value checked.
-    await page.locator("main input").first().fill("Fexo 120");
+    await page.locator("main li input").first().fill("Fexo 120");
     const ok = page.getByRole("button", { name: "ঠিক আছে" });
     while ((await ok.count()) > 0) await ok.first().click();
     await expect(save).toBeEnabled();
@@ -35,12 +35,24 @@ test.describe("Demo flow: review → confirm → check-in → doctor page", () =
     await page.getByRole("link", { name: "চেক-ইন" }).first().click();
     const chip = page.getByRole("button", { name: "বুকে ব্যথা" });
     await chip.click();
-    await expect(chip).toHaveAttribute("aria-pressed", "true");
-    await page.getByRole("button", { name: "সংরক্ষণ করুন" }).click();
     const dialog = page.getByRole("alertdialog");
     await expect(dialog).toContainText("৯৯৯");
     await expect(dialog).not.toContainText("This may need");
     await expect(page.getByRole("link", { name: /৯৯৯/ })).toHaveAttribute("href", "tel:999");
+    // Before saving, "I understand" stays on the form with the choice kept.
+    await page.getByRole("button", { name: "আমি বুঝছি" }).click();
+    await expect(page).toHaveURL(/\/checkin/);
+    await expect(chip).toHaveAttribute("aria-pressed", "true");
+    // Save warns again, then "I understand" moves on.
+    await page.getByRole("button", { name: "সংরক্ষণ করুন" }).click();
+    await expect(dialog).toContainText("৯৯৯");
+    await page.getByRole("button", { name: "আমি বুঝছি" }).click();
+    await expect(page).toHaveURL(/\/records/);
+
+    // A severe symptom level warns on the tap too.
+    await page.goto("/checkin");
+    await page.getByRole("button", { name: "গুরুতর" }).click();
+    await expect(dialog).toContainText("৯৯৯");
     await page.getByRole("button", { name: "আমি বুঝছি" }).click();
 
     // Doctor page → summary tab → generate.

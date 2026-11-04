@@ -97,7 +97,7 @@ export async function POST(
   const unreviewed = Object.values(fields).filter(
     (f) => f.needsReview === true
   );
-  if (unreviewed.length > 0) {
+  if (unreviewed.length > 0 || extraction.dateNeedsReview === true) {
     return NextResponse.json(
       { error: "review_required", message: "Please check every field before confirming." },
       { status: 409 }

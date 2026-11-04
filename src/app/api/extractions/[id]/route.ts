@@ -3,6 +3,7 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { z } from "zod";
 import { fieldBoxSchema, type ExtractedField } from "@/lib/schemas/extraction";
+import { isValidISODate } from "@/lib/document-date";
 
 const fieldSchema = z.object({
   key: z.string(),
@@ -20,6 +21,11 @@ const fieldSchema = z.object({
   box: fieldBoxSchema.nullable().optional(),
 });
 
+const dateSchema = z.object({
+  documentDate: z.string().refine(isValidISODate).nullable().optional(),
+  dateChecked: z.boolean().optional(),
+});
+
 export const dynamic = "force-dynamic";
 
 export async function PATCH(
@@ -30,7 +36,7 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
-  let body: { fields: unknown[] };
+  let body: { fields: unknown[]; documentDate?: unknown; dateChecked?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -40,6 +46,13 @@ export async function PATCH(
   if (!fields.success) {
     return NextResponse.json({ error: "Invalid fields" }, { status: 400 });
   }
+  const date = dateSchema.safeParse({
+    documentDate: body.documentDate,
+    dateChecked: body.dateChecked,
+  });
+  if (!date.success) {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+  }
 
   const repo = getRepo();
   const updated = await repo.updateExtractionFields(
@@ -48,6 +61,16 @@ export async function PATCH(
     fields.data as ExtractedField[]
   );
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  if (date.data.documentDate !== undefined) {
+    const dated = await repo.updateExtractionDate(
+      user.id,
+      id,
+      date.data.documentDate,
+      date.data.dateChecked !== true
+    );
+    if (!dated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   return NextResponse.json({ id: updated.id, fields: updated.fields });
 }
 

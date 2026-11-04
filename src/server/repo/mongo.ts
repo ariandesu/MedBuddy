@@ -274,6 +274,7 @@ export class MongoRepository implements Repository {
       documentType: input.documentType,
       documentDateRaw: input.documentDateRaw,
       documentDate: input.documentDate,
+      dateNeedsReview: input.dateNeedsReview ?? false,
       fields: input.fields,
       ocrText: input.ocrText,
       createdAt: new Date(),
@@ -310,6 +311,20 @@ export class MongoRepository implements Repository {
     const res = await db
       .collection<FlexDoc>(COLLECTIONS.extractions)
       .updateOne({ _id: id, userId }, { $set: { fields } });
+    if (res.matchedCount === 0) return null;
+    return this.getExtraction(userId, id);
+  }
+
+  async updateExtractionDate(
+    userId: string,
+    id: string,
+    documentDate: string | null,
+    dateNeedsReview: boolean
+  ): Promise<Extraction | null> {
+    const db = await this.db();
+    const res = await db
+      .collection<FlexDoc>(COLLECTIONS.extractions)
+      .updateOne({ _id: id, userId }, { $set: { documentDate, dateNeedsReview } });
     if (res.matchedCount === 0) return null;
     return this.getExtraction(userId, id);
   }

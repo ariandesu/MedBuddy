@@ -161,6 +161,13 @@ function runContractSuite(
       expect(
         await repo.updateExtractionFields(userB, ext.id, [field()])
       ).toBeNull();
+
+      expect(ext.dateNeedsReview).toBe(false);
+      const dated = await repo.updateExtractionDate(userA, ext.id, "2026-03-11", true);
+      expect(dated).toMatchObject({ documentDate: "2026-03-11", dateNeedsReview: true });
+      expect(await repo.getExtraction(userA, ext.id)).toMatchObject({ documentDate: "2026-03-11" });
+      expect(await repo.updateExtractionDate(userB, ext.id, null, false)).toBeNull();
+      expect(await repo.getExtraction(userA, ext.id)).toMatchObject({ documentDate: "2026-03-11" });
     });
 
     it("records: CRUD + date filter + ownership", async () => {

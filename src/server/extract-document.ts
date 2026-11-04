@@ -3,6 +3,8 @@ import { getAI } from "@/server/ai/index";
 import { crossCheckField } from "@/server/ai/crosscheck";
 import { locateField, type OcrWord } from "@/server/ai/locate";
 import { toExtractedField } from "@/lib/schemas/ai";
+import { resolveDocumentDate } from "@/lib/document-date";
+import { todayISODate } from "@/server/dates";
 import type { Document } from "@/lib/schemas";
 
 export async function processDocumentExtraction({
@@ -40,12 +42,15 @@ export async function processDocumentExtraction({
     return toExtractedField(f, agreement, needsReview, ocrValue, locateField(f, ocrWords));
   });
 
+  const date = resolveDocumentDate(aiResult.documentDateRaw, aiResult.documentDate, todayISODate());
+
   await repo.createExtraction({
     userId,
     documentId: doc.id,
     documentType: aiResult.documentType,
     documentDateRaw: aiResult.documentDateRaw,
-    documentDate: aiResult.documentDate,
+    documentDate: date.date,
+    dateNeedsReview: date.needsReview,
     fields,
     ocrText,
   });

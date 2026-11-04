@@ -24,21 +24,11 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { useLocale } from "@/components/locale-provider";
-import { isRedFlag, urgentMessage } from "@/lib/safety/redflags";
+import { isRedFlag, URGENT_SYMPTOMS, urgentMessage } from "@/lib/safety/redflags";
 import { toLocaleDigits } from "@/lib/digits";
 import { cn } from "@/lib/utils";
 
 type SymptomLevel = "none" | "mild" | "moderate" | "severe";
-
-/** Values are the canonical English keys stored in the DB and used by redflags.ts. */
-const URGENT_SYMPTOMS = [
-  { value: "chest pain", key: "symptomChestPain" },
-  { value: "difficulty breathing", key: "symptomDifficultyBreathing" },
-  { value: "fainting", key: "symptomFainting" },
-  { value: "severe bleeding", key: "symptomSevereBleeding" },
-  { value: "confusion", key: "symptomConfusion" },
-  { value: "stroke signs", key: "symptomStrokeSigns" },
-] as const;
 
 const OTHER_SYMPTOMS = [
   { value: "headache", key: "symptomHeadache" },
@@ -223,6 +213,7 @@ export default function CheckinPage() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [sleepHours, setSleepHours] = useState<number | null>(null);
@@ -243,10 +234,19 @@ export default function CheckinPage() {
     symptoms.length === 0 &&
     !note.trim();
 
+  // Safety first: warn the moment an urgent sign is picked, not only on Save,
+  // so nobody can leave with Skip without seeing it.
   function toggleSymptom(value: string) {
+    const adding = !symptoms.includes(value);
+    if (adding && isRedFlag({ symptoms: [value] })) setOpen(true);
     setSymptoms((prev) =>
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
     );
+  }
+
+  function chooseSymptomLevel(level: SymptomLevel | null) {
+    if (isRedFlag({ symptomLevel: level })) setOpen(true);
+    setSymptomLevel(level);
   }
 
   async function handleSave() {
@@ -275,7 +275,8 @@ export default function CheckinPage() {
       });
       if (!res.ok) throw new Error(t.saveFailed);
       await res.json();
-      if (!redFlag) router.push("/records?tab=timeline");
+      if (redFlag) setSaved(true);
+      else router.push("/records?tab=timeline");
     } catch (err) {
       setError(err instanceof Error ? err.message : dict.common.error);
     } finally {
@@ -360,7 +361,7 @@ export default function CheckinPage() {
         <ChoiceRow
           legend={t.symptomLevel}
           value={symptomLevel}
-          onChange={setSymptomLevel}
+          onChange={chooseSymptomLevel}
           options={[
             { value: "none", label: t.symptomNone },
             { value: "mild", label: t.symptomMild },
@@ -457,7 +458,8 @@ export default function CheckinPage() {
               className="h-12"
               onClick={() => {
                 setOpen(false);
-                router.push("/records?tab=timeline");
+                // Before saving, stay on the form so the check-in can still be saved.
+                if (saved) router.push("/records?tab=timeline");
               }}
             >
               {t.iUnderstand}

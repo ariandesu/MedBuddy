@@ -19,6 +19,7 @@ import {
   aiAnswerQuestionSchema,
 } from "@/lib/schemas/ai";
 import type { MedicalRecord } from "@/lib/schemas/record";
+import type { WellnessDigest } from "@/server/trends";
 
 const REASONING_EFFORT_EXTRACTION = "low";
 const REASONING_EFFORT_SUMMARY = "medium";
@@ -218,15 +219,19 @@ export class MuseAI implements AIProvider {
     records: MedicalRecord[],
     coveredFrom: string,
     coveredTo: string,
-    locale: "bn" | "en"
+    locale: "bn" | "en",
+    wellness?: WellnessDigest | null
   ): Promise<AIGenerateSummary> {
+    const checkins = wellness
+      ? ` Also use these daily check-ins, which the person logged themselves. Code already calculated every number: repeat them, never recalculate them, and treat days without a check-in as unknown, never as zero. Describe them briefly in the summary text as self-reported, in plain words (hours of sleep, glasses of water, minutes of activity), including how many days are missing. Do not add them to observedChanges, which only cites records. Mention every symptomDays entry by date. Where urgent is true, say the person logged it and suggest talking to a doctor promptly. Do not write questionsForDoctor about urgent entries: those are added separately. ${wrapDocument("checkins", JSON.stringify(wellness))}`
+      : "";
     return this.chat(
       aiGenerateSummarySchema,
       [
         { role: "system", content: systemPrompt(locale) },
         {
           role: "user",
-          content: `Generate a source-linked health summary covering ${coveredFrom} to ${coveredTo} from these confirmed records. For every test that appears on more than one date, add an observedChanges entry stating the values and dates, with sourceRecordIds set to the id of each record it came from. Never write record ids inside summary or description text: refer to records by date and type. ${wrapDocument("summary", JSON.stringify({ records: records.map(({ userId: _userId, ...r }) => r), coveredFrom, coveredTo }))}`,
+          content: `Generate a source-linked health summary covering ${coveredFrom} to ${coveredTo} from these confirmed records. For every test that appears on more than one date, add an observedChanges entry stating the values and dates, with sourceRecordIds set to the id of each record it came from. Never write record ids inside summary or description text: refer to records by date and type. ${wrapDocument("summary", JSON.stringify({ records: records.map(({ userId: _userId, ...r }) => r), coveredFrom, coveredTo }))}${checkins}`,
         },
       ],
       REASONING_EFFORT_SUMMARY,

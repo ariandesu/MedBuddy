@@ -83,6 +83,7 @@ export async function seedDemoData(
           e.documentDateDaysAgo === null
             ? null
             : daysAgoISODate(e.documentDateDaysAgo),
+        dateNeedsReview: e.documentDateDaysAgo === null,
         fields: withSampleBoxes(fileRefs.get(e.documentId) ?? "", e.fields as ExtractedField[]),
         ocrText: e.ocrText,
       });

@@ -198,7 +198,13 @@
     },
     "tapHint": "Tap any value to see it on the paper.",
     "onPaper": "highlighted on the paper",
-    "notOnPaper": "couldn't find this on the paper. Please look for it yourself."
+    "notOnPaper": "couldn't find this on the paper. Please look for it yourself.",
+    "dateLabel": "Date of this paper",
+    "dateWritten": "Written on the paper as: {{raw}}",
+    "dateAmbiguous": "This could mean {{date}} or {{other}}. Please check which is right.",
+    "dateUnclear": "Please check this date against the paper.",
+    "dateMissing": "No date was found. Add it if the paper has one, or mark it checked to save it undated.",
+    "dateUseOther": "Use {{date}}"
   },
   "checkin": {
     "title": "Daily check-in",
@@ -284,7 +290,8 @@
     "sourceRecords": "source record(s)",
     "noRecords": "There are no confirmed records to summarize yet. Add a document first.",
     "toastGenerated": "Summary generated",
-    "uploadDocument": "Upload document"
+    "uploadDocument": "Upload document",
+    "urgentQuestion": "On {{dates}} I noted: {{symptoms}}. What should I do about this?"
   },
   "ask": {
     "title": "Ask about your records",

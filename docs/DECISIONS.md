@@ -108,3 +108,14 @@ Log when spec conflicts with current library docs, or when a choice needs justif
 - Value highlights on uploads come from Tesseract word boxes matched in `server/ai/locate.ts`; unclear spots return null.
 - Q&A citations: model-supplied ids are grounded first; if none, `inferCitations` cites records the answer visibly quotes.
 - Removed `POST /api/documents/sample`: its values were hardcoded yet labelled as Muse's. Sample buttons use the real pipeline.
+
+## Audit fixes (2026-11-04)
+
+- Document dates: `lib/document-date.ts` decides the stored date from the written one (dd/mm default), not from the model.
+  Swappable, future, non-numeric or missing dates set `dateNeedsReview`, and confirm returns 409 until the person checks them.
+  Extractions saved before this have no flag and aren't blocked, but the review page still shows their date and lets it be edited.
+- Red-flag dialog: FIX_PLAN's check-in section asks for it on Save; AGENTS.md §10 says immediately. It now fires on both,
+  so Skip can't bypass it. "I understand" stays on the form until the check-in is saved.
+- Summaries get a computed `WellnessDigest` (`server/trends.ts`) for the last 30 days, without free-text notes. Check-ins go in
+  the summary text, not `observedChanges`, because they have no record id to ground. Urgent check-ins also add a
+  doctor question in code, so they reach the report whatever the model writes.

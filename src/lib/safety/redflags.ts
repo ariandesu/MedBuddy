@@ -1,6 +1,17 @@
 /**
  * Red-flag rules (deterministic, not model-dependent). AGENTS.md §10.
  */
+
+/** Values are the canonical English keys stored in the DB; keys are dict.checkin labels. */
+export const URGENT_SYMPTOMS = [
+  { value: "chest pain", key: "symptomChestPain" },
+  { value: "difficulty breathing", key: "symptomDifficultyBreathing" },
+  { value: "fainting", key: "symptomFainting" },
+  { value: "severe bleeding", key: "symptomSevereBleeding" },
+  { value: "confusion", key: "symptomConfusion" },
+  { value: "stroke signs", key: "symptomStrokeSigns" },
+] as const;
+
 export const RED_FLAG_SYMPTOMS = new Set([
   "chest pain",
   "chest_pain",

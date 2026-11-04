@@ -39,6 +39,7 @@ export interface CreateExtractionInput {
   documentType: "lab_report" | "prescription" | "other";
   documentDateRaw: string | null;
   documentDate: string | null;
+  dateNeedsReview?: boolean;
   fields: ExtractedField[];
   ocrText: string;
 }
@@ -113,6 +114,12 @@ export interface Repository {
     userId: string,
     id: string,
     fields: ExtractedField[]
+  ): Promise<Extraction | null>;
+  updateExtractionDate(
+    userId: string,
+    id: string,
+    documentDate: string | null,
+    dateNeedsReview: boolean
   ): Promise<Extraction | null>;
 
   createMedicalRecord(input: CreateMedicalRecordInput): Promise<MedicalRecord>;

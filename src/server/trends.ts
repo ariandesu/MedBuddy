@@ -1,6 +1,8 @@
 /**
  * Deterministic trend calculations (AGENTS.md §9). Never treat missing days as 0.
  */
+import { isRedFlag } from "@/lib/safety/redflags";
+
 export type WellnessPoint = {
   date: string;
   sleepHours?: number;
@@ -56,6 +58,68 @@ export function deltas(entries: WellnessPoint[]): {
     sleepHours: delta(first?.sleepHours, last?.sleepHours),
     waterGlasses: delta(first?.waterGlasses, last?.waterGlasses),
     activityMinutes: delta(first?.activityMinutes, last?.activityMinutes),
+  };
+}
+
+/** Computed check-in facts for the summary. Muse describes these, it never recalculates them. */
+export type WellnessDigest = {
+  from: string;
+  to: string;
+  daysInPeriod: number;
+  daysWithCheckin: number;
+  daysMissing: number;
+  averages: { sleepHours?: number; waterGlasses?: number; activityMinutes?: number };
+  changeFirstToLast: { sleepHours?: number; waterGlasses?: number; activityMinutes?: number };
+  symptomDays: {
+    date: string;
+    symptomLevel?: string;
+    symptoms: string[];
+    urgent: boolean;
+  }[];
+};
+
+type DigestEntry = WellnessPoint & {
+  symptomLevel?: "none" | "mild" | "moderate" | "severe";
+  symptoms?: string[];
+};
+
+const oneDecimal = (n?: number) => (n == null ? undefined : Math.round(n * 10) / 10);
+
+/** Null when there are no check-ins in the period. Notes are left out: they stay in the report. */
+export function buildWellnessDigest(
+  entries: DigestEntry[],
+  from: string,
+  to: string
+): WellnessDigest | null {
+  if (entries.length === 0) return null;
+  const sorted = [...entries].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const avg = weeklyAverages(sorted);
+  const change = deltas(sorted);
+  const missing = missingDays(sorted, from, to).length;
+  return {
+    from,
+    to,
+    daysInPeriod: missing + new Set(sorted.map((e) => e.date)).size,
+    daysWithCheckin: sorted.length,
+    daysMissing: missing,
+    averages: {
+      sleepHours: oneDecimal(avg.sleepHours),
+      waterGlasses: oneDecimal(avg.waterGlasses),
+      activityMinutes: oneDecimal(avg.activityMinutes),
+    },
+    changeFirstToLast: {
+      sleepHours: oneDecimal(change.sleepHours),
+      waterGlasses: oneDecimal(change.waterGlasses),
+      activityMinutes: oneDecimal(change.activityMinutes),
+    },
+    symptomDays: sorted
+      .filter((e) => (e.symptoms?.length ?? 0) > 0 || (e.symptomLevel && e.symptomLevel !== "none"))
+      .map((e) => ({
+        date: e.date,
+        symptomLevel: e.symptomLevel === "none" ? undefined : e.symptomLevel,
+        symptoms: e.symptoms ?? [],
+        urgent: isRedFlag(e),
+      })),
   };
 }
 

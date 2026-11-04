@@ -7,7 +7,8 @@ import { Check, ChevronLeft, FileText, ImageOff, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useLocale } from "@/components/locale-provider";
-import { normalizeDigits, toLocaleDigits } from "@/lib/digits";
+import { formatDate, normalizeDigits, toLocaleDigits } from "@/lib/digits";
+import { parseNumericDate } from "@/lib/document-date";
 import { cn } from "@/lib/utils";
 import type { Dictionary, Locale } from "@/lib/i18n";
 
@@ -33,6 +34,7 @@ type Extraction = {
   documentType: string;
   documentDateRaw: string | null;
   documentDate: string | null;
+  dateNeedsReview?: boolean;
   fields: Field[];
   ocrText: string;
 };
@@ -120,6 +122,8 @@ export default function DocumentReviewPage() {
   } | null>(null);
   const [extraction, setExtraction] = useState<Extraction | null>(null);
   const [fields, setFields] = useState<Field[]>([]);
+  const [documentDate, setDocumentDate] = useState("");
+  const [dateNeedsReview, setDateNeedsReview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -153,6 +157,8 @@ export default function DocumentReviewPage() {
         setDoc(docData);
         setExtraction(extData);
         setFields(extData?.fields ?? []);
+        setDocumentDate(extData?.documentDate ?? "");
+        setDateNeedsReview(extData?.dateNeedsReview === true);
         // Start on the first value that needs checking, so the paper lights up at once.
         const first = extData?.fields.find((f) => f.needsReview) ?? extData?.fields[0];
         setActiveKey(first?.key ?? null);
@@ -198,7 +204,8 @@ export default function DocumentReviewPage() {
       setError(dict.review.noExtraction);
       return;
     }
-    const needsReviewCount = fields.filter((f) => f.needsReview).length;
+    const needsReviewCount =
+      fields.filter((f) => f.needsReview).length + (dateNeedsReview ? 1 : 0);
     if (needsReviewCount > 0) {
       setError(
         dict.review.checkAllFirst.replace("{{count}}", String(needsReviewCount))
@@ -211,7 +218,11 @@ export default function DocumentReviewPage() {
       const patchRes = await fetch(`/api/extractions/${extId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fields }),
+        body: JSON.stringify({
+          fields,
+          documentDate: documentDate || null,
+          dateChecked: !dateNeedsReview,
+        }),
       });
       if (!patchRes.ok) throw new Error(dict.review.saveFailed);
 
@@ -252,10 +263,18 @@ export default function DocumentReviewPage() {
     );
   }
 
-  const total = fields.length;
-  const needsReviewCount = fields.filter((f) => f.needsReview).length;
+  const total = fields.length + 1;
+  const needsReviewCount =
+    fields.filter((f) => f.needsReview).length + (dateNeedsReview ? 1 : 0);
   const done = total - needsReviewCount;
   const n = (v: number) => toLocaleDigits(String(v), locale);
+  const writtenDate = parseNumericDate(extraction.documentDateRaw);
+  // Either reading of a date like 03/11/2026, whichever isn't selected right now.
+  const otherDate = !writtenDate?.alternate
+    ? null
+    : documentDate === writtenDate.alternate
+      ? writtenDate.date
+      : writtenDate.alternate;
   const activeField = fields.find((f) => f.key === activeKey) ?? null;
   const canHighlight = doc.mimeType !== "application/pdf" && !imgFailed;
 
@@ -310,6 +329,74 @@ export default function DocumentReviewPage() {
           {canHighlight && (
             <p className="text-sm font-medium text-warning-foreground">{dict.review.tapHint}</p>
           )}
+
+          <div
+            className={cn(
+              "rounded-2xl border bg-card p-4",
+              dateNeedsReview && !isConfirmed && "border-warning"
+            )}
+          >
+            <label htmlFor="document-date" className="font-medium">{dict.review.dateLabel}</label>
+            <input
+              id="document-date"
+              type="date"
+              value={documentDate}
+              max={new Date().toLocaleDateString("en-CA")}
+              onChange={(e) => {
+                setDocumentDate(e.target.value);
+                setDateNeedsReview(false);
+              }}
+              disabled={isConfirmed}
+              className="mt-2 h-12 w-full rounded-xl border bg-background px-3 text-lg focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring disabled:opacity-70"
+            />
+            {documentDate && (
+              <p className="mt-1 font-medium">{formatDate(documentDate, locale)}</p>
+            )}
+            {extraction.documentDateRaw && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dict.review.dateWritten.replace("{{raw}}", toLocaleDigits(extraction.documentDateRaw, locale))}
+              </p>
+            )}
+            {!isConfirmed && dateNeedsReview && (
+              <p className="mt-2 text-sm font-medium text-warning-foreground">
+                {!documentDate
+                  ? dict.review.dateMissing
+                  : otherDate
+                    ? dict.review.dateAmbiguous
+                        .replace("{{date}}", formatDate(documentDate, locale))
+                        .replace("{{other}}", formatDate(otherDate, locale))
+                    : dict.review.dateUnclear}
+              </p>
+            )}
+            {!isConfirmed && otherDate && (
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-2 h-11 w-full"
+                onClick={() => {
+                  setDocumentDate(otherDate);
+                  setDateNeedsReview(false);
+                }}
+              >
+                {dict.review.dateUseOther.replace("{{date}}", formatDate(otherDate, locale))}
+              </Button>
+            )}
+            {!isConfirmed && (
+              <div className="mt-3">
+                {dateNeedsReview ? (
+                  <Button type="button" variant="outline" className="h-11 w-full" onClick={() => setDateNeedsReview(false)}>
+                    <Check aria-hidden />
+                    {dict.review.markChecked}
+                  </Button>
+                ) : (
+                  <p className="flex h-11 items-center justify-center gap-1.5 font-medium text-primary">
+                    <Check className="size-5" aria-hidden />
+                    {dict.review.checked}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           <ul className="flex flex-col gap-3">
             {fields.map((f) => {

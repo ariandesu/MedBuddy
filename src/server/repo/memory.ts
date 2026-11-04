@@ -99,6 +99,7 @@ export class MemoryRepository implements Repository {
           e.documentDateDaysAgo === null
             ? null
             : daysAgoISODate(e.documentDateDaysAgo),
+        dateNeedsReview: e.documentDateDaysAgo === null,
         fields: withSampleBoxes(
           documentsFixture.find((d) => d.id === e.documentId)?.fileRef ?? "",
           e.fields as ExtractedField[]
@@ -278,6 +279,7 @@ export class MemoryRepository implements Repository {
       documentType: input.documentType,
       documentDateRaw: input.documentDateRaw,
       documentDate: input.documentDate,
+      dateNeedsReview: input.dateNeedsReview ?? false,
       fields: clone(input.fields),
       ocrText: input.ocrText,
       createdAt: new Date(),
@@ -310,6 +312,19 @@ export class MemoryRepository implements Repository {
     const ext = this.extractions.get(id);
     if (!ext || ext.userId !== userId) return null;
     ext.fields = clone(fields);
+    return clone(ext);
+  }
+
+  async updateExtractionDate(
+    userId: string,
+    id: string,
+    documentDate: string | null,
+    dateNeedsReview: boolean
+  ): Promise<Extraction | null> {
+    const ext = this.extractions.get(id);
+    if (!ext || ext.userId !== userId) return null;
+    ext.documentDate = documentDate;
+    ext.dateNeedsReview = dateNeedsReview;
     return clone(ext);
   }
 
