@@ -162,6 +162,35 @@ test.describe("Demo flow: review → confirm → check-in → doctor page", () =
     await expect(page.getByRole("heading", { name: "What the paper says" })).toBeVisible();
   });
 
+  test("a medicine answer shows its official source, with the general-information note", async ({ page, context }) => {
+    await context.addCookies([{ name: "medisathi-locale", value: "en", domain: "localhost", path: "/" }]);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await demoLogin(page, /demo/i);
+    // Hold the answer back, to see the loader first.
+    await page.route("**/api/ask", async (route) => {
+      await new Promise((done) => setTimeout(done, 700));
+      await route.fulfill({
+        json: {
+          answer: "It treats frequent heartburn.",
+          citations: [],
+          limitations: [],
+          medicineSource: { title: "U.S. FDA label: Omeprazole", url: "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=abc" },
+        },
+      });
+    });
+
+    await page.goto("/ask");
+    await page.getByRole("button", { name: "What is omeprazole used for?" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Looking in your records" })).toBeVisible();
+    await expect(page.locator(".orb[data-working] .orb-scan")).toBeVisible();
+
+    const source = page.getByRole("link", { name: "U.S. FDA label: Omeprazole" });
+    await expect(source).toHaveAttribute("href", /^https:\/\/dailymed\.nlm\.nih\.gov\//);
+    await expect(page.getByRole("heading", { name: "From the official label" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "From your records" })).toHaveCount(0);
+    await expect(page.getByText("not advice about you")).toBeVisible();
+  });
+
   test("the printed report lists values as written, with sources and no email", async ({ page, context }) => {
     await context.addCookies([{ name: "medisathi-locale", value: "en", domain: "localhost", path: "/" }]);
     await page.setViewportSize({ width: 390, height: 844 });

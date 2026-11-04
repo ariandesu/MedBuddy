@@ -46,6 +46,8 @@ function stubAI(generateSummary = vi.fn(async () => summaryResult)): AIProvider 
       throw new Error("unused");
     },
     generateSummary,
+    identifyMedicine: async () => ({ medicine: null }),
+    answerMedicineQuestion: async () => ({ answer: "", limitations: [] }),
     answerQuestion: async () => {
       throw new Error("unused");
     },

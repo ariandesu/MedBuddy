@@ -11,6 +11,7 @@ import { PaperView } from "@/components/paper-view";
 import { RangeBar } from "@/components/range-bar";
 import { MedicationList } from "@/components/medication-list";
 import { ReadAloud } from "@/components/read-aloud";
+import { AiLoader } from "@/components/ai-loader";
 import { DeletePaperDialog } from "@/components/delete-paper-dialog";
 import { useLocale } from "@/components/locale-provider";
 import { previousObservation } from "@/lib/range";
@@ -137,15 +138,14 @@ export function RecordDetail({ doc }: { doc: { id: string; fileName: string; mim
             </>
           ) : (
             <>
-              <Button
-                variant="outline"
-                className="h-14 w-full text-lg font-semibold"
-                disabled={explanation.status === "loading"}
-                onClick={() => explain(record.id)}
-              >
-                <Sparkles className="size-5!" aria-hidden />
-                {explanation.status === "loading" ? t.explaining : explanation.status === "error" ? dict.common.retry : t.explain}
-              </Button>
+              {explanation.status === "loading" ? (
+                <AiLoader label={t.explaining} />
+              ) : (
+                <Button variant="outline" className="h-14 w-full text-lg font-semibold" onClick={() => explain(record.id)}>
+                  <Sparkles className="size-5!" aria-hidden />
+                  {explanation.status === "error" ? dict.common.retry : t.explain}
+                </Button>
+              )}
               {explanation.status === "error" && (
                 <p role="alert" className="text-sm font-medium text-destructive">{t.explainFailed}</p>
               )}

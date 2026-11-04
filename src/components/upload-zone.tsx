@@ -240,7 +240,7 @@ export function UploadZone({ dict, onBusyChange }: { dict: Dictionary; onBusyCha
           <p className="mt-1">{dict.documents.readingNote}</p>
         </div>
         <div className="orb-halo flex justify-center py-8">
-          <Orb className="size-36" />
+          <Orb working className="size-36" />
         </div>
         <ul role="status" className="flex flex-col divide-y rounded-2xl border bg-card px-4">
           <li className="flex min-h-[4.25rem] items-center gap-3 py-2">

@@ -192,3 +192,15 @@ Other choices:
 - Added `error.tsx` and `not-found.tsx`, so these show in the user's language and not Next's English defaults.
 - Reduced motion: the global rule shortened infinite animations to 0.01ms, which flickers. It now also stops them after one run.
 - The recovering badge on sample neighbors is neutral now. Red is only for urgent signs and delete.
+
+## Medicine questions on Ask (2026-11-04)
+
+The user asked for Ask to explain what a medicine is and why it is used, from official online documentation. This extends
+"use ONLY the supplied records" (`AGENTS.md` section 9) with one more supplied source, and keeps the other rules:
+
+- Server code fetches the label from openFDA and links to it on DailyMed. Muse only explains that text. It has no web access.
+- Only the medicine's name leaves the server. Dosing sections are never read, so a dose can't be repeated.
+- Filters: real medicines only (`openfda.rxcui`, which drops homeopathic labels), one ingredient, an exact name match, and real usage text.
+- A brand is never mapped to a generic. "Napa" gets "no official label found". The only aliases are one ingredient's two official
+  names, such as paracetamol and acetaminophen.
+- The labels are American, so the answer says it is general information and that medicines in Bangladesh may differ.

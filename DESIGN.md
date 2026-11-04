@@ -130,6 +130,7 @@ Fonts come from `next/font/google`.
 - **The orb** (`orb.tsx`). A glass sphere holding a paper with one lit line, built in CSS with no image. It appears only
   while AI is reading, or on Ask while waiting for a question. It is the only glow and the only
   decorative gradient besides the ground. Reduced motion stops any animation and keeps the orb.
+  `ai-loader.tsx` is the shared waiting state for AI: a line sweeps down the paper, and after 8 seconds it says it is still working.
 
 ### Shared parts
 
