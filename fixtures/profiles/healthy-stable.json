@@ -1,0 +1,73 @@
+{
+  "documents": [
+    { "id": "doc_healthy_cbc", "fileName": "CBC-normal.jpg", "mimeType": "image/jpeg", "sizeBytes": 184320, "checksum": "fixture-healthy-cbc", "fileRef": "file_healthy_cbc", "status": "confirmed", "daysAgo": 20 },
+    { "id": "doc_healthy_lipid", "fileName": "Lipid-normal.jpg", "mimeType": "image/jpeg", "sizeBytes": 186100, "checksum": "fixture-healthy-lipid", "fileRef": "file_healthy_lipid", "status": "confirmed", "daysAgo": 5 },
+    { "id": "doc_healthy_rx", "fileName": "Prescription-vitamins.jpg", "mimeType": "image/jpeg", "sizeBytes": 175120, "checksum": "fixture-healthy-rx", "fileRef": "file_healthy_rx", "status": "needs_review", "daysAgo": 1 }
+  ],
+  "extractions": [
+    {
+      "id": "ext_healthy_cbc", "documentId": "doc_healthy_cbc", "documentType": "lab_report",
+      "documentDateRaw": "15/10/2026", "documentDateDaysAgo": 20, "createdDaysAgo": 20,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. CBC. Hemoglobin 14.2 g/dL (13.0-17.0). WBC 6.8.",
+      "fields": [
+        { "key": "hemoglobin", "label": "Hemoglobin", "rawValue": "14.2", "numericValue": 14.2, "unit": "g/dL", "referenceRangeRaw": "13.0-17.0", "page": 1, "sources": { "muse": "14.2", "ocr": "14.2" }, "agreement": "match", "confidence": 0.97, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_healthy_lipid", "documentId": "doc_healthy_lipid", "documentType": "lab_report",
+      "documentDateRaw": "30/10/2026", "documentDateDaysAgo": 5, "createdDaysAgo": 5,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Cholesterol 178 mg/dL (<200).",
+      "fields": [
+        { "key": "total_cholesterol", "label": "Total Cholesterol", "rawValue": "178", "numericValue": 178, "unit": "mg/dL", "referenceRangeRaw": "<200", "page": 1, "sources": { "muse": "178", "ocr": "178" }, "agreement": "match", "confidence": 0.96, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_healthy_rx", "documentId": "doc_healthy_rx", "documentType": "prescription",
+      "documentDateRaw": null, "documentDateDaysAgo": null, "createdDaysAgo": 1,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Note partly unclear.",
+      "fields": [
+        { "key": "med_1_name", "label": "Medicine 1 — name", "rawValue": "Vitamin (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "Vitamin (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.5, "needsReview": true, "userEdited": false },
+        { "key": "med_1_dose", "label": "Medicine 1 — dose", "rawValue": "1 tablet", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "1 tablet", "ocr": null }, "agreement": "single_source", "confidence": 0.55, "needsReview": true, "userEdited": false },
+        { "key": "med_1_frequency", "label": "Medicine 1 — frequency", "rawValue": "once daily (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "once daily (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.45, "needsReview": true, "userEdited": false },
+        { "key": "med_1_duration", "label": "Medicine 1 — duration", "rawValue": "", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": null, "ocr": null }, "agreement": "single_source", "confidence": null, "needsReview": true, "userEdited": false }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "id": "rec_healthy_cbc", "documentId": "doc_healthy_cbc", "recordType": "lab_report", "recordDateDaysAgo": 20, "confirmedDaysAgo": 19,
+      "observations": [{ "name": "Hemoglobin", "rawValue": "14.2", "numericValue": 14.2, "unit": "g/dL", "referenceRangeRaw": "13.0-17.0", "sourceDocumentId": "doc_healthy_cbc", "page": 1 }],
+      "medications": []
+    },
+    {
+      "id": "rec_healthy_lipid", "documentId": "doc_healthy_lipid", "recordType": "lab_report", "recordDateDaysAgo": 5, "confirmedDaysAgo": 4,
+      "observations": [{ "name": "Total Cholesterol", "rawValue": "178", "numericValue": 178, "unit": "mg/dL", "referenceRangeRaw": "<200", "sourceDocumentId": "doc_healthy_lipid", "page": 1 }],
+      "medications": []
+    }
+  ],
+  "wellness": [
+    { "daysAgo": 13, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 12, "sleepHours": 8, "waterGlasses": 8, "activityMinutes": 40, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 11, "sleepHours": 7.5, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 10, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 35, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 8, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 7, "sleepHours": 8, "waterGlasses": 9, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 6, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 4, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 35, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 3, "sleepHours": 8, "waterGlasses": 9, "activityMinutes": 40, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 2, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 1, "sleepHours": 8, "waterGlasses": 9, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 0, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "Steady week" }
+  ],
+  "summary": {
+    "coveredFromDaysAgo": 30, "coveredToDaysAgo": 0, "model": "fixture", "isSample": true,
+    "sourceRecordIds": ["rec_healthy_cbc", "rec_healthy_lipid"],
+    "payload": {
+      "summary": "SAMPLE — Hemoglobin 14.2 and cholesterol 178 are within the printed ranges. Check-ins show steady sleep, water and activity.",
+      "observedChanges": [{ "description": "SAMPLE — Both lab values are within the printed ranges. No change to compare yet.", "sourceRecordIds": ["rec_healthy_cbc", "rec_healthy_lipid"], "uncertainty": "Only one measurement per test." }],
+      "missingInformation": ["No blood pressure readings in your records.", "Note is uploaded but not yet confirmed."],
+      "questionsForDoctor": ["How often should routine tests be repeated?", "Anything to keep doing for steady habits?"],
+      "limitations": ["SAMPLE summary from synthetic data.", "Only confirmed records are included."]
+    }
+  }
+}

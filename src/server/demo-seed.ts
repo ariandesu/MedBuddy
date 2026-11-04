@@ -10,6 +10,7 @@ import type {
   MedicationAsWritten,
   HealthSummaryPayload,
 } from "@/lib/schemas";
+import { isDemoProfileId, loadProfileBundle, type DemoProfileId } from "@/server/demo-profiles";
 import documentsFixture from "../../fixtures/documents.json";
 import extractionsFixture from "../../fixtures/extractions.json";
 import recordsFixture from "../../fixtures/records.json";
@@ -25,20 +26,39 @@ const PLACEHOLDER_BYTES = Buffer.from(
 /**
  * Seed demo data for a given userId through repository methods only.
  * Works for both MemoryRepository and MongoRepository.
+ * When profileId is a judge profile, seeds that story; otherwise seeds the
+ * classic fixture set (keeps existing tests green).
  * Returns a map of fixture docId → new docId and fixture recordId → new recordId.
  */
 export async function seedDemoData(
   repo: Repository,
-  userId: string
+  userId: string,
+  profileId?: string
 ): Promise<{
   docIdMap: Map<string, string>;
   recordIdMap: Map<string, string>;
 }> {
+  const useProfile = isDemoProfileId(profileId);
+  const documents = useProfile
+    ? (await loadProfileBundle(profileId as DemoProfileId)).documents
+    : documentsFixture;
+  const extractions = useProfile
+    ? (await loadProfileBundle(profileId as DemoProfileId)).extractions
+    : extractionsFixture;
+  const records = useProfile
+    ? (await loadProfileBundle(profileId as DemoProfileId)).records
+    : recordsFixture;
+  const wellness = useProfile
+    ? (await loadProfileBundle(profileId as DemoProfileId)).wellness
+    : wellnessFixture;
+  const summary = useProfile
+    ? (await loadProfileBundle(profileId as DemoProfileId)).summary
+    : summaryFixture;
   const docIdMap = new Map<string, string>();
   const recordIdMap = new Map<string, string>();
 
   // 1. Documents: storeFile → createDocument → updateDocumentStatus
-  for (const d of documentsFixture) {
+  for (const d of documents) {
     await repo.storeFile(
       userId,
       d.fileRef,
@@ -63,7 +83,7 @@ export async function seedDemoData(
   }
 
   // 2. Extractions: createExtraction with remapped documentId
-  for (const e of extractionsFixture) {
+  for (const e of extractions) {
     const newDocId = docIdMap.get(e.documentId);
     if (!newDocId) continue;
     const doc = await repo.getDocument(userId, newDocId);
@@ -83,7 +103,7 @@ export async function seedDemoData(
   }
 
   // 3. Medical records: createMedicalRecord with remapped documentId
-  for (const r of recordsFixture) {
+  for (const r of records) {
     const newDocId = docIdMap.get(r.documentId);
     if (!newDocId) continue;
     const observations = (r.observations as Observation[]).map((obs) => ({
@@ -102,7 +122,7 @@ export async function seedDemoData(
   }
 
   // 4. Wellness entries: upsertWellnessEntry
-  for (const w of wellnessFixture) {
+  for (const w of wellness) {
     await repo.upsertWellnessEntry(userId, daysAgoISODate(w.daysAgo), {
       sleepHours: w.sleepHours,
       waterGlasses: w.waterGlasses,
@@ -119,12 +139,12 @@ export async function seedDemoData(
   }
 
   // 5. Health summary: createHealthSummary with remapped sourceRecordIds
-  const remappedSourceRecordIds = summaryFixture.sourceRecordIds.map(
+  const remappedSourceRecordIds = summary.sourceRecordIds.map(
     (id: string) => recordIdMap.get(id)
   ).filter((id): id is string => id !== undefined);
 
   // Deep-clone payload and remap every observedChanges[].sourceRecordIds
-  const payload = structuredClone(summaryFixture.payload) as HealthSummaryPayload;
+  const payload = structuredClone(summary.payload) as HealthSummaryPayload;
   for (const change of payload.observedChanges) {
     change.sourceRecordIds = change.sourceRecordIds
       .map((id: string) => recordIdMap.get(id))
@@ -133,12 +153,12 @@ export async function seedDemoData(
 
   await repo.createHealthSummary({
     userId,
-    coveredFrom: daysAgoISODate(summaryFixture.coveredFromDaysAgo),
-    coveredTo: daysAgoISODate(summaryFixture.coveredToDaysAgo),
+    coveredFrom: daysAgoISODate(summary.coveredFromDaysAgo),
+    coveredTo: daysAgoISODate(summary.coveredToDaysAgo),
     payload,
     sourceRecordIds: remappedSourceRecordIds,
-    model: summaryFixture.model,
-    isSample: summaryFixture.isSample,
+    model: summary.model,
+    isSample: summary.isSample,
   });
 
   return { docIdMap, recordIdMap };

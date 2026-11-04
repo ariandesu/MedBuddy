@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getRepo } from "@/server/repo/index";
 import { seedDemoData } from "@/server/demo-seed";
+import { isDemoProfileId } from "@/server/demo-profiles";
 import { clientIp, rateLimitCheck } from "@/server/rate-limit";
 import { isDemoDataMode } from "@/server/env";
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/server/repo/memory";
@@ -13,6 +15,10 @@ export const maxDuration = 60;
 // share one IP, so keep headroom). Keyed per IP so one
 // visitor (or bot) can never lock the demo out for everyone else.
 const DEMO_LIMIT = 30;
+
+const demoStartSchema = z.object({
+  profile: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   // No database (in-memory mode): on serverless hosts like Vercel each request
@@ -28,6 +34,16 @@ export async function POST(req: Request) {
   }
 
   // With MongoDB: a private, freshly seeded demo account per visitor.
+  let profile: string | undefined;
+  try {
+    const body = await req.json().catch(() => ({}));
+    const parsed = demoStartSchema.safeParse(body);
+    if (parsed.success && parsed.data.profile && isDemoProfileId(parsed.data.profile)) {
+      profile = parsed.data.profile;
+    }
+  } catch {
+    profile = undefined;
+  }
   const repo = getRepo();
   const rateLimit = await rateLimitCheck(`ip:${clientIp(req)}`, "demo-start", DEMO_LIMIT);
   if (!rateLimit.allowed) {
@@ -47,7 +63,7 @@ export async function POST(req: Request) {
     locale: "bn",
   });
 
-  await seedDemoData(repo, user.id);
+  await seedDemoData(repo, user.id, profile);
 
-  return Response.json({ email, password }, { status: 201 });
+  return Response.json({ email, password, profile: profile ?? "classic" }, { status: 201 });
 }

@@ -1,0 +1,73 @@
+{
+  "documents": [
+    { "id": "doc_anemia_old", "fileName": "CBC-low.jpg", "mimeType": "image/jpeg", "sizeBytes": 184320, "checksum": "fixture-anemia-old", "fileRef": "file_anemia_old", "status": "confirmed", "daysAgo": 20 },
+    { "id": "doc_anemia_new", "fileName": "CBC-improved.jpg", "mimeType": "image/jpeg", "sizeBytes": 186100, "checksum": "fixture-anemia-new", "fileRef": "file_anemia_new", "status": "confirmed", "daysAgo": 3 },
+    { "id": "doc_anemia_rx", "fileName": "Prescription-as-written.jpg", "mimeType": "image/jpeg", "sizeBytes": 175120, "checksum": "fixture-anemia-rx", "fileRef": "file_anemia_rx", "status": "needs_review", "daysAgo": 1 }
+  ],
+  "extractions": [
+    {
+      "id": "ext_anemia_old", "documentId": "doc_anemia_old", "documentType": "lab_report",
+      "documentDateRaw": "15/10/2026", "documentDateDaysAgo": 20, "createdDaysAgo": 20,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. CBC. Hemoglobin 9.1 g/dL (12.0-15.5).",
+      "fields": [
+        { "key": "hemoglobin", "label": "Hemoglobin", "rawValue": "9.1", "numericValue": 9.1, "unit": "g/dL", "referenceRangeRaw": "12.0-15.5", "page": 1, "sources": { "muse": "9.1", "ocr": "9.1" }, "agreement": "match", "confidence": 0.97, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_anemia_new", "documentId": "doc_anemia_new", "documentType": "lab_report",
+      "documentDateRaw": "01/11/2026", "documentDateDaysAgo": 3, "createdDaysAgo": 3,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. CBC. Hemoglobin 10.7 g/dL (12.0-15.5).",
+      "fields": [
+        { "key": "hemoglobin", "label": "Hemoglobin", "rawValue": "10.7", "numericValue": 10.7, "unit": "g/dL", "referenceRangeRaw": "12.0-15.5", "page": 1, "sources": { "muse": "10.7", "ocr": "10.7" }, "agreement": "match", "confidence": 0.97, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_anemia_rx", "documentId": "doc_anemia_rx", "documentType": "prescription",
+      "documentDateRaw": null, "documentDateDaysAgo": null, "createdDaysAgo": 1,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Handwritten note, partly unclear.",
+      "fields": [
+        { "key": "med_1_name", "label": "Medicine 1 — name", "rawValue": "Iron (?) 200mg", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "Iron (?) 200mg", "ocr": null }, "agreement": "single_source", "confidence": 0.5, "needsReview": true, "userEdited": false },
+        { "key": "med_1_dose", "label": "Medicine 1 — dose", "rawValue": "1 tablet", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "1 tablet", "ocr": null }, "agreement": "single_source", "confidence": 0.55, "needsReview": true, "userEdited": false },
+        { "key": "med_1_frequency", "label": "Medicine 1 — frequency", "rawValue": "once daily (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "once daily (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.45, "needsReview": true, "userEdited": false },
+        { "key": "med_1_duration", "label": "Medicine 1 — duration", "rawValue": "", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": null, "ocr": null }, "agreement": "single_source", "confidence": null, "needsReview": true, "userEdited": false }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "id": "rec_anemia_old", "documentId": "doc_anemia_old", "recordType": "lab_report", "recordDateDaysAgo": 20, "confirmedDaysAgo": 19,
+      "observations": [{ "name": "Hemoglobin", "rawValue": "9.1", "numericValue": 9.1, "unit": "g/dL", "referenceRangeRaw": "12.0-15.5", "sourceDocumentId": "doc_anemia_old", "page": 1 }],
+      "medications": []
+    },
+    {
+      "id": "rec_anemia_new", "documentId": "doc_anemia_new", "recordType": "lab_report", "recordDateDaysAgo": 3, "confirmedDaysAgo": 2,
+      "observations": [{ "name": "Hemoglobin", "rawValue": "10.7", "numericValue": 10.7, "unit": "g/dL", "referenceRangeRaw": "12.0-15.5", "sourceDocumentId": "doc_anemia_new", "page": 1 }],
+      "medications": []
+    }
+  ],
+  "wellness": [
+    { "daysAgo": 13, "sleepHours": 5.5, "waterGlasses": 5, "activityMinutes": 10, "energy": 2, "symptomLevel": "moderate", "symptoms": ["tiredness"], "note": "" },
+    { "daysAgo": 12, "sleepHours": 6, "waterGlasses": 6, "activityMinutes": 15, "energy": 2, "symptomLevel": "moderate", "symptoms": ["tiredness"], "note": "" },
+    { "daysAgo": 11, "sleepHours": 5.5, "waterGlasses": 5, "activityMinutes": 10, "energy": 2, "symptomLevel": "mild", "symptoms": ["tiredness"], "note": "" },
+    { "daysAgo": 10, "sleepHours": 6, "waterGlasses": 6, "activityMinutes": 20, "energy": 2, "symptomLevel": "mild", "symptoms": ["tiredness"], "note": "" },
+    { "daysAgo": 8, "sleepHours": 6.5, "waterGlasses": 6, "activityMinutes": 20, "energy": 3, "symptomLevel": "mild", "symptoms": ["tiredness"], "note": "" },
+    { "daysAgo": 7, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 25, "energy": 3, "symptomLevel": "mild", "symptoms": [], "note": "" },
+    { "daysAgo": 6, "sleepHours": 6.5, "waterGlasses": 7, "activityMinutes": 25, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 4, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 3, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 2, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 1, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 0, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "Less tired this week" }
+  ],
+  "summary": {
+    "coveredFromDaysAgo": 30, "coveredToDaysAgo": 0, "model": "fixture", "isSample": true,
+    "sourceRecordIds": ["rec_anemia_old", "rec_anemia_new"],
+    "payload": {
+      "summary": "SAMPLE — Two blood tests show hemoglobin 9.1 then 10.7 (printed range 12.0-15.5). Check-ins show tiredness easing and sleep improving.",
+      "observedChanges": [{ "description": "SAMPLE — Hemoglobin went from 9.1 to 10.7. Still below the printed range, but higher than before.", "sourceRecordIds": ["rec_anemia_old", "rec_anemia_new"], "uncertainty": "Only two measurements; lab methods may differ." }],
+      "missingInformation": ["No blood pressure readings in your records.", "Prescription is uploaded but not yet confirmed."],
+      "questionsForDoctor": ["Should the blood test be repeated, and when?", "What does the handwritten note say about dose and duration?"],
+      "limitations": ["SAMPLE summary from synthetic data.", "Only confirmed records are included."]
+    }
+  }
+}

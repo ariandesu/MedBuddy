@@ -1,0 +1,81 @@
+{
+  "documents": [
+    { "id": "doc_lipid_old", "fileName": "Lipid-old.jpg", "mimeType": "image/jpeg", "sizeBytes": 184320, "checksum": "fixture-lipid-old", "fileRef": "file_lipid_old", "status": "confirmed", "daysAgo": 20 },
+    { "id": "doc_lipid_new", "fileName": "Lipid-followup.jpg", "mimeType": "image/jpeg", "sizeBytes": 186100, "checksum": "fixture-lipid-new", "fileRef": "file_lipid_new", "status": "confirmed", "daysAgo": 3 },
+    { "id": "doc_lipid_rx", "fileName": "Prescription-as-written.jpg", "mimeType": "image/jpeg", "sizeBytes": 175120, "checksum": "fixture-lipid-rx", "fileRef": "file_lipid_rx", "status": "needs_review", "daysAgo": 1 }
+  ],
+  "extractions": [
+    {
+      "id": "ext_lipid_old", "documentId": "doc_lipid_old", "documentType": "lab_report",
+      "documentDateRaw": "15/10/2026", "documentDateDaysAgo": 20, "createdDaysAgo": 20,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Lipid. Total Cholesterol 245 mg/dL. LDL 162 mg/dL.",
+      "fields": [
+        { "key": "total_cholesterol", "label": "Total Cholesterol", "rawValue": "245", "numericValue": 245, "unit": "mg/dL", "referenceRangeRaw": "<200", "page": 1, "sources": { "muse": "245", "ocr": "245" }, "agreement": "match", "confidence": 0.96, "needsReview": false, "userEdited": false },
+        { "key": "ldl", "label": "LDL", "rawValue": "162", "numericValue": 162, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "162", "ocr": "162" }, "agreement": "match", "confidence": 0.95, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_lipid_new", "documentId": "doc_lipid_new", "documentType": "lab_report",
+      "documentDateRaw": "০১/১১/২০২৬", "documentDateDaysAgo": 3, "createdDaysAgo": 3,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Lipid. Total Cholesterol ২০১ mg/dL. LDL ১৩০ mg/dL.",
+      "fields": [
+        { "key": "total_cholesterol", "label": "Total Cholesterol", "rawValue": "২০১", "numericValue": 201, "unit": "mg/dL", "referenceRangeRaw": "<200", "page": 1, "sources": { "muse": "২০১", "ocr": "২০১" }, "agreement": "match", "confidence": 0.9, "needsReview": false, "userEdited": false },
+        { "key": "ldl", "label": "LDL", "rawValue": "১৩০", "numericValue": 130, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "১৩০", "ocr": "130" }, "agreement": "mismatch", "confidence": 0.8, "needsReview": false, "userEdited": true }
+      ]
+    },
+    {
+      "id": "ext_lipid_rx", "documentId": "doc_lipid_rx", "documentType": "prescription",
+      "documentDateRaw": null, "documentDateDaysAgo": null, "createdDaysAgo": 1,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Handwritten note, partly unclear.",
+      "fields": [
+        { "key": "med_1_name", "label": "Medicine 1 — name", "rawValue": "Ator (?) 10mg", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "Ator (?) 10mg", "ocr": null }, "agreement": "single_source", "confidence": 0.5, "needsReview": true, "userEdited": false },
+        { "key": "med_1_dose", "label": "Medicine 1 — dose", "rawValue": "1 tablet", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "1 tablet", "ocr": null }, "agreement": "single_source", "confidence": 0.55, "needsReview": true, "userEdited": false },
+        { "key": "med_1_frequency", "label": "Medicine 1 — frequency", "rawValue": "at night (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "at night (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.45, "needsReview": true, "userEdited": false },
+        { "key": "med_1_duration", "label": "Medicine 1 — duration", "rawValue": "", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": null, "ocr": null }, "agreement": "single_source", "confidence": null, "needsReview": true, "userEdited": false }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "id": "rec_lipid_old", "documentId": "doc_lipid_old", "recordType": "lab_report", "recordDateDaysAgo": 20, "confirmedDaysAgo": 19,
+      "observations": [
+        { "name": "Total Cholesterol", "rawValue": "245", "numericValue": 245, "unit": "mg/dL", "referenceRangeRaw": "<200", "sourceDocumentId": "doc_lipid_old", "page": 1 },
+        { "name": "LDL", "rawValue": "162", "numericValue": 162, "unit": "mg/dL", "referenceRangeRaw": "<100", "sourceDocumentId": "doc_lipid_old", "page": 1 }
+      ],
+      "medications": []
+    },
+    {
+      "id": "rec_lipid_new", "documentId": "doc_lipid_new", "recordType": "lab_report", "recordDateDaysAgo": 3, "confirmedDaysAgo": 2,
+      "observations": [
+        { "name": "Total Cholesterol", "rawValue": "২০১", "numericValue": 201, "unit": "mg/dL", "referenceRangeRaw": "<200", "sourceDocumentId": "doc_lipid_new", "page": 1 },
+        { "name": "LDL", "rawValue": "১৩০", "numericValue": 130, "unit": "mg/dL", "referenceRangeRaw": "<100", "sourceDocumentId": "doc_lipid_new", "page": 1 }
+      ],
+      "medications": []
+    }
+  ],
+  "wellness": [
+    { "daysAgo": 13, "sleepHours": 6, "waterGlasses": 5, "activityMinutes": 15, "energy": 2, "symptomLevel": "mild", "symptoms": ["headache"], "note": "" },
+    { "daysAgo": 12, "sleepHours": 6.5, "waterGlasses": 6, "activityMinutes": 20, "energy": 2, "symptomLevel": "mild", "symptoms": [], "note": "" },
+    { "daysAgo": 11, "sleepHours": 6.5, "waterGlasses": 6, "activityMinutes": 20, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 10, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 25, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 8, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 7, "sleepHours": 7.5, "waterGlasses": 7, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 6, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 4, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 3, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 2, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 1, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 0, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" }
+  ],
+  "summary": {
+    "coveredFromDaysAgo": 30, "coveredToDaysAgo": 0, "model": "fixture", "isSample": true,
+    "sourceRecordIds": ["rec_lipid_old", "rec_lipid_new"],
+    "payload": {
+      "summary": "SAMPLE — Two lipid tests show total cholesterol 245 then ২০১ and LDL 162 then ১৩০. Check-ins show steady sleep and activity.",
+      "observedChanges": [{ "description": "SAMPLE — Total cholesterol went from 245 to ২০১ and LDL from 162 to ১৩০. Both still above the printed range, but lower than before.", "sourceRecordIds": ["rec_lipid_old", "rec_lipid_new"], "uncertainty": "Only two measurements; Bangla digits kept as written." }],
+      "missingInformation": ["No blood pressure readings in your records.", "Prescription is uploaded but not yet confirmed."],
+      "questionsForDoctor": ["Should the lipid test be repeated, and when?", "What does the handwritten note say?"],
+      "limitations": ["SAMPLE summary from synthetic data.", "Only confirmed records are included."]
+    }
+  }
+}

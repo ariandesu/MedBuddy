@@ -18,6 +18,8 @@ import {
   Link as LinkIcon,
   AlertTriangle,
   Search,
+  Mic,
+  Volume2,
 } from "lucide-react";
 
 export function AskPage() {
@@ -28,6 +30,7 @@ export function AskPage() {
   const [limitations, setLimitations] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
 
   async function handleAsk(e: React.FormEvent) {
     e.preventDefault();
@@ -74,14 +77,50 @@ export function AskPage() {
           <label className="font-medium" htmlFor="ask-input">
             {dict.ask.label}
           </label>
-          <Input
-            id="ask-input"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder={dict.ask.examples}
-            disabled={saving}
-            className="h-12 text-base"
-          />
+          <div className="flex gap-2">
+            <Input
+              id="ask-input"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder={dict.ask.examples}
+              disabled={saving}
+              className="h-12 text-base"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 shrink-0"
+              disabled={saving || listening}
+              onClick={() => {
+                const SR =
+                  (window as unknown as { webkitSpeechRecognition?: new () => { lang: string; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void }; SpeechRecognition?: new () => { lang: string; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void } }).webkitSpeechRecognition ??
+                  (window as unknown as { SpeechRecognition?: new () => { lang: string; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void } }).SpeechRecognition;
+                if (!SR) {
+                  setError(dict.ask.voiceNotSupported);
+                  return;
+                }
+                try {
+                  const rec = new SR();
+                  const htmlLang = document.documentElement.lang || "bn";
+                  rec.lang = htmlLang.startsWith("bn") ? "bn-BD" : "en-US";
+                  setListening(true);
+                  rec.onresult = (e) => {
+                    const text = e.results?.[0]?.[0]?.transcript ?? "";
+                    if (text) setQuestion(text);
+                  };
+                  rec.onerror = () => {};
+                  rec.onend = () => setListening(false);
+                  rec.start();
+                } catch {
+                  setListening(false);
+                }
+              }}
+              aria-label={dict.ask.listen}
+            >
+              <Mic aria-hidden />
+              {listening ? dict.ask.listening : dict.ask.listen}
+            </Button>
+          </div>
         </div>
         <Button
           type="submit"
@@ -98,6 +137,23 @@ export function AskPage() {
           <CardHeader className="flex items-center gap-2">
             <CheckCircle2 className="size-4 text-primary" aria-hidden />
             <CardTitle>{dict.ask.answer}</CardTitle>
+            <Button
+              type="button"
+              variant="ghost"
+              className="ml-auto h-10"
+              onClick={() => {
+                try {
+                  speechSynthesis.cancel();
+                  const u = new SpeechSynthesisUtterance(answer);
+                  const htmlLang = document.documentElement.lang || "bn";
+                  u.lang = htmlLang.startsWith("bn") ? "bn-BD" : "en-US";
+                  speechSynthesis.speak(u);
+                } catch {}
+              }}
+            >
+              <Volume2 aria-hidden />
+              {dict.ask.speakAnswer}
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             <p>{answer}</p>

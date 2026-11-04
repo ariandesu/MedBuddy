@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import type { Dictionary } from "@/lib/i18n";
+import { DEMO_PROFILES, type DemoProfileId } from "@/server/demo-profiles";
 
-export function LoginForm({ dict }: { dict: Dictionary }) {
+export function LoginForm({ dict, locale }: { dict: Dictionary; locale: "bn" | "en" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
@@ -16,6 +18,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
     searchParams.get("error") ? dict.auth.error : null
   );
   const [pending, setPending] = useState(false);
+  const [startingProfile, setStartingProfile] = useState<DemoProfileId | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,11 +91,16 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
     }
   }
 
-  async function startDemo() {
+  async function startDemo(profile?: DemoProfileId) {
     setPending(true);
+    setStartingProfile(profile ?? null);
     setError(null);
     try {
-      const res = await fetch("/api/demo/start", { method: "POST" });
+      const res = await fetch("/api/demo/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profile ? { profile } : {}),
+      });
       if (!res.ok) throw new Error("Failed to start demo");
       const data = await res.json();
       await submit(data.email, data.password);
@@ -100,6 +108,7 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
       setError(dict.auth.demoStartError);
     } finally {
       setPending(false);
+      setStartingProfile(null);
     }
   }
 
@@ -144,13 +153,46 @@ export function LoginForm({ dict }: { dict: Dictionary }) {
         </Button>
       </form>
       <Button
-        onClick={startDemo}
+        onClick={() => startDemo()}
         variant="secondary"
         className="w-full"
         disabled={pending}
       >
         {dict.auth.tryDemo}
       </Button>
+      <div className="flex flex-col gap-2 rounded-2xl border bg-card p-3">
+        <p className="font-medium">{dict.auth.chooseProfile}</p>
+        <p className="text-sm text-muted-foreground">{dict.auth.chooseProfileHint}</p>
+        <ul className="flex flex-col gap-2">
+          {DEMO_PROFILES.map((p) => (
+            <li key={p.id}>
+              <Button
+                onClick={() => startDemo(p.id)}
+                variant="outline"
+                className="h-auto w-full justify-start py-3 text-left"
+                disabled={pending}
+              >
+                <span className="flex w-full flex-col gap-1">
+                  <span className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {locale === "bn" ? p.nameBn : p.nameEn}
+                    </span>
+                    <Badge variant={p.badge === "recovering" ? "destructive" : "secondary"}>
+                      {p.badge === "recovering" ? dict.auth.profileRecovering : dict.auth.profileStable}
+                    </Badge>
+                  </span>
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {locale === "bn" ? p.storyBn : p.storyEn}
+                  </span>
+                  {startingProfile === p.id && (
+                    <span className="text-sm text-muted-foreground">{dict.auth.profileStarting}</span>
+                  )}
+                </span>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </div>
       <p className="text-center text-sm text-muted-foreground">
         {dict.auth.noAccount}{" "}
         <a href="/signup" className="underline">

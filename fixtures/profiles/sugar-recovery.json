@@ -1,0 +1,73 @@
+{
+  "documents": [
+    { "id": "doc_sugar_old", "fileName": "Glucose-fasting.jpg", "mimeType": "image/jpeg", "sizeBytes": 184320, "checksum": "fixture-sugar-old", "fileRef": "file_sugar_old", "status": "confirmed", "daysAgo": 20 },
+    { "id": "doc_sugar_new", "fileName": "Glucose-followup.jpg", "mimeType": "image/jpeg", "sizeBytes": 186100, "checksum": "fixture-sugar-new", "fileRef": "file_sugar_new", "status": "confirmed", "daysAgo": 3 },
+    { "id": "doc_sugar_rx", "fileName": "Prescription-as-written.jpg", "mimeType": "image/jpeg", "sizeBytes": 175120, "checksum": "fixture-sugar-rx", "fileRef": "file_sugar_rx", "status": "needs_review", "daysAgo": 1 }
+  ],
+  "extractions": [
+    {
+      "id": "ext_sugar_old", "documentId": "doc_sugar_old", "documentType": "lab_report",
+      "documentDateRaw": "15/10/2026", "documentDateDaysAgo": 20, "createdDaysAgo": 20,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Fasting Glucose 152 mg/dL (<100).",
+      "fields": [
+        { "key": "fasting_glucose", "label": "Fasting Glucose", "rawValue": "152", "numericValue": 152, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "152", "ocr": "152" }, "agreement": "match", "confidence": 0.97, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_sugar_new", "documentId": "doc_sugar_new", "documentType": "lab_report",
+      "documentDateRaw": "01/11/2026", "documentDateDaysAgo": 3, "createdDaysAgo": 3,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Fasting Glucose 121 mg/dL (<100).",
+      "fields": [
+        { "key": "fasting_glucose", "label": "Fasting Glucose", "rawValue": "121", "numericValue": 121, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "121", "ocr": "121" }, "agreement": "match", "confidence": 0.97, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_sugar_rx", "documentId": "doc_sugar_rx", "documentType": "prescription",
+      "documentDateRaw": null, "documentDateDaysAgo": null, "createdDaysAgo": 1,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Handwritten note, partly unclear.",
+      "fields": [
+        { "key": "med_1_name", "label": "Medicine 1 — name", "rawValue": "Met (?) 500mg", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "Met (?) 500mg", "ocr": null }, "agreement": "single_source", "confidence": 0.5, "needsReview": true, "userEdited": false },
+        { "key": "med_1_dose", "label": "Medicine 1 — dose", "rawValue": "1 tablet", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "1 tablet", "ocr": null }, "agreement": "single_source", "confidence": 0.55, "needsReview": true, "userEdited": false },
+        { "key": "med_1_frequency", "label": "Medicine 1 — frequency", "rawValue": "twice daily (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "twice daily (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.45, "needsReview": true, "userEdited": false },
+        { "key": "med_1_duration", "label": "Medicine 1 — duration", "rawValue": "", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": null, "ocr": null }, "agreement": "single_source", "confidence": null, "needsReview": true, "userEdited": false }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "id": "rec_sugar_old", "documentId": "doc_sugar_old", "recordType": "lab_report", "recordDateDaysAgo": 20, "confirmedDaysAgo": 19,
+      "observations": [{ "name": "Fasting Glucose", "rawValue": "152", "numericValue": 152, "unit": "mg/dL", "referenceRangeRaw": "<100", "sourceDocumentId": "doc_sugar_old", "page": 1 }],
+      "medications": []
+    },
+    {
+      "id": "rec_sugar_new", "documentId": "doc_sugar_new", "recordType": "lab_report", "recordDateDaysAgo": 3, "confirmedDaysAgo": 2,
+      "observations": [{ "name": "Fasting Glucose", "rawValue": "121", "numericValue": 121, "unit": "mg/dL", "referenceRangeRaw": "<100", "sourceDocumentId": "doc_sugar_new", "page": 1 }],
+      "medications": []
+    }
+  ],
+  "wellness": [
+    { "daysAgo": 13, "sleepHours": 6, "waterGlasses": 5, "activityMinutes": 10, "energy": 2, "symptomLevel": "mild", "symptoms": ["tiredness"], "note": "" },
+    { "daysAgo": 12, "sleepHours": 6.5, "waterGlasses": 6, "activityMinutes": 10, "energy": 2, "symptomLevel": "mild", "symptoms": [], "note": "" },
+    { "daysAgo": 11, "sleepHours": 6, "waterGlasses": 6, "activityMinutes": 15, "energy": 2, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 10, "sleepHours": 6.5, "waterGlasses": 7, "activityMinutes": 20, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 8, "sleepHours": 7, "waterGlasses": 7, "activityMinutes": 25, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 7, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 6, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 4, "sleepHours": 7.5, "waterGlasses": 8, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 3, "sleepHours": 7, "waterGlasses": 8, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 2, "sleepHours": 7, "waterGlasses": 9, "activityMinutes": 40, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 1, "sleepHours": 7.5, "waterGlasses": 9, "activityMinutes": 40, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 0, "sleepHours": 7.5, "waterGlasses": 9, "activityMinutes": 35, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "Walking daily" }
+  ],
+  "summary": {
+    "coveredFromDaysAgo": 30, "coveredToDaysAgo": 0, "model": "fixture", "isSample": true,
+    "sourceRecordIds": ["rec_sugar_old", "rec_sugar_new"],
+    "payload": {
+      "summary": "SAMPLE — Two fasting glucose tests show 152 then 121 (printed range below 100). Check-ins show walking rising from 10 to 35 minutes.",
+      "observedChanges": [{ "description": "SAMPLE — Fasting glucose went from 152 to 121. Still above the printed range, but lower than before.", "sourceRecordIds": ["rec_sugar_old", "rec_sugar_new"], "uncertainty": "Only two measurements; fasting conditions may differ." }],
+      "missingInformation": ["No blood pressure readings in your records.", "Prescription is uploaded but not yet confirmed."],
+      "questionsForDoctor": ["Should the glucose test be repeated, and when?", "What does the handwritten note say?"],
+      "limitations": ["SAMPLE summary from synthetic data.", "Only confirmed records are included."]
+    }
+  }
+}

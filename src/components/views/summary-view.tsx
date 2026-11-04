@@ -55,17 +55,17 @@ export async function SummaryView({ embedded = false }: { embedded?: boolean }) 
                       {dict.summary.uncertainty}: {c.uncertainty}
                     </p>
                     {c.sourceRecordIds.length > 0 && (
-                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                      <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-1">
                         <Link className="size-3" aria-hidden />
                         {dict.summary.sourceRecords}:{" "}
                         {c.sourceRecordIds.map((id) => (
-                          <span
+                          <a
                             key={id}
-                            className="underline underline-offset-4 hover:underline cursor-pointer"
-                            title={id}
+                            href={`/records?tab=timeline#rec-${id}`}
+                            className="underline underline-offset-4 hover:underline"
                           >
                             {id.slice(0, 8)}
-                          </span>
+                          </a>
                         ))}
                       </p>
                     )}

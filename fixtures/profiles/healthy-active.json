@@ -1,0 +1,73 @@
+{
+  "documents": [
+    { "id": "doc_active_cbc", "fileName": "CBC-active.jpg", "mimeType": "image/jpeg", "sizeBytes": 184320, "checksum": "fixture-active-cbc", "fileRef": "file_active_cbc", "status": "confirmed", "daysAgo": 18 },
+    { "id": "doc_active_glucose", "fileName": "Glucose-normal.jpg", "mimeType": "image/jpeg", "sizeBytes": 186100, "checksum": "fixture-active-glucose", "fileRef": "file_active_glucose", "status": "confirmed", "daysAgo": 6 },
+    { "id": "doc_active_note", "fileName": "Note-as-written.jpg", "mimeType": "image/jpeg", "sizeBytes": 175120, "checksum": "fixture-active-note", "fileRef": "file_active_note", "status": "needs_review", "daysAgo": 1 }
+  ],
+  "extractions": [
+    {
+      "id": "ext_active_cbc", "documentId": "doc_active_cbc", "documentType": "lab_report",
+      "documentDateRaw": "17/10/2026", "documentDateDaysAgo": 18, "createdDaysAgo": 18,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. CBC. Hemoglobin 13.8 g/dL (12.0-15.5).",
+      "fields": [
+        { "key": "hemoglobin", "label": "Hemoglobin", "rawValue": "13.8", "numericValue": 13.8, "unit": "g/dL", "referenceRangeRaw": "12.0-15.5", "page": 1, "sources": { "muse": "13.8", "ocr": "13.8" }, "agreement": "match", "confidence": 0.97, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_active_glucose", "documentId": "doc_active_glucose", "documentType": "lab_report",
+      "documentDateRaw": "29/10/2026", "documentDateDaysAgo": 6, "createdDaysAgo": 6,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Fasting Glucose 92 mg/dL (<100).",
+      "fields": [
+        { "key": "fasting_glucose", "label": "Fasting Glucose", "rawValue": "92", "numericValue": 92, "unit": "mg/dL", "referenceRangeRaw": "<100", "page": 1, "sources": { "muse": "92", "ocr": "92" }, "agreement": "match", "confidence": 0.96, "needsReview": false, "userEdited": false }
+      ]
+    },
+    {
+      "id": "ext_active_note", "documentId": "doc_active_note", "documentType": "prescription",
+      "documentDateRaw": null, "documentDateDaysAgo": null, "createdDaysAgo": 1,
+      "ocrText": "SAMPLE — NOT REAL PATIENT DATA. Note partly unclear.",
+      "fields": [
+        { "key": "med_1_name", "label": "Medicine 1 — name", "rawValue": "ORS (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "ORS (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.5, "needsReview": true, "userEdited": false },
+        { "key": "med_1_dose", "label": "Medicine 1 — dose", "rawValue": "1 sachet (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "1 sachet (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.5, "needsReview": true, "userEdited": false },
+        { "key": "med_1_frequency", "label": "Medicine 1 — frequency", "rawValue": "as needed (?)", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": "as needed (?)", "ocr": null }, "agreement": "single_source", "confidence": 0.45, "needsReview": true, "userEdited": false },
+        { "key": "med_1_duration", "label": "Medicine 1 — duration", "rawValue": "", "numericValue": null, "unit": null, "referenceRangeRaw": null, "page": 1, "sources": { "muse": null, "ocr": null }, "agreement": "single_source", "confidence": null, "needsReview": true, "userEdited": false }
+      ]
+    }
+  ],
+  "records": [
+    {
+      "id": "rec_active_cbc", "documentId": "doc_active_cbc", "recordType": "lab_report", "recordDateDaysAgo": 18, "confirmedDaysAgo": 17,
+      "observations": [{ "name": "Hemoglobin", "rawValue": "13.8", "numericValue": 13.8, "unit": "g/dL", "referenceRangeRaw": "12.0-15.5", "sourceDocumentId": "doc_active_cbc", "page": 1 }],
+      "medications": []
+    },
+    {
+      "id": "rec_active_glucose", "documentId": "doc_active_glucose", "recordType": "lab_report", "recordDateDaysAgo": 6, "confirmedDaysAgo": 5,
+      "observations": [{ "name": "Fasting Glucose", "rawValue": "92", "numericValue": 92, "unit": "mg/dL", "referenceRangeRaw": "<100", "sourceDocumentId": "doc_active_glucose", "page": 1 }],
+      "medications": []
+    }
+  ],
+  "wellness": [
+    { "daysAgo": 13, "sleepHours": 7, "waterGlasses": 9, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 12, "sleepHours": 6.5, "waterGlasses": 10, "activityMinutes": 50, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 11, "sleepHours": 7, "waterGlasses": 9, "activityMinutes": 40, "energy": 3, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 10, "sleepHours": 8, "waterGlasses": 10, "activityMinutes": 55, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 8, "sleepHours": 6.5, "waterGlasses": 8, "activityMinutes": 30, "energy": 3, "symptomLevel": "mild", "symptoms": ["headache"], "note": "Late study night" },
+    { "daysAgo": 7, "sleepHours": 7.5, "waterGlasses": 9, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 6, "sleepHours": 7, "waterGlasses": 10, "activityMinutes": 50, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 4, "sleepHours": 7.5, "waterGlasses": 9, "activityMinutes": 40, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 3, "sleepHours": 7, "waterGlasses": 9, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 2, "sleepHours": 8, "waterGlasses": 10, "activityMinutes": 55, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 1, "sleepHours": 7.5, "waterGlasses": 9, "activityMinutes": 40, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "" },
+    { "daysAgo": 0, "sleepHours": 7, "waterGlasses": 9, "activityMinutes": 45, "energy": 4, "symptomLevel": "none", "symptoms": [], "note": "Good week" }
+  ],
+  "summary": {
+    "coveredFromDaysAgo": 30, "coveredToDaysAgo": 0, "model": "fixture", "isSample": true,
+    "sourceRecordIds": ["rec_active_cbc", "rec_active_glucose"],
+    "payload": {
+      "summary": "SAMPLE — Hemoglobin 13.8 and fasting glucose 92 are within the printed ranges. One mild headache on a short-sleep night, otherwise well.",
+      "observedChanges": [{ "description": "SAMPLE — Both lab values are within the printed ranges. Habits look steady with high water and activity.", "sourceRecordIds": ["rec_active_cbc", "rec_active_glucose"], "uncertainty": "Only one measurement per test." }],
+      "missingInformation": ["No blood pressure readings in your records.", "Note is uploaded but not yet confirmed."],
+      "questionsForDoctor": ["How often should routine tests be repeated?", "Anything to keep doing?"],
+      "limitations": ["SAMPLE summary from synthetic data.", "Only confirmed records are included."]
+    }
+  }
+}

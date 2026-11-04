@@ -7,6 +7,7 @@ import {
   Stethoscope,
   FileText,
   Check,
+  MessageCircleQuestion,
 } from "lucide-react";
 import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
@@ -79,6 +80,31 @@ export default async function DashboardPage() {
         >
           {next.cta}
         </Link>
+      </section>
+
+      <section aria-labelledby="tour-h" className="rounded-2xl border bg-card p-4">
+        <h2 id="tour-h" className="font-heading text-lg font-semibold">{t.tourTitle}</h2>
+        <ol className="mt-2 flex flex-col gap-2 text-sm">
+          <li>
+            <Link href="/records" className="font-medium text-primary underline-offset-4 hover:underline">
+              {t.tourStep1}
+            </Link>
+            <p className="text-muted-foreground">{t.tourStep1Body}</p>
+          </li>
+          <li>
+            <Link href="/ask" className="flex items-center gap-1 font-medium text-primary underline-offset-4 hover:underline">
+              <MessageCircleQuestion className="size-4" aria-hidden />
+              {t.tourStep2}
+            </Link>
+            <p className="text-muted-foreground">{t.tourStep2Body}</p>
+          </li>
+          <li>
+            <Link href="/show-doctor" className="font-medium text-primary underline-offset-4 hover:underline">
+              {t.tourStep3}
+            </Link>
+            <p className="text-muted-foreground">{t.tourStep3Body}</p>
+          </li>
+        </ol>
       </section>
 
       {latestLab && latestLab.observations.length > 0 && (

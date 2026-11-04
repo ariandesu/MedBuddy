@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage() {
   const session = await getSessionUser();
   if (session) redirect("/dashboard");
-  const { dict } = await getLocaleAndDict();
+  const { dict, locale } = await getLocaleAndDict();
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 pt-10">
       <div className="flex flex-col items-center text-center">
@@ -32,7 +32,7 @@ export default async function LoginPage() {
           <CardDescription>{dict.auth.demoExplain}</CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm dict={dict} />
+          <LoginForm dict={dict} locale={locale} />
         </CardContent>
       </Card>
     </div>

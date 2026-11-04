@@ -101,7 +101,14 @@
     "checkinDone": "Done",
     "checkinPending": "Not yet",
     "summaryFrom": "Summary from {{date}}",
-    "addDocument": "Add a document"
+    "addDocument": "Add a document",
+    "tourTitle": "Judge tour — 3 taps",
+    "tourStep1": "1. Check a value",
+    "tourStep1Body": "Open Records, pick Needs review, tap Looks right.",
+    "tourStep2": "2. Ask a question",
+    "tourStep2Body": "Ask lite asks only your records, with sources.",
+    "tourStep3": "3. Show the doctor",
+    "tourStep3Body": "Print-ready page with raw values + ranges."
   },
   "documents": {
     "title": "Documents",
@@ -284,7 +291,11 @@
     "limitations": "Limitations",
     "intro": "Answers come only from your confirmed records and latest summary. This is not medical advice.",
     "label": "Your question",
-    "examples": "For example: Is my hemoglobin normal?"
+    "examples": "For example: Is my hemoglobin normal?",
+    "listen": "Speak",
+    "listening": "Listening…",
+    "speakAnswer": "Read aloud",
+    "voiceNotSupported": "Voice input is not supported in this browser."
   },
   "recordType": {
     "lab_report": "Lab report",
@@ -331,7 +342,12 @@
     "demoStartError": "Failed to start demo account.",
     "userExists": "User already exists.",
     "passwordsDoNotMatch": "Passwords do not match.",
-    "signUpError": "Signup failed. Please try again."
+    "signUpError": "Signup failed. Please try again.",
+    "chooseProfile": "Meet 5 sample neighbors",
+    "chooseProfileHint": "3 recovering, 2 staying healthy. Synthetic data only.",
+    "profileRecovering": "Recovering",
+    "profileStable": "Healthy",
+    "profileStarting": "Starting…"
   },
   "common": {
     "loading": "Loading…",
