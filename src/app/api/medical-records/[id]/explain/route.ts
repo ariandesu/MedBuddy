@@ -3,7 +3,7 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getAI } from "@/server/ai/index";
 import { getLocale } from "@/lib/i18n/server";
-import { rateLimitCheck } from "@/server/rate-limit";
+import { aiRateLimitCheck } from "@/server/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,7 +16,7 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
 
-  const rateLimit = await rateLimitCheck(user.id, "explain");
+  const rateLimit = await aiRateLimitCheck(user, "explain", req);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }

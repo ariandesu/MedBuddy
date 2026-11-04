@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
+import { after } from "next/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { DEMO_RETENTION_MS } from "@/lib/demo";
 import { getRepo } from "@/server/repo/index";
 import { seedDemoData } from "@/server/demo-seed";
 import { isDemoProfileId } from "@/server/demo-profiles";
@@ -19,6 +21,21 @@ const DEMO_LIMIT = 30;
 const demoStartSchema = z.object({
   profile: z.string().optional(),
 });
+
+// Each new demo clears a few expired ones, after the response so it adds no wait.
+const DEMO_CLEANUP_BATCH = 25;
+
+function removeOldDemoAccountsLater() {
+  try {
+    after(() =>
+      getRepo()
+        .deleteExpiredDemoUsers(new Date(Date.now() - DEMO_RETENTION_MS), DEMO_CLEANUP_BATCH)
+        .catch(() => {})
+    );
+  } catch {
+    // Outside a request scope (route tests): nothing to schedule on.
+  }
+}
 
 export async function POST(req: Request) {
   // No database (in-memory mode): on serverless hosts like Vercel each request
@@ -66,6 +83,8 @@ export async function POST(req: Request) {
   });
 
   await seedDemoData(repo, user.id, profile);
+
+  removeOldDemoAccountsLater();
 
   return Response.json({ email, password, profile: profile ?? "classic" }, { status: 201 });
 }

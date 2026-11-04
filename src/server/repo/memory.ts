@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
+import { isDemoAccountEmail } from "@/lib/demo";
 import type {
   User,
   Document,
@@ -168,6 +169,22 @@ export class MemoryRepository implements Repository {
     this.users.set(user.id, user);
     this.usersByEmail.set(email, user);
     return clone(user);
+  }
+
+  async deleteExpiredDemoUsers(before: Date, limit: number): Promise<number> {
+    const expired = [...this.users.values()]
+      .filter((u) => isDemoAccountEmail(u.email) && u.createdAt < before)
+      .slice(0, limit);
+    for (const u of expired) {
+      for (const store of [this.documents, this.files, this.extractions, this.records, this.wellness, this.summaries]) {
+        for (const [key, row] of store as Map<string, { userId: string }>) {
+          if (row.userId === u.id) store.delete(key);
+        }
+      }
+      this.users.delete(u.id);
+      this.usersByEmail.delete(u.email);
+    }
+    return expired.length;
   }
 
   async getUserByEmail(email: string): Promise<User | null> {

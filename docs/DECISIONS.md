@@ -119,3 +119,13 @@ Log when spec conflicts with current library docs, or when a choice needs justif
 - Summaries get a computed `WellnessDigest` (`server/trends.ts`) for the last 30 days, without free-text notes. Check-ins go in
   the summary text, not `observedChanges`, because they have no record id to ground. Urgent check-ins also add a
   doctor question in code, so they reach the report whatever the model writes.
+
+## Security hardening (2026-11-04)
+
+- Model routes share `aiRateLimitCheck`. The retry route had no limit before and now shares the upload allowance.
+- Old demo accounts are removed from `/api/demo/start` using `after()`, a batch at a time, rather than a Vercel cron: no extra
+  config or secret, and accounts only pile up when demos are being started, which is exactly when cleanup runs.
+- CSP applies to pages only, not `/api/*`, so the browser's PDF viewer keeps working on `/api/documents/[id]/file`. Uploaded files
+  are limited to JPEG, PNG and PDF by magic bytes and served with `nosniff`.
+- CSP is production-only because `next dev` needs eval and a websocket, so E2E on the dev server doesn't exercise it. Test OCR
+  against `next start` after changing it.

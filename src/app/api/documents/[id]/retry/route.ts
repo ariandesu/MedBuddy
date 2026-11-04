@@ -3,6 +3,7 @@ import { getRepo } from "@/server/repo/index";
 import { getSessionUser } from "@/server/auth";
 import { getLocale } from "@/lib/i18n/server";
 import { processDocumentExtraction } from "@/server/extract-document";
+import { aiRateLimitCheck } from "@/server/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,6 +16,12 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const locale = await getLocale();
   const { id } = await params;
+
+  // Same allowance as a new upload: a retry costs the same model call.
+  const rateLimit = await aiRateLimitCheck(user, "documents", req);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
+  }
 
   const repo = getRepo();
   const doc = await repo.getDocument(user.id, id);

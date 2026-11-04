@@ -170,6 +170,81 @@ function runContractSuite(
       expect(await repo.getExtraction(userA, ext.id)).toMatchObject({ documentDate: "2026-03-11" });
     });
 
+    it("deleteExpiredDemoUsers: removes old demo accounts and their data, nothing else", async () => {
+      const seedOwner = async (email: string) => {
+        const u = await repo.createUser({ email, passwordHash: "h", locale: "en" });
+        await repo.storeFile(u.id, `file-${u.id}`, Buffer.from("x"), "image/jpeg", "a.jpg");
+        const doc = await repo.createDocument({
+          userId: u.id,
+          fileName: "a.jpg",
+          mimeType: "image/jpeg",
+          sizeBytes: 1,
+          checksum: `c-${u.id}`,
+          fileRef: `file-${u.id}`,
+        });
+        await repo.createExtraction({
+          userId: u.id,
+          documentId: doc.id,
+          documentType: "other",
+          documentDateRaw: null,
+          documentDate: null,
+          fields: [],
+          ocrText: "",
+        });
+        await repo.createMedicalRecord({
+          userId: u.id,
+          documentId: doc.id,
+          recordType: "other",
+          recordDate: null,
+          observations: [],
+          medications: [],
+        });
+        await repo.upsertWellnessEntry(u.id, "2026-01-01", { sleepHours: 7 });
+        await repo.createHealthSummary({
+          userId: u.id,
+          coveredFrom: "",
+          coveredTo: "",
+          payload: { summary: "s", observedChanges: [], missingInformation: [], questionsForDoctor: [], limitations: [] },
+          sourceRecordIds: [],
+          model: "m",
+          isSample: true,
+        });
+        return { user: u, doc };
+      };
+      const demo = await seedOwner("demo-0a0b0c0d@medisathi.app");
+      const lookalike = await seedOwner("demo-0a0b0c0d@example.test");
+      const unrelated = await seedOwner("not-a-demo@medisathi.app");
+
+      // Younger than the cutoff: kept.
+      expect(await repo.deleteExpiredDemoUsers(new Date(Date.now() - 60_000), 25)).toBe(0);
+      expect(await repo.getUserById(demo.user.id)).not.toBeNull();
+
+      expect(await repo.deleteExpiredDemoUsers(new Date(Date.now() + 60_000), 25)).toBe(1);
+      expect(await repo.getUserById(demo.user.id)).toBeNull();
+      expect(await repo.getUserByEmail(demo.user.email)).toBeNull();
+      expect(await repo.getDocument(demo.user.id, demo.doc.id)).toBeNull();
+      expect(await repo.getFile(demo.user.id, `file-${demo.user.id}`)).toBeNull();
+      expect(await repo.getExtractionByDocument(demo.user.id, demo.doc.id)).toBeNull();
+      expect(await repo.listMedicalRecords(demo.user.id)).toHaveLength(0);
+      expect(await repo.listWellnessEntries(demo.user.id, "2026-01-01", "2026-01-01")).toHaveLength(0);
+      expect(await repo.getLatestHealthSummary(demo.user.id)).toBeNull();
+
+      for (const kept of [lookalike, unrelated]) {
+        expect(await repo.getUserById(kept.user.id)).not.toBeNull();
+        expect(await repo.getFile(kept.user.id, `file-${kept.user.id}`)).not.toBeNull();
+        expect(await repo.listMedicalRecords(kept.user.id)).toHaveLength(1);
+      }
+    });
+
+    it("deleteExpiredDemoUsers: respects the batch limit", async () => {
+      await repo.createUser({ email: "demo-11111111@medisathi.app", passwordHash: "h", locale: "en" });
+      await repo.createUser({ email: "demo-22222222@medisathi.app", passwordHash: "h", locale: "en" });
+      const future = new Date(Date.now() + 60_000);
+      expect(await repo.deleteExpiredDemoUsers(future, 1)).toBe(1);
+      expect(await repo.deleteExpiredDemoUsers(future, 25)).toBe(1);
+      expect(await repo.deleteExpiredDemoUsers(future, 25)).toBe(0);
+    });
+
     it("records: CRUD + date filter + ownership", async () => {
       const r1 = await repo.createMedicalRecord({
         userId: userA,

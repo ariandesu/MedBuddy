@@ -42,8 +42,10 @@ export function getAuthSecret(): string | undefined {
 export function getMongoDb(): string {
   try {
     const raw = process.env.MONGODB_DB;
-    if (!raw || raw.trim().length === 0) return "medisathi";
-    return raw.trim();
+    const db = !raw || raw.trim().length === 0 ? "medisathi" : raw.trim();
+    // Preview deployments share MONGODB_URI with production; never its database.
+    if (process.env.VERCEL_ENV === "preview" && !db.endsWith("_preview")) return `${db}_preview`;
+    return db;
   } catch {
     return "medisathi";
   }

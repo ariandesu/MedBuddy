@@ -124,6 +124,8 @@ export interface Repository {
   createUser(input: CreateUserInput): Promise<User>;
   getUserByEmail(email: string): Promise<User | null>;
   getUserById(id: string): Promise<User | null>;
+  /** Removes demo accounts created before `before`, with all their data. Returns how many. */
+  deleteExpiredDemoUsers(before: Date, limit: number): Promise<number>;
 
   deleteDocument(userId: string, id: string): Promise<boolean>;
   findDocumentByChecksum(userId: string, checksum: string): Promise<Document | null>;

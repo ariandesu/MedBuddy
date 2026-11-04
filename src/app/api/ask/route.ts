@@ -11,7 +11,7 @@ import {
   inferCitations,
   stripRecordIds,
 } from "@/server/ai/grounding";
-import { rateLimitCheck } from "@/server/rate-limit";
+import { aiRateLimitCheck } from "@/server/rate-limit";
 
 const RECORD_TYPE_LABELS: Record<string, string> = {
   lab_report: "Lab report",
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rateLimit = await rateLimitCheck(user.id, "ask");
+  const rateLimit = await aiRateLimitCheck(user, "ask", req);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }

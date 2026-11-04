@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/digits";
 import { URGENT_SYMPTOMS } from "@/lib/safety/redflags";
 import { groundSummaryChanges, stripRecordIds } from "@/server/ai/grounding";
 import { isDemoAiMode, getMuseModel } from "@/server/env";
-import { rateLimitCheck } from "@/server/rate-limit";
+import { aiRateLimitCheck } from "@/server/rate-limit";
 import { todayISODate } from "@/server/dates";
 import { buildWellnessDigest, type WellnessDigest } from "@/server/trends";
 import type { HealthSummaryPayload } from "@/lib/schemas";
@@ -35,12 +35,12 @@ function urgentQuestion(wellness: WellnessDigest | null, dict: Dictionary, local
 }
 
 export async function POST(
-  _req: NextRequest
+  req: NextRequest
 ): Promise<NextResponse> {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rateLimit = await rateLimitCheck(user.id, "summaries");
+  const rateLimit = await aiRateLimitCheck(user, "summaries", req);
   if (!rateLimit.allowed) {
     return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
   }

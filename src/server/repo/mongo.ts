@@ -21,6 +21,8 @@ import type {
   DemoBundle,
 } from "./types";
 
+import { DEMO_ACCOUNT_EMAIL } from "@/lib/demo";
+
 export const COLLECTIONS = {
   users: "users",
   documents: "documents",
@@ -133,6 +135,36 @@ export class MongoRepository implements Repository {
       throw err;
     }
     return user;
+  }
+
+  async deleteExpiredDemoUsers(before: Date, limit: number): Promise<number> {
+    const db = await this.db();
+    const users = await db
+      .collection<FlexDoc>(COLLECTIONS.users)
+      .find({ email: DEMO_ACCOUNT_EMAIL, createdAt: { $lt: before } })
+      .limit(limit)
+      .toArray();
+    if (users.length === 0) return 0;
+    const ids = users.map((u) => String(u._id));
+
+    const bucket = new GridFSBucket(db, { bucketName: FILES_BUCKET });
+    const files = await bucket.find({ "metadata.userId": { $in: ids } }).toArray();
+    for (const f of files) {
+      // Another instance may be running the same cleanup.
+      await bucket.delete(f._id).catch(() => {});
+    }
+    await Promise.all(
+      [
+        COLLECTIONS.documents,
+        COLLECTIONS.extractions,
+        COLLECTIONS.medicalRecords,
+        COLLECTIONS.wellness,
+        COLLECTIONS.healthSummaries,
+      ].map((c) => db.collection<FlexDoc>(c).deleteMany({ userId: { $in: ids } }))
+    );
+    // Last, so a failed run is picked up again next time.
+    await db.collection<FlexDoc>(COLLECTIONS.users).deleteMany({ _id: { $in: ids } });
+    return ids.length;
   }
 
   async getUserByEmail(email: string): Promise<User | null> {

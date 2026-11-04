@@ -14,8 +14,9 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  const parsed = schema.safeParse(await req.json());
-  if (!parsed.success) {
+  const parsed = schema.safeParse(await req.json().catch(() => null));
+  // @medisathi.app is reserved: old demo-* accounts on it get deleted automatically.
+  if (!parsed.success || parsed.data.email.toLowerCase().endsWith("@medisathi.app")) {
     return Response.json({ error: "Invalid input" }, { status: 400 });
   }
 
